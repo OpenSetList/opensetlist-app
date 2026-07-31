@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.opensetlist.app.AppStrings
 
 enum class DrawerSection {
     ALL_SONGS, SETLISTS, ARTISTS, TAGS, SETTINGS
@@ -40,7 +41,7 @@ fun SideDrawer(
         Spacer(modifier = Modifier.height(48.dp))
 
         Text(
-            text = "Setlist App",
+            text = AppStrings.appName,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
@@ -49,7 +50,7 @@ fun SideDrawer(
         Spacer(modifier = Modifier.height(32.dp))
 
         DrawerItem(
-            label = "Todas as Músicas",
+            label = AppStrings.allSongsTitle,
             isSelected = currentSection == DrawerSection.ALL_SONGS,
             onClick = { onSectionSelected(DrawerSection.ALL_SONGS) }
         )
@@ -57,7 +58,7 @@ fun SideDrawer(
         Spacer(modifier = Modifier.height(8.dp))
 
         DrawerItem(
-            label = "Set Lists",
+            label = AppStrings.setlistsTitle,
             isSelected = currentSection == DrawerSection.SETLISTS,
             onClick = { onSectionSelected(DrawerSection.SETLISTS) }
         )
@@ -65,7 +66,7 @@ fun SideDrawer(
         Spacer(modifier = Modifier.height(8.dp))
 
         DrawerItem(
-            label = "Artistas",
+            label = AppStrings.artistsTitle,
             isSelected = currentSection == DrawerSection.ARTISTS,
             onClick = { onSectionSelected(DrawerSection.ARTISTS) }
         )
@@ -73,7 +74,7 @@ fun SideDrawer(
         Spacer(modifier = Modifier.height(8.dp))
 
         DrawerItem(
-            label = "Tags",
+            label = AppStrings.tagsTitle,
             isSelected = currentSection == DrawerSection.TAGS,
             onClick = { onSectionSelected(DrawerSection.TAGS) }
         )
@@ -81,7 +82,7 @@ fun SideDrawer(
         Spacer(modifier = Modifier.height(8.dp))
 
         DrawerItem(
-            label = "Configurações",
+            label = AppStrings.settingsTitle,
             isSelected = currentSection == DrawerSection.SETTINGS,
             onClick = { onSectionSelected(DrawerSection.SETTINGS) }
         )

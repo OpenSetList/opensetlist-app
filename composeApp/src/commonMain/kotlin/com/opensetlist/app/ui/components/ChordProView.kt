@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.opensetlist.app.AppStrings
 import com.opensetlist.app.model.ChordProLine
 import com.opensetlist.app.model.ChordProSegment
 import com.opensetlist.app.model.CommentStyle
@@ -67,11 +68,11 @@ fun ChordProView(
         }
 
         val metaParts = mutableListOf<String>()
-        if (song.key.isNotBlank()) metaParts.add("Tom: ${song.key}")
-        if (song.tempo.isNotBlank()) metaParts.add("Tempo: ${song.tempo}")
-        if (song.time.isNotBlank()) metaParts.add("Compasso: ${song.time}")
-        if (song.duration.isNotBlank()) metaParts.add("Duração: ${song.duration}")
-        if (song.capo.isNotBlank()) metaParts.add("Capo: ${song.capo}")
+        if (song.key.isNotBlank()) metaParts.add(AppStrings.metaKeyValue(AppStrings.metaTom, song.key))
+        if (song.tempo.isNotBlank()) metaParts.add(AppStrings.metaKeyValue(AppStrings.metaTempo, song.tempo))
+        if (song.time.isNotBlank()) metaParts.add(AppStrings.metaKeyValue(AppStrings.metaCompasso, song.time))
+        if (song.duration.isNotBlank()) metaParts.add(AppStrings.metaKeyValue(AppStrings.metaDuracao, song.duration))
+        if (song.capo.isNotBlank()) metaParts.add(AppStrings.metaKeyValue(AppStrings.metaCapo, song.capo))
 
         if (metaParts.isNotEmpty()) {
             Spacer(modifier = Modifier.height(4.dp))
@@ -83,12 +84,12 @@ fun ChordProView(
         }
 
         val details = mutableListOf<String>()
-        if (song.composer.isNotBlank()) details.add("Compositor: ${song.composer}")
-        if (song.lyricist.isNotBlank()) details.add("Letra: ${song.lyricist}")
-        if (song.album.isNotBlank()) details.add("Álbum: ${song.album}")
-        if (song.year.isNotBlank()) details.add("Ano: ${song.year}")
+        if (song.composer.isNotBlank()) details.add(AppStrings.metaKeyValue(AppStrings.metaCompositor, song.composer))
+        if (song.lyricist.isNotBlank()) details.add(AppStrings.metaKeyValue(AppStrings.metaLetra, song.lyricist))
+        if (song.album.isNotBlank()) details.add(AppStrings.metaKeyValue(AppStrings.metaAlbum, song.album))
+        if (song.year.isNotBlank()) details.add(AppStrings.metaKeyValue(AppStrings.metaAno, song.year))
         if (song.copyright.isNotBlank()) details.add("© ${song.copyright}")
-        if (song.tags.isNotEmpty()) details.add("Tags: ${song.tags.joinToString(", ")}")
+        if (song.tags.isNotEmpty()) details.add(AppStrings.metaKeyValue(AppStrings.metaTags, song.tags.joinToString(", ")))
 
         if (details.isNotEmpty()) {
             Spacer(modifier = Modifier.height(2.dp))

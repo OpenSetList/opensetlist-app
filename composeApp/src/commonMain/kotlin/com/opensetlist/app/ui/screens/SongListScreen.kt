@@ -30,17 +30,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.opensetlist.app.AppStrings
 import com.opensetlist.app.model.Setlist
 import com.opensetlist.app.model.Song
 import com.opensetlist.app.ui.components.SortMenu
 
 enum class SongListSort(val label: String) {
-    TITLE_ASC("Nome (A-Z)"),
-    TITLE_DESC("Nome (Z-A)"),
-    ARTIST_ASC("Artista (A-Z)"),
-    ARTIST_DESC("Artista (Z-A)"),
-    CREATED_ASC("Criação (antigas)"),
-    CREATED_DESC("Criação (recentes)")
+    TITLE_ASC(AppStrings.sortNameAsc),
+    TITLE_DESC(AppStrings.sortNameDesc),
+    ARTIST_ASC(AppStrings.sortArtistAsc),
+    ARTIST_DESC(AppStrings.sortArtistDesc),
+    CREATED_ASC(AppStrings.sortCreatedAsc),
+    CREATED_DESC(AppStrings.sortCreatedDesc)
 }
 
 @Composable
@@ -87,7 +88,7 @@ fun SongListScreen(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Buscar músicas e setlists...") },
+                    placeholder = { Text(AppStrings.searchSongsPlaceholder) },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -111,7 +112,7 @@ fun SongListScreen(
                     if (filteredSetlists.isNotEmpty()) {
                         item(key = "setlists_header") {
                             Text(
-                                text = "SETLISTS",
+                                text = AppStrings.setlistsHeader,
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -139,7 +140,7 @@ fun SongListScreen(
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = "${setlist.songs.size} músicas",
+                                        text = AppStrings.songsCount(setlist.songs.size),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -152,7 +153,7 @@ fun SongListScreen(
                         }
                         item(key = "songs_header") {
                             Text(
-                                text = "MÚSICAS",
+                                text = AppStrings.songsHeader,
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -182,7 +183,7 @@ fun SongListScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Nova música"
+                    contentDescription = AppStrings.newSong
                 )
             }
         }

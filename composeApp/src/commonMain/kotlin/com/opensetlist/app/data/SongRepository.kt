@@ -1,5 +1,6 @@
 package com.opensetlist.app.data
 
+import com.opensetlist.app.AppStrings
 import com.opensetlist.app.data.db.AppDatabase
 import com.opensetlist.app.data.db.Artist as DbArtist
 import com.opensetlist.app.data.db.Setlist as DbSetlist
@@ -84,8 +85,8 @@ class SongRepository(private val database: AppDatabase) {
         val parsed = ChordProParser.parse(body)
         val song = Song(
             id = generateId(),
-            title = parsed.title.ifBlank { "Música sem título" },
-            artist = parsed.artist.ifBlank { "Artista desconhecido" },
+            title = parsed.title.ifBlank { AppStrings.untitledSong },
+            artist = parsed.artist.ifBlank { AppStrings.unknownArtist },
             key = parsed.key,
             tempo = parsed.tempo,
             capo = parsed.capo,
@@ -96,8 +97,8 @@ class SongRepository(private val database: AppDatabase) {
 
     fun newSong(): Song = Song(
         id = generateId(),
-        title = "Nova música",
-        artist = "Artista",
+        title = AppStrings.newSongTitle,
+        artist = AppStrings.defaultArtistName,
         key = "",
         tempo = "",
         capo = "",
@@ -322,6 +323,16 @@ class SongRepository(private val database: AppDatabase) {
 
     fun deleteArtist(id: String) {
         queries.deleteArtist(id)
+    }
+
+    fun deleteArtistAndSongs(id: String) {
+        val existing = queries.selectArtistById(id).executeAsOneOrNull() ?: return
+        database.transaction {
+            queries.deleteSongTagsByArtist(existing.name)
+            queries.deleteSetlistSongsByArtist(existing.name)
+            queries.deleteSongsByArtist(existing.name)
+            queries.deleteArtist(id)
+        }
     }
 
     fun songsByArtist(name: String): List<Song> =

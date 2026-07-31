@@ -31,20 +31,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.opensetlist.app.AppStrings
 import com.opensetlist.app.data.formatDuration
 import com.opensetlist.app.data.parseDurationSeconds
 import com.opensetlist.app.model.Setlist
 import com.opensetlist.app.ui.components.SortMenu
 
 enum class SetlistSort(val label: String) {
-    NAME_ASC("Nome (A-Z)"),
-    NAME_DESC("Nome (Z-A)"),
-    LOCATION_ASC("Local (A-Z)"),
-    LOCATION_DESC("Local (Z-A)"),
-    DATE_ASC("Data (crescente)"),
-    DATE_DESC("Data (decrescente)"),
-    SONGS_ASC("Menos músicas"),
-    SONGS_DESC("Mais músicas")
+    NAME_ASC(AppStrings.sortNameAsc),
+    NAME_DESC(AppStrings.sortNameDesc),
+    LOCATION_ASC(AppStrings.sortLocationAsc),
+    LOCATION_DESC(AppStrings.sortLocationDesc),
+    DATE_ASC(AppStrings.sortDateAsc),
+    DATE_DESC(AppStrings.sortDateDesc),
+    SONGS_ASC(AppStrings.sortSongsAsc),
+    SONGS_DESC(AppStrings.sortSongsDesc)
 }
 
 @Composable
@@ -91,13 +92,13 @@ fun SetlistListScreen(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Set Lists",
+                    text = AppStrings.setlistsTitle,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "${setlists.size} setlists",
+                    text = AppStrings.setlistsCount(setlists.size),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -112,7 +113,7 @@ fun SetlistListScreen(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = { Text("Buscar setlist por nome ou local...") },
+            placeholder = { Text(AppStrings.searchSetlistsPlaceholder) },
             singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
@@ -125,8 +126,8 @@ fun SetlistListScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = if (searchQuery.isBlank()) "Nenhuma setlist ainda"
-                    else "Nenhuma setlist encontrada",
+                    text = if (searchQuery.isBlank()) AppStrings.noSetlistsYet
+                    else AppStrings.noSetlistsFound,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -157,7 +158,7 @@ fun SetlistListScreen(
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = buildString {
-                                    append("${setlist.songs.size} músicas")
+                                    append(AppStrings.songsCount(setlist.songs.size))
                                     val total = setlist.songs.sumOf {
                                         parseDurationSeconds(it.duration)
                                     }
@@ -178,13 +179,13 @@ fun SetlistListScreen(
                             IconButton(onClick = { onShare(setlist) }) {
                                 Icon(
                                     imageVector = Icons.Default.Share,
-                                    contentDescription = "Compartilhar setlist"
+                                    contentDescription = AppStrings.shareSetlist
                                 )
                             }
                             IconButton(onClick = { onEdit(setlist) }) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
-                                    contentDescription = "Editar setlist"
+                                    contentDescription = AppStrings.editSetlist
                                 )
                             }
                         }

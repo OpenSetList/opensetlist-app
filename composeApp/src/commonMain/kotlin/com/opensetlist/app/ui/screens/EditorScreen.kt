@@ -14,7 +14,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,6 +39,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.opensetlist.app.AppStrings
 import com.opensetlist.app.data.ChordProParser
 import com.opensetlist.app.model.Song
 import com.opensetlist.app.model.Tag
@@ -46,6 +50,7 @@ fun EditorScreen(
     song: Song,
     allTags: List<Tag>,
     initialTags: List<Tag>,
+    artistSuggestions: List<String>,
     onSave: (Song, List<String>) -> Unit,
     onNewTag: (String) -> Unit,
     onCancel: () -> Unit,
@@ -61,6 +66,14 @@ fun EditorScreen(
     var youtubeUrl by remember(song.id) { mutableStateOf(song.youtubeUrl) }
     var selectedTagIds by remember(song.id) { mutableStateOf(initialTags.map { it.id }.toSet()) }
     var newTagText by remember { mutableStateOf("") }
+    var artistMenuOpen by remember(song.id) { mutableStateOf(false) }
+
+    val filteredArtistSuggestions = remember(artist, artistSuggestions) {
+        artistSuggestions
+            .filter { it.contains(artist.trim(), ignoreCase = true) }
+            .distinct()
+            .sortedBy { it.lowercase() }
+    }
 
     fun save() {
         val parsed = ChordProParser.parse(body)
@@ -82,7 +95,7 @@ fun EditorScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Editar ${song.title}",
+                        text = AppStrings.editSongTitle(song.title),
                         style = MaterialTheme.typography.titleMedium
                     )
                 },
@@ -90,13 +103,13 @@ fun EditorScreen(
                     IconButton(onClick = onCancel) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Cancelar"
+                            contentDescription = AppStrings.cancel
                         )
                     }
                 },
                 actions = {
                     TextButton(onClick = ::save) {
-                        Text("Salvar")
+                        Text(AppStrings.save)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -116,19 +129,45 @@ fun EditorScreen(
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
-                label = { Text("Título") },
+                label = { Text(AppStrings.titleLabel) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
-            OutlinedTextField(
-                value = artist,
-                onValueChange = { artist = it },
-                label = { Text("Artista") },
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp)
-            )
+            ExposedDropdownMenuBox(
+                expanded = artistMenuOpen && filteredArtistSuggestions.isNotEmpty(),
+                onExpandedChange = { artistMenuOpen = it }
+            ) {
+                OutlinedTextField(
+                    value = artist,
+                    onValueChange = {
+                        artist = it
+                        artistMenuOpen = true
+                    },
+                    label = { Text(AppStrings.artistLabel) },
+                    singleLine = true,
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = artistMenuOpen)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp)
+                        .menuAnchor()
+                )
+                ExposedDropdownMenu(
+                    expanded = artistMenuOpen && filteredArtistSuggestions.isNotEmpty(),
+                    onDismissRequest = { artistMenuOpen = false }
+                ) {
+                    filteredArtistSuggestions.forEach { suggestion ->
+                        DropdownMenuItem(
+                            text = { Text(suggestion) },
+                            onClick = {
+                                artist = suggestion
+                                artistMenuOpen = false
+                            }
+                        )
+                    }
+                }
+            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -136,29 +175,29 @@ fun EditorScreen(
                 OutlinedTextField(
                     value = key,
                     onValueChange = { key = it },
-                    label = { Text("Tom") },
+                    label = { Text(AppStrings.keyLabel) },
                     singleLine = true,
                     modifier = Modifier.weight(1f)
                 )
                 OutlinedTextField(
                     value = tempo,
                     onValueChange = { tempo = it },
-                    label = { Text("BPM") },
+                    label = { Text(AppStrings.bpmLabel) },
                     singleLine = true,
                     modifier = Modifier.weight(1f)
                 )
                 OutlinedTextField(
                     value = capo,
                     onValueChange = { capo = it },
-                    label = { Text("Capo") },
+                    label = { Text(AppStrings.capoLabel) },
                     singleLine = true,
                     modifier = Modifier.weight(1f)
                 )
                 OutlinedTextField(
                     value = duration,
                     onValueChange = { duration = it },
-                    label = { Text("Duração") },
-                    placeholder = { Text("3:45") },
+                    label = { Text(AppStrings.durationLabel) },
+                    placeholder = { Text(AppStrings.durationPlaceholder) },
                     singleLine = true,
                     modifier = Modifier.weight(1f)
                 )
@@ -166,8 +205,8 @@ fun EditorScreen(
             OutlinedTextField(
                 value = youtubeUrl,
                 onValueChange = { youtubeUrl = it },
-                label = { Text("Link do YouTube") },
-                placeholder = { Text("https://youtube.com/watch?v=...") },
+                label = { Text(AppStrings.youtubeLinkLabel) },
+                placeholder = { Text(AppStrings.youtubePlaceholder) },
                 singleLine = true,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -175,7 +214,7 @@ fun EditorScreen(
             )
 
             Text(
-                text = "Tags",
+                text = AppStrings.tagsTitle,
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
@@ -211,7 +250,7 @@ fun EditorScreen(
                 OutlinedTextField(
                     value = newTagText,
                     onValueChange = { newTagText = it },
-                    placeholder = { Text("Nova tag") },
+                    placeholder = { Text(AppStrings.newTagPlaceholder) },
                     singleLine = true,
                     modifier = Modifier.weight(1f)
                 )
@@ -227,13 +266,13 @@ fun EditorScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Adicionar tag"
+                        contentDescription = AppStrings.addTag
                     )
                 }
             }
 
             Text(
-                text = "Letra / Cifra (ChordPro)",
+                text = AppStrings.bodyLabel,
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)

@@ -27,12 +27,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.opensetlist.app.AppStrings
 import com.opensetlist.app.model.Tag
 import com.opensetlist.app.ui.components.SortMenu
 
 enum class TagSort(val label: String) {
-    NAME_ASC("Nome (A-Z)"),
-    NAME_DESC("Nome (Z-A)")
+    NAME_ASC(AppStrings.sortNameAsc),
+    NAME_DESC(AppStrings.sortNameDesc)
 }
 
 @Composable
@@ -63,13 +64,13 @@ fun TagsScreen(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Tags",
+                    text = AppStrings.tagsTitle,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "${tags.size} tags",
+                    text = AppStrings.tagsCount(tags.size),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -87,7 +88,7 @@ fun TagsScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Nenhuma tag cadastrada",
+                    text = AppStrings.noTags,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -116,7 +117,7 @@ fun TagsScreen(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "${songCounts[tag.id] ?: 0} músicas",
+                                text = AppStrings.songsCount(songCounts[tag.id] ?: 0),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -124,13 +125,13 @@ fun TagsScreen(
                         IconButton(onClick = { onEdit(tag) }) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
-                                contentDescription = "Editar tag"
+                                contentDescription = AppStrings.editTag
                             )
                         }
                         IconButton(onClick = { onDelete(tag) }) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
-                                contentDescription = "Excluir tag"
+                                contentDescription = AppStrings.deleteTag
                             )
                         }
                     }

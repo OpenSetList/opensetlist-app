@@ -91,6 +91,15 @@ UPDATE artist SET name = ? WHERE id = ?;
 deleteArtist:
 DELETE FROM artist WHERE id = ?;
 
+deleteSongsByArtist:
+DELETE FROM song WHERE artist = ?;
+
+deleteSetlistSongsByArtist:
+DELETE FROM setlist_song WHERE song_id IN (SELECT id FROM song WHERE artist = ?);
+
+deleteSongTagsByArtist:
+DELETE FROM song_tag WHERE song_id IN (SELECT id FROM song WHERE artist = ?);
+
 selectAllTags:
 SELECT * FROM tag ORDER BY name COLLATE NOCASE ASC;
 

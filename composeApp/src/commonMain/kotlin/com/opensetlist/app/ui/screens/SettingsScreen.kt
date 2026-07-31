@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.opensetlist.app.AppStrings
 import com.opensetlist.app.model.Setlist
 
 @Composable
@@ -50,35 +51,35 @@ fun SettingsScreen(
             .padding(16.dp)
     ) {
         SettingsSection(
-            title = "Backup do banco de dados",
+            title = AppStrings.backupDbTitle,
             icon = Icons.Default.Backup
         ) {
             SettingsRow(
-                label = "Exportar backup completo (.db)",
-                subtitle = "Copia o banco SQLite inteiro, pronto para uso externo",
+                label = AppStrings.exportFullBackup,
+                subtitle = AppStrings.exportFullBackupSubtitle,
                 actions = {
                     IconButton(onClick = { onExportBackup(false) }) {
                         Icon(
                             imageVector = Icons.Default.Save,
-                            contentDescription = "Salvar backup em arquivo"
+                            contentDescription = AppStrings.saveBackupToFile
                         )
                     }
                     IconButton(onClick = { onExportBackup(true) }) {
                         Icon(
                             imageVector = Icons.Default.Share,
-                            contentDescription = "Compartilhar backup"
+                            contentDescription = AppStrings.shareBackup
                         )
                     }
                 }
             )
             SettingsRow(
-                label = "Importar backup (.db)",
-                subtitle = "Restaura todos os dados a partir de um arquivo .db",
+                label = AppStrings.importBackup,
+                subtitle = AppStrings.importBackupSubtitle,
                 actions = {
                     IconButton(onClick = onImportBackup) {
                         Icon(
                             imageVector = Icons.Default.FileOpen,
-                            contentDescription = "Importar backup"
+                            contentDescription = AppStrings.importBackupFile
                         )
                     }
                 }
@@ -86,33 +87,33 @@ fun SettingsScreen(
         }
 
         SettingsSection(
-            title = "Músicas",
+            title = AppStrings.songsSectionTitle,
             icon = Icons.Default.LibraryMusic
         ) {
             SettingsRow(
-                label = "Exportar todas as músicas",
+                label = AppStrings.exportAllSongs,
                 actions = {
                     IconButton(onClick = { onExportAllSongs(false) }) {
                         Icon(
                             imageVector = Icons.Default.Save,
-                            contentDescription = "Salvar músicas em arquivo"
+                            contentDescription = AppStrings.saveSongsToFile
                         )
                     }
                     IconButton(onClick = { onExportAllSongs(true) }) {
                         Icon(
                             imageVector = Icons.Default.Share,
-                            contentDescription = "Compartilhar músicas"
+                            contentDescription = AppStrings.shareSongs
                         )
                     }
                 }
             )
             SettingsRow(
-                label = "Importar músicas (em lote)",
+                label = AppStrings.importSongsBatch,
                 actions = {
                     IconButton(onClick = onImportSongs) {
                         Icon(
                             imageVector = Icons.Default.FileOpen,
-                            contentDescription = "Importar músicas"
+                            contentDescription = AppStrings.importSongs
                         )
                     }
                 }
@@ -120,17 +121,17 @@ fun SettingsScreen(
         }
 
         SettingsSection(
-            title = "SetList Helper",
+            title = AppStrings.setlistHelperTitle,
             icon = Icons.Default.MusicNote
         ) {
             SettingsRow(
-                label = "Importar backup do SetList Helper",
-                subtitle = "Restaura músicas e setlists de um backup .db",
+                label = AppStrings.importSetlistHelper,
+                subtitle = AppStrings.importSetlistHelperSubtitle,
                 actions = {
                     IconButton(onClick = onImportSetlistHelper) {
                         Icon(
                             imageVector = Icons.Default.FileOpen,
-                            contentDescription = "Importar backup do SetList Helper"
+                            contentDescription = AppStrings.importSetlistHelperFile
                         )
                     }
                 }
@@ -138,16 +139,16 @@ fun SettingsScreen(
         }
 
         SettingsSection(
-            title = "Setlists",
+            title = AppStrings.setlistsTitle,
             icon = Icons.AutoMirrored.Filled.List
         ) {
             SettingsRow(
-                label = "Importar setlist compartilhada",
+                label = AppStrings.importSharedSetlist,
                 actions = {
                     IconButton(onClick = onImportSet) {
                         Icon(
                             imageVector = Icons.Default.FileOpen,
-                            contentDescription = "Importar setlist"
+                            contentDescription = AppStrings.importSetlist
                         )
                     }
                 }
@@ -156,7 +157,7 @@ fun SettingsScreen(
             if (setlists.isEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Nenhuma setlist criada ainda.",
+                    text = AppStrings.noSetlistsCreatedYet,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 12.dp)
@@ -166,12 +167,12 @@ fun SettingsScreen(
                 setlists.forEach { setlist ->
                     SettingsRow(
                         label = setlist.name,
-                        subtitle = "${setlist.songs.size} músicas",
+                        subtitle = AppStrings.songsCount(setlist.songs.size),
                         actions = {
                             IconButton(onClick = { onShareSetlist(setlist) }) {
                                 Icon(
                                     imageVector = Icons.Default.Share,
-                                    contentDescription = "Compartilhar ${setlist.name}"
+                                    contentDescription = AppStrings.shareSetlistName(setlist.name)
                                 )
                             }
                         }

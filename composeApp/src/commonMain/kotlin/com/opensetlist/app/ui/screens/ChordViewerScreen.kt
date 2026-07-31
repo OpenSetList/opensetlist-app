@@ -70,6 +70,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.opensetlist.app.AppStrings
 import com.opensetlist.app.data.ChordProParser
 import com.opensetlist.app.data.Transposer
 import com.opensetlist.app.data.pedal.PedalEvent
@@ -243,7 +244,7 @@ fun ChordViewerScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Voltar"
+                            contentDescription = AppStrings.back
                         )
                     }
                 },
@@ -251,26 +252,26 @@ fun ChordViewerScreen(
                     IconButton(onClick = { searchOpen = !searchOpen }) {
                         Icon(
                             imageVector = if (searchOpen) Icons.Default.Close else Icons.Default.Search,
-                            contentDescription = "Buscar"
+                            contentDescription = AppStrings.search
                         )
                     }
                     IconButton(onClick = { onEdit(currentSong) }) {
                         Icon(
                             imageVector = Icons.Default.Edit,
-                            contentDescription = "Editar"
+                            contentDescription = AppStrings.edit
                         )
                     }
                     IconButton(onClick = { fileActions.saveFile("${currentSong.title}.pro", "application/octet-stream") }) {
                         Icon(
                             imageVector = Icons.Default.Share,
-                            contentDescription = "Exportar .pro"
+                            contentDescription = AppStrings.exportPro
                         )
                     }
                     Box {
                         IconButton(onClick = { menuOpen = !menuOpen }) {
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
-                                contentDescription = "Mais opções"
+                                contentDescription = AppStrings.moreOptions
                             )
                         }
                         DropdownMenu(
@@ -278,7 +279,7 @@ fun ChordViewerScreen(
                             onDismissRequest = { menuOpen = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Ver no YouTube") },
+                                text = { Text(AppStrings.viewOnYoutube) },
                                 enabled = currentSong.youtubeUrl.isNotBlank(),
                                 onClick = {
                                     menuOpen = false
@@ -326,7 +327,7 @@ fun ChordViewerScreen(
                                 searchQuery = it
                                 currentMatchIndex = 0
                             },
-                            placeholder = { Text("Buscar no texto...") },
+                            placeholder = { Text(AppStrings.searchInSongPlaceholder) },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                             keyboardActions = KeyboardActions(
@@ -345,7 +346,7 @@ fun ChordViewerScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowUp,
-                                contentDescription = "Anterior"
+                                contentDescription = AppStrings.previous
                             )
                         }
                         IconButton(
@@ -358,7 +359,7 @@ fun ChordViewerScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowDown,
-                                contentDescription = "Próximo"
+                                contentDescription = AppStrings.next
                             )
                         }
                         Text(
@@ -481,7 +482,7 @@ private fun ViewerControls(
                 IconButton(onClick = { onTransposeChange(transpose - 1) }) {
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = "Transpor -1"
+                        contentDescription = AppStrings.transposeMinusOne
                     )
                 }
                 Text(
@@ -493,7 +494,7 @@ private fun ViewerControls(
                 IconButton(onClick = { onTransposeChange(transpose + 1) }) {
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowUp,
-                        contentDescription = "Transpor +1"
+                        contentDescription = AppStrings.transposePlusOne
                     )
                 }
 
@@ -502,7 +503,7 @@ private fun ViewerControls(
                 IconButton(onClick = { onFontSizeChange((fontSize - 1f).coerceAtLeast(10f)) }) {
                     Icon(
                         imageVector = Icons.Default.Remove,
-                        contentDescription = "Diminuir letra"
+                        contentDescription = AppStrings.decreaseFont
                     )
                 }
                 Text(
@@ -514,7 +515,7 @@ private fun ViewerControls(
                 IconButton(onClick = { onFontSizeChange((fontSize + 1f).coerceAtMost(26f)) }) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Aumentar letra"
+                        contentDescription = AppStrings.increaseFont
                     )
                 }
 
@@ -523,7 +524,7 @@ private fun ViewerControls(
                 IconButton(onClick = { onHideChordsChange(!hideChords) }) {
                     Icon(
                         imageVector = if (hideChords) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                        contentDescription = if (hideChords) "Mostrar acordes" else "Ocultar acordes"
+                        contentDescription = if (hideChords) AppStrings.showChords else AppStrings.hideChords
                     )
                 }
 
@@ -532,7 +533,7 @@ private fun ViewerControls(
                 IconButton(onClick = { onAutoScrollChange(!isAutoScrolling) }) {
                     Icon(
                         imageVector = if (isAutoScrolling) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = "Rolagem automática"
+                        contentDescription = AppStrings.autoScroll
                     )
                 }
 
@@ -541,7 +542,7 @@ private fun ViewerControls(
                 IconButton(onClick = { onPedalEnabledChange(!pedalEnabled) }) {
                     Icon(
                         imageVector = Icons.Default.Bluetooth,
-                        contentDescription = "Pedal Bluetooth",
+                        contentDescription = AppStrings.pedalBluetooth,
                         tint = if (pedalEnabled) MaterialTheme.colorScheme.primary
                         else MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -558,14 +559,14 @@ private fun ViewerControls(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Velocidade:",
+                        text = AppStrings.speedLabel,
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     IconButton(onClick = { onScrollSpeedChange((scrollSpeed - 1).coerceAtLeast(1)) }) {
                         Icon(
                             imageVector = Icons.Default.Remove,
-                            contentDescription = "Diminuir velocidade",
+                            contentDescription = AppStrings.decreaseSpeed,
                             modifier = Modifier.padding(4.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )
@@ -579,7 +580,7 @@ private fun ViewerControls(
                     IconButton(onClick = { onScrollSpeedChange((scrollSpeed + 1).coerceAtMost(10)) }) {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = "Aumentar velocidade",
+                            contentDescription = AppStrings.increaseSpeed,
                             modifier = Modifier.padding(4.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )

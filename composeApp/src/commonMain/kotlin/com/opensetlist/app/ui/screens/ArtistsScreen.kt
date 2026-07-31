@@ -27,12 +27,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.opensetlist.app.AppStrings
 import com.opensetlist.app.model.Artist
 import com.opensetlist.app.ui.components.SortMenu
 
 enum class ArtistSort(val label: String) {
-    NAME_ASC("Nome (A-Z)"),
-    NAME_DESC("Nome (Z-A)")
+    NAME_ASC(AppStrings.sortNameAsc),
+    NAME_DESC(AppStrings.sortNameDesc)
 }
 
 @Composable
@@ -63,13 +64,13 @@ fun ArtistsScreen(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Artistas",
+                    text = AppStrings.artistsTitle,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "${artists.size} artistas",
+                    text = AppStrings.artistsCount(artists.size),
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -87,7 +88,7 @@ fun ArtistsScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Nenhum artista cadastrado",
+                    text = AppStrings.noArtists,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -116,7 +117,7 @@ fun ArtistsScreen(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "${songCounts[artist.name] ?: 0} músicas",
+                                text = AppStrings.songsCount(songCounts[artist.name] ?: 0),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -124,13 +125,13 @@ fun ArtistsScreen(
                         IconButton(onClick = { onEdit(artist) }) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
-                                contentDescription = "Editar artista"
+                                contentDescription = AppStrings.editArtist
                             )
                         }
                         IconButton(onClick = { onDelete(artist) }) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
-                                contentDescription = "Excluir artista"
+                                contentDescription = AppStrings.deleteArtist
                             )
                         }
                     }

@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.opensetlist.app.AppStrings
 import com.opensetlist.app.data.formatDuration
 import com.opensetlist.app.data.parseDurationSeconds
 import com.opensetlist.app.model.Setlist
@@ -91,7 +92,7 @@ fun SetlistScreen(
                 )
                 Text(
                     text = buildString {
-                        append("${songs.size} músicas")
+                        append(AppStrings.songsCount(songs.size))
                         val total = songs.sumOf { parseDurationSeconds(it.duration) }
                         val formatted = formatDuration(total)
                         if (formatted.isNotEmpty()) append(" · $formatted")
@@ -103,13 +104,13 @@ fun SetlistScreen(
             IconButton(onClick = { showGigDialog = true }) {
                 Icon(
                     imageVector = Icons.Default.Edit,
-                    contentDescription = "Editar dados da Gig"
+                    contentDescription = AppStrings.editGigInfo
                 )
             }
             IconButton(onClick = { showAddDialog = true }) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Adicionar música"
+                    contentDescription = AppStrings.addSong
                 )
             }
         }
@@ -142,17 +143,17 @@ fun SetlistScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Setlist vazia",
+                    text = AppStrings.emptySetlist,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "Toque e arraste para reordenar as músicas.",
+                    text = AppStrings.dragToReorderHint,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 TextButton(onClick = { showAddDialog = true }) {
-                    Text("Adicionar músicas")
+                    Text(AppStrings.addSongs)
                 }
             }
         } else {
@@ -210,7 +211,7 @@ fun SetlistScreen(
                         )
                         Icon(
                             imageVector = Icons.Default.DragHandle,
-                            contentDescription = "Reordenar",
+                            contentDescription = AppStrings.reorder,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(end = 8.dp)
                         )
@@ -238,7 +239,7 @@ fun SetlistScreen(
                         IconButton(onClick = { onRemoveSong(song) }) {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = "Remover da setlist"
+                                contentDescription = AppStrings.removeFromSetlist
                             )
                         }
                     }
@@ -291,22 +292,22 @@ private fun GigInfoDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Dados da Gig") },
+        title = { Text(AppStrings.editGigInfo) },
         text = {
             Column {
                 OutlinedTextField(
                     value = dateText,
                     onValueChange = { dateText = it },
-                    label = { Text("Data") },
-                    placeholder = { Text("ex.: 12/05/2026") },
+                    label = { Text(AppStrings.dateLabel) },
+                    placeholder = { Text(AppStrings.datePlaceholder) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = locationText,
                     onValueChange = { locationText = it },
-                    label = { Text("Local") },
-                    placeholder = { Text("ex.: Bar do Zé") },
+                    label = { Text(AppStrings.locationLabel) },
+                    placeholder = { Text(AppStrings.locationPlaceholder) },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -315,8 +316,8 @@ private fun GigInfoDialog(
                 OutlinedTextField(
                     value = timeText,
                     onValueChange = { timeText = it },
-                    label = { Text("Horário") },
-                    placeholder = { Text("ex.: 20:30") },
+                    label = { Text(AppStrings.timeLabel) },
+                    placeholder = { Text(AppStrings.timePlaceholder) },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -328,12 +329,12 @@ private fun GigInfoDialog(
             TextButton(onClick = {
                 onSave(dateText.trim(), locationText.trim(), timeText.trim())
             }) {
-                Text("Salvar")
+                Text(AppStrings.save)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+                Text(AppStrings.cancel)
             }
         }
     )
@@ -350,11 +351,11 @@ private fun AddSongDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Adicionar músicas") },
+        title = { Text(AppStrings.addSongs) },
         text = {
             if (available.isEmpty()) {
                 Text(
-                    text = "Todas as músicas já estão nesta setlist.",
+                    text = AppStrings.allSongsInSetlist,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -393,7 +394,7 @@ private fun AddSongDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Fechar")
+                Text(AppStrings.close)
             }
         }
     )

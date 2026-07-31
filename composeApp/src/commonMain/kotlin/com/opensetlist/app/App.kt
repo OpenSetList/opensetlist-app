@@ -1,6 +1,9 @@
 package com.opensetlist.app
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -10,6 +13,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -33,7 +37,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.opensetlist.app.data.DataTransfer
 import com.opensetlist.app.data.DatabaseDriverFactory
 import com.opensetlist.app.data.SongRepository
@@ -213,7 +219,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
                         pendingRestoreData = data
                         showRestoreConfirm = true
                     } else {
-                        showMessage("Arquivo de backup inválido")
+                        showMessage(AppStrings.invalidBackupFile)
                     }
                 }
                 "songs" -> {
@@ -221,9 +227,9 @@ fun App(driverFactory: DatabaseDriverFactory) {
                     if (parsed.isNotEmpty()) {
                         val count = repository.importSongs(parsed)
                         reload()
-                        showMessage("$count músicas importadas")
+                        showMessage(AppStrings.songsImported(count))
                     } else {
-                        showMessage("Arquivo de músicas inválido")
+                        showMessage(AppStrings.invalidSongsFile)
                     }
                 }
                 "set" -> {
@@ -233,9 +239,9 @@ fun App(driverFactory: DatabaseDriverFactory) {
                         reload()
                         currentDrawerSection = DrawerSection.SETLISTS
                         currentScreen = Screen.SetlistView(created)
-                        showMessage("Setlist \"${created.name}\" importada")
+                        showMessage(AppStrings.setlistImported(created.name))
                     } else {
-                        showMessage("Arquivo de setlist inválido")
+                        showMessage(AppStrings.invalidSetlistFile)
                     }
                 }
                 else -> importSingleSong(content)
@@ -249,9 +255,9 @@ fun App(driverFactory: DatabaseDriverFactory) {
         getExportContent = { pendingExportContent },
         onImported = { content -> handleImported(content) },
         onExported = { ok ->
-            showMessage(if (ok) "Arquivo salvo" else "Falha ao salvar arquivo")
+            showMessage(if (ok) AppStrings.fileSaved else AppStrings.fileSaveFailed)
         },
-        onShared = { showMessage("Conteúdo compartilhado") },
+        onShared = { showMessage(AppStrings.contentShared) },
         getExportBytes = { pendingExportBytes }
     )
 
@@ -261,7 +267,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
                 pendingRestoreData = data
                 showRestoreConfirm = true
             } else {
-                showMessage("Arquivo .db inválido ou não é um backup deste app")
+                showMessage(AppStrings.invalidDbFile)
             }
         }
     )
@@ -271,9 +277,9 @@ fun App(driverFactory: DatabaseDriverFactory) {
             if (data != null) {
                 val (songCount, setCount) = repository.importSetlistHelper(data)
                 reload()
-                showMessage("Importadas $songCount músicas e $setCount setlists do SetList Helper")
+                showMessage(AppStrings.slhImported(songCount, setCount))
             } else {
-                showMessage("Falha ao importar backup do SetList Helper")
+                showMessage(AppStrings.slhImportFailed)
             }
         }
     )
@@ -293,7 +299,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
             if (share) fileActions.shareFile("setlist_backup.db", "application/octet-stream")
             else fileActions.saveFile("setlist_backup.db", "application/octet-stream")
         } else {
-            showMessage("Falha ao ler o banco de dados")
+            showMessage(AppStrings.dbReadFailed)
         }
     }
 
@@ -343,16 +349,16 @@ fun App(driverFactory: DatabaseDriverFactory) {
                         title = {
                             Text(
                                 text = when (val screen = currentScreen) {
-                                    is Screen.SongList -> "Todas as Músicas"
-                                    is Screen.SetlistList -> "Set Lists"
-                                    is Screen.ArtistList -> "Artistas"
-                                    is Screen.TagList -> "Tags"
-                                    is Screen.Settings -> "Configurações"
+                                    is Screen.SongList -> AppStrings.allSongsTitle
+                                    is Screen.SetlistList -> AppStrings.setlistsTitle
+                                    is Screen.ArtistList -> AppStrings.artistsTitle
+                                    is Screen.TagList -> AppStrings.tagsTitle
+                                    is Screen.Settings -> AppStrings.settingsTitle
                                     is Screen.ChordView -> screen.song.title
                                     is Screen.SetlistView -> screen.setlist.name
                                     is Screen.ArtistSongs -> screen.artist.name
                                     is Screen.TagSongs -> screen.tag.name
-                                    is Screen.Editor -> "Editar Música"
+                                    is Screen.Editor -> AppStrings.editSongTitle
                                 }
                             )
                         },
@@ -361,14 +367,14 @@ fun App(driverFactory: DatabaseDriverFactory) {
                                 IconButton(onClick = { goBack() }) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = "Voltar"
+                                        contentDescription = AppStrings.back
                                     )
                                 }
                             } else {
                                 IconButton(onClick = { scope.launch { drawerState.open() } }) {
                                     Icon(
                                         imageVector = Icons.Default.Menu,
-                                        contentDescription = "Menu"
+                                        contentDescription = AppStrings.menu
                                     )
                                 }
                             }
@@ -379,7 +385,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
                                     IconButton(onClick = { fileActions.importFile() }) {
                                         Icon(
                                             imageVector = Icons.Default.Add,
-                                            contentDescription = "Importar .pro"
+                                            contentDescription = AppStrings.importPro
                                         )
                                     }
                                 }
@@ -390,7 +396,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
                                     }) {
                                         Icon(
                                             imageVector = Icons.Default.Add,
-                                            contentDescription = "Nova setlist"
+                                            contentDescription = AppStrings.newSetlist
                                         )
                                     }
                                 }
@@ -398,7 +404,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
                                     IconButton(onClick = { showNewArtistDialog = true }) {
                                         Icon(
                                             imageVector = Icons.Default.Add,
-                                            contentDescription = "Novo artista"
+                                            contentDescription = AppStrings.newArtist
                                         )
                                     }
                                 }
@@ -406,7 +412,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
                                     IconButton(onClick = { showNewTagDialog = true }) {
                                         Icon(
                                             imageVector = Icons.Default.Add,
-                                            contentDescription = "Nova tag"
+                                            contentDescription = AppStrings.newTag
                                         )
                                     }
                                 }
@@ -414,7 +420,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
                                     IconButton(onClick = { shareSetlist(screen.setlist) }) {
                                         Icon(
                                             imageVector = Icons.Default.Share,
-                                            contentDescription = "Compartilhar setlist"
+                                            contentDescription = AppStrings.shareSetlist
                                         )
                                     }
                                     IconButton(onClick = {
@@ -423,13 +429,13 @@ fun App(driverFactory: DatabaseDriverFactory) {
                                     }) {
                                         Icon(
                                             imageVector = Icons.Default.Edit,
-                                            contentDescription = "Renomear setlist"
+                                            contentDescription = AppStrings.renameSetlist
                                         )
                                     }
                                     IconButton(onClick = { showDeleteSetlistDialog = true }) {
                                         Icon(
                                             imageVector = Icons.Default.Delete,
-                                            contentDescription = "Excluir setlist"
+                                            contentDescription = AppStrings.deleteSetlist
                                         )
                                     }
                                 }
@@ -519,7 +525,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
                                 onSongClick = { song ->
                                     currentScreen = Screen.ChordView(song, origin = screen)
                                 },
-                                emptyText = "Nenhuma música deste artista"
+                                emptyText = AppStrings.noSongsOfArtist
                             )
                         }
                         is Screen.TagSongs -> {
@@ -528,7 +534,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
                                 onSongClick = { song ->
                                     currentScreen = Screen.ChordView(song, origin = screen)
                                 },
-                                emptyText = "Nenhuma música com esta tag"
+                                emptyText = AppStrings.noSongsWithTag
                             )
                         }
                         is Screen.Settings -> {
@@ -619,6 +625,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
                                 song = screen.song,
                                 allTags = tags,
                                 initialTags = tagsBySong[screen.song.id].orEmpty(),
+                                artistSuggestions = artists.map { it.name },
                                 onSave = { updated, tagIds ->
                                     repository.upsert(updated)
                                     repository.setSongTags(updated.id, tagIds)
@@ -651,8 +658,8 @@ fun App(driverFactory: DatabaseDriverFactory) {
 
         if (showNewSetlistDialog) {
             NameDialog(
-                title = "Nova setlist",
-                confirmLabel = "Criar",
+                title = AppStrings.newSetlist,
+                confirmLabel = AppStrings.create,
                 initialName = dialogText,
                 onConfirm = { name ->
                     val created = repository.createSetlist(name)
@@ -669,8 +676,8 @@ fun App(driverFactory: DatabaseDriverFactory) {
             val current = currentScreen as? Screen.SetlistView
             val targetId = pendingRenameSetlist?.id ?: current?.setlist?.id
             NameDialog(
-                title = "Renomear setlist",
-                confirmLabel = "Salvar",
+                title = AppStrings.renameSetlist,
+                confirmLabel = AppStrings.save,
                 initialName = dialogText,
                 onConfirm = { name ->
                     if (targetId != null) repository.renameSetlist(targetId, name)
@@ -688,10 +695,10 @@ fun App(driverFactory: DatabaseDriverFactory) {
         if (showDeleteSetlistDialog) {
             AlertDialog(
                 onDismissRequest = { showDeleteSetlistDialog = false },
-                title = { Text("Excluir setlist") },
+                title = { Text(AppStrings.deleteSetlist) },
                 text = {
                     val current = currentScreen as? Screen.SetlistView
-                    Text("Excluir \"${current?.setlist?.name}\"?")
+                    Text(AppStrings.deleteConfirmation.format(current?.setlist?.name ?: ""))
                 },
                 confirmButton = {
                     TextButton(onClick = {
@@ -703,12 +710,12 @@ fun App(driverFactory: DatabaseDriverFactory) {
                         }
                         showDeleteSetlistDialog = false
                     }) {
-                        Text("Excluir", color = MaterialTheme.colorScheme.error)
+                        Text(AppStrings.delete, color = MaterialTheme.colorScheme.error)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showDeleteSetlistDialog = false }) {
-                        Text("Cancelar")
+                        Text(AppStrings.cancel)
                     }
                 }
             )
@@ -716,8 +723,8 @@ fun App(driverFactory: DatabaseDriverFactory) {
 
         if (showNewArtistDialog) {
             NameDialog(
-                title = "Novo artista",
-                confirmLabel = "Criar",
+                title = AppStrings.newArtist,
+                confirmLabel = AppStrings.create,
                 initialName = "",
                 onConfirm = { name ->
                     repository.createArtist(name)
@@ -732,8 +739,8 @@ fun App(driverFactory: DatabaseDriverFactory) {
         if (showRenameArtistDialog) {
             val target = pendingRenameArtist
             NameDialog(
-                title = "Renomear artista",
-                confirmLabel = "Salvar",
+                title = AppStrings.renameArtist,
+                confirmLabel = AppStrings.save,
                 initialName = target?.name ?: "",
                 onConfirm = { name ->
                     if (target != null) repository.renameArtist(target.id, name)
@@ -749,24 +756,51 @@ fun App(driverFactory: DatabaseDriverFactory) {
         }
 
         if (showDeleteArtistDialog) {
+            val target = pendingDeleteArtist
+            var deleteSongs by remember(target) { mutableStateOf(false) }
             AlertDialog(
                 onDismissRequest = { showDeleteArtistDialog = false },
-                title = { Text("Excluir artista") },
-                text = { Text("Excluir \"${pendingDeleteArtist?.name}\"?") },
+                title = { Text(AppStrings.deleteArtist) },
+                text = {
+                    Column {
+                        Text(AppStrings.deleteConfirmation.format(target?.name ?: ""))
+                        val count = target?.let { artistSongCounts[it.name] ?: 0 } ?: 0
+                        if (count > 0) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(top = 8.dp)
+                                    .clickable { deleteSongs = !deleteSongs },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = deleteSongs,
+                                    onCheckedChange = { deleteSongs = it }
+                                )
+                                Text(
+                                    text = AppStrings.deleteArtistWithSongs.format(count),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                    }
+                },
                 confirmButton = {
                     TextButton(onClick = {
-                        val target = pendingDeleteArtist
-                        if (target != null) repository.deleteArtist(target.id)
-                        reload()
+                        val t = target
+                        if (t != null) {
+                            if (deleteSongs) repository.deleteArtistAndSongs(t.id)
+                            else repository.deleteArtist(t.id)
+                            reload()
+                        }
                         showDeleteArtistDialog = false
                         pendingDeleteArtist = null
                     }) {
-                        Text("Excluir", color = MaterialTheme.colorScheme.error)
+                        Text(AppStrings.delete, color = MaterialTheme.colorScheme.error)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showDeleteArtistDialog = false }) {
-                        Text("Cancelar")
+                        Text(AppStrings.cancel)
                     }
                 }
             )
@@ -774,8 +808,8 @@ fun App(driverFactory: DatabaseDriverFactory) {
 
         if (showNewTagDialog) {
             NameDialog(
-                title = "Nova tag",
-                confirmLabel = "Criar",
+                title = AppStrings.newTag,
+                confirmLabel = AppStrings.create,
                 initialName = "",
                 onConfirm = { name ->
                     repository.createTag(name)
@@ -790,8 +824,8 @@ fun App(driverFactory: DatabaseDriverFactory) {
         if (showRenameTagDialog) {
             val target = pendingRenameTag
             NameDialog(
-                title = "Renomear tag",
-                confirmLabel = "Salvar",
+                title = AppStrings.renameTag,
+                confirmLabel = AppStrings.save,
                 initialName = target?.name ?: "",
                 onConfirm = { name ->
                     if (target != null) repository.renameTag(target.id, name)
@@ -809,8 +843,8 @@ fun App(driverFactory: DatabaseDriverFactory) {
         if (showDeleteTagDialog) {
             AlertDialog(
                 onDismissRequest = { showDeleteTagDialog = false },
-                title = { Text("Excluir tag") },
-                text = { Text("Excluir \"${pendingDeleteTag?.name}\"?") },
+                title = { Text(AppStrings.deleteTag) },
+                text = { Text(AppStrings.deleteConfirmation.format(pendingDeleteTag?.name ?: "")) },
                 confirmButton = {
                     TextButton(onClick = {
                         val target = pendingDeleteTag
@@ -819,12 +853,12 @@ fun App(driverFactory: DatabaseDriverFactory) {
                         showDeleteTagDialog = false
                         pendingDeleteTag = null
                     }) {
-                        Text("Excluir", color = MaterialTheme.colorScheme.error)
+                        Text(AppStrings.delete, color = MaterialTheme.colorScheme.error)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showDeleteTagDialog = false }) {
-                        Text("Cancelar")
+                        Text(AppStrings.cancel)
                     }
                 }
             )
@@ -833,9 +867,9 @@ fun App(driverFactory: DatabaseDriverFactory) {
         if (showRestoreConfirm) {
             AlertDialog(
                 onDismissRequest = { showRestoreConfirm = false },
-                title = { Text("Restaurar backup") },
+                title = { Text(AppStrings.restoreBackup) },
                 text = {
-                    Text("Isso substituirá todos os dados atuais pelos dados do backup. Continuar?")
+                    Text(AppStrings.restoreBackupConfirm)
                 },
                 confirmButton = {
                     TextButton(onClick = {
@@ -843,14 +877,14 @@ fun App(driverFactory: DatabaseDriverFactory) {
                         if (data != null && repository.restoreBackup(data)) {
                             reload()
                             currentScreen = Screen.SongList
-                            showMessage("Backup restaurado com sucesso")
+                            showMessage(AppStrings.backupRestored)
                         } else {
-                            showMessage("Backup inválido ou vazio")
+                            showMessage(AppStrings.invalidOrEmptyBackup)
                         }
                         showRestoreConfirm = false
                         pendingRestoreData = null
                     }) {
-                        Text("Restaurar", color = MaterialTheme.colorScheme.error)
+                        Text(AppStrings.restore, color = MaterialTheme.colorScheme.error)
                     }
                 },
                 dismissButton = {
@@ -858,7 +892,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
                         showRestoreConfirm = false
                         pendingRestoreData = null
                     }) {
-                        Text("Cancelar")
+                        Text(AppStrings.cancel)
                     }
                 }
             )
@@ -883,7 +917,7 @@ private fun NameDialog(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                placeholder = { Text("Nome") },
+                placeholder = { Text(AppStrings.name) },
                 singleLine = true
             )
         },
@@ -897,7 +931,7 @@ private fun NameDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+                Text(AppStrings.cancel)
             }
         }
     )

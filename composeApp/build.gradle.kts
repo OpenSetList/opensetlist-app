@@ -23,6 +23,8 @@ kotlin {
         }
     }
 
+    jvm("desktop")
+
     listOf(
         iosX64(),
         iosArm64(),
@@ -53,6 +55,18 @@ kotlin {
         iosMain.dependencies {
             implementation(libs.sqldelight.native.driver)
         }
+
+        val desktopMain by getting
+        desktopMain.dependencies {
+            implementation(compose.desktop.currentOs)
+            implementation(libs.sqldelight.jvm.driver)
+        }
+    }
+}
+
+compose.desktop {
+    application {
+        mainClass = "com.opensetlist.app.MainKt"
     }
 }
 
