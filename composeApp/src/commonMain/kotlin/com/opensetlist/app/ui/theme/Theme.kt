@@ -29,6 +29,11 @@ private val LightColors = lightColorScheme(
     onBackground = Color(0xFF1C1B1F)
 )
 
+/**
+ * Tema Material 3 do app, com paletas clara e escura.
+ *
+ * @author ruanitto
+ */
 @Composable
 fun AppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),

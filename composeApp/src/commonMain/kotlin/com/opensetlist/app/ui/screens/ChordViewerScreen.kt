@@ -83,6 +83,11 @@ import com.opensetlist.app.model.Tag
 import com.opensetlist.app.ui.components.ChordProView
 import kotlinx.coroutines.launch
 
+/**
+ * Tela de visualização de cifra, com transposição, tom e pedal.
+ *
+ * @author ruanitto
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ChordViewerScreen(

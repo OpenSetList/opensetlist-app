@@ -1,5 +1,10 @@
 package com.opensetlist.app.data
 
+/**
+ * Transposição de acordes e tom entre semitons.
+ *
+ * @author ruanitto
+ */
 object Transposer {
     private val sharps = listOf("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
     private val flats = listOf("C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B")

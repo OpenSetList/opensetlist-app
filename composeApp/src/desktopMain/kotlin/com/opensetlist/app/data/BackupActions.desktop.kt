@@ -14,6 +14,11 @@ import java.sql.DriverManager
 import java.sql.ResultSet
 import javax.swing.JFileChooser
 
+/**
+ * Ações de backup no desktop (importa/exporta o banco SQLite via JFileChooser).
+ *
+ * @author ruanitto
+ */
 @Composable
 actual fun rememberBackupActions(
     onImported: (BackupData?) -> Unit

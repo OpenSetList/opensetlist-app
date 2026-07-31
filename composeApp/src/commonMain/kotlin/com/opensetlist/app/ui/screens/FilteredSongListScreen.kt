@@ -28,6 +28,11 @@ import androidx.compose.ui.unit.dp
 import com.opensetlist.app.model.Song
 import com.opensetlist.app.ui.components.SortMenu
 
+/**
+ * Tela reutilizável de músicas filtradas por artista ou tag.
+ *
+ * @author ruanitto
+ */
 @Composable
 fun FilteredSongListScreen(
     songs: List<Song>,

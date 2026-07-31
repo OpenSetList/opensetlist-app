@@ -11,6 +11,11 @@ import java.util.Date
 import java.util.Locale
 import javax.swing.JFileChooser
 
+/**
+ * Importação de backup do SetList Helper no desktop (banco SQLite).
+ *
+ * @author ruanitto
+ */
 @Composable
 actual fun rememberSetlistHelperActions(
     onImported: (SetlistHelperBackup?) -> Unit

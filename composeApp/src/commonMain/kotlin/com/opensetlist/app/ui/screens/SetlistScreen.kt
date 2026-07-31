@@ -50,6 +50,11 @@ import com.opensetlist.app.model.Setlist
 import com.opensetlist.app.model.Song
 import kotlin.math.roundToInt
 
+/**
+ * Tela de detalhes de uma setlist, com reordenação e adição de músicas.
+ *
+ * @author ruanitto
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SetlistScreen(

@@ -20,10 +20,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.opensetlist.app.AppStrings
 
+/** Seções de navegação exibidas na gaveta lateral. */
 enum class DrawerSection {
     ALL_SONGS, SETLISTS, ARTISTS, TAGS, SETTINGS
 }
 
+/**
+ * Gaveta lateral de navegação do app.
+ *
+ * @author ruanitto
+ */
 @Composable
 fun SideDrawer(
     currentSection: DrawerSection,

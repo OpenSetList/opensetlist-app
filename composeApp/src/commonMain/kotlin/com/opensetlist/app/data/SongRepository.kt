@@ -16,6 +16,11 @@ import com.opensetlist.app.model.SetlistSongLink
 import com.opensetlist.app.model.Song
 import com.opensetlist.app.model.Tag
 
+/**
+ * Repositório único de acesso ao banco SQLDelight: músicas, artistas, tags e setlists.
+ *
+ * @author ruanitto
+ */
 class SongRepository(private val database: AppDatabase) {
     private val queries = database.appDatabaseQueries
 

@@ -5,6 +5,11 @@ import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.opensetlist.app.data.db.AppDatabase
 import java.io.File
 
+/**
+ * Fábrica de driver SQLDelight para desktop (JDBC SQLite).
+ *
+ * @author ruanitto
+ */
 actual class DatabaseDriverFactory {
     actual fun createDriver(): SqlDriver {
         val file = appDbFile()
@@ -16,4 +21,5 @@ actual class DatabaseDriverFactory {
     }
 }
 
+/** Caminho do banco local no diretório do usuário. */
 fun appDbFile(): File = File(System.getProperty("user.home"), ".opensetlist/setlist.db")

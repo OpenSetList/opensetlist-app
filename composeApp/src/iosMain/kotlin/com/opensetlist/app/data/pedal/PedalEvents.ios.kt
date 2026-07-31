@@ -6,6 +6,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
+/**
+ * Pedal no iOS (ainda sem suporte: estado desabilitado).
+ *
+ * @author ruanitto
+ */
 @Composable
 actual fun rememberPedalEvents(onEvent: (PedalEvent) -> Unit): PedalState {
     var enabled by remember { mutableStateOf(false) }

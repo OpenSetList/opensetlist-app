@@ -25,6 +25,11 @@ private fun readDatabaseBytes(): ByteArray? {
     }
 }
 
+/**
+ * Ações de backup no iOS (exporta o banco dos documentos; importação pendente).
+ *
+ * @author ruanitto
+ */
 @Composable
 actual fun rememberBackupActions(
     onImported: (BackupData?) -> Unit

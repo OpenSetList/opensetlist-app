@@ -6,6 +6,11 @@ import java.util.prefs.Preferences
 
 private const val KEY_DARK_MODE = "dark_mode"
 
+/**
+ * Persistência de preferências no desktop (java.util.prefs).
+ *
+ * @author ruanitto
+ */
 @Composable
 actual fun rememberSettingsStore(): SettingsStore {
     return remember {

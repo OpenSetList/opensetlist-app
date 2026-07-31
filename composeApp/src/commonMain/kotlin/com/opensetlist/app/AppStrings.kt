@@ -1,5 +1,10 @@
 package com.opensetlist.app
 
+/**
+ * Strings de interface do app (pt-BR).
+ *
+ * @author ruanitto
+ */
 object AppStrings {
     val appName = "OpenSetlist"
 

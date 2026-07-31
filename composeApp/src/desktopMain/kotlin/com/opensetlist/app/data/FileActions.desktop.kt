@@ -8,6 +8,11 @@ import java.io.File
 import java.net.URI
 import javax.swing.JFileChooser
 
+/**
+ * Ações de arquivo no desktop (diálogos nativos via JFileChooser e Desktop).
+ *
+ * @author ruanitto
+ */
 @Composable
 actual fun rememberFileActions(
     getExportContent: () -> String?,

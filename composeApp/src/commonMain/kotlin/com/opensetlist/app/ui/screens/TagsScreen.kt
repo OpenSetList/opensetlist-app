@@ -32,11 +32,17 @@ import com.opensetlist.app.AppStrings
 import com.opensetlist.app.model.Tag
 import com.opensetlist.app.ui.components.SortMenu
 
+/** Critérios de ordenação da lista de tags. */
 enum class TagSort(val label: String) {
     NAME_ASC(AppStrings.sortNameAsc),
     NAME_DESC(AppStrings.sortNameDesc)
 }
 
+/**
+ * Tela de listagem de tags.
+ *
+ * @author ruanitto
+ */
 @Composable
 fun TagsScreen(
     tags: List<Tag>,

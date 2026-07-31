@@ -16,6 +16,11 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+/**
+ * Importação de backup do SetList Helper no Android (banco SQLite).
+ *
+ * @author ruanitto
+ */
 @Composable
 actual fun rememberSetlistHelperActions(
     onImported: (SetlistHelperBackup?) -> Unit

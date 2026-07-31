@@ -73,6 +73,11 @@ import com.opensetlist.app.ui.screens.TagsScreen
 import com.opensetlist.app.ui.theme.AppTheme
 import kotlinx.coroutines.launch
 
+/**
+ * Telas navegáveis do app e seus parâmetros.
+ *
+ * @author ruanitto
+ */
 sealed class Screen {
     data object SongList : Screen()
     data object SetlistList : Screen()
@@ -91,6 +96,11 @@ sealed class Screen {
     data class Editor(val song: Song, val returnTo: Screen.ChordView? = null) : Screen()
 }
 
+/**
+ * Componente raiz do app: banco, navegação, tema e estado global.
+ *
+ * @author ruanitto
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App(driverFactory: DatabaseDriverFactory) {

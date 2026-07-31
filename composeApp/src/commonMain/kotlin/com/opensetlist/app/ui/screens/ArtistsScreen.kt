@@ -32,11 +32,17 @@ import com.opensetlist.app.AppStrings
 import com.opensetlist.app.model.Artist
 import com.opensetlist.app.ui.components.SortMenu
 
+/** Critérios de ordenação da lista de artistas. */
 enum class ArtistSort(val label: String) {
     NAME_ASC(AppStrings.sortNameAsc),
     NAME_DESC(AppStrings.sortNameDesc)
 }
 
+/**
+ * Tela de listagem de artistas.
+ *
+ * @author ruanitto
+ */
 @Composable
 fun ArtistsScreen(
     artists: List<Artist>,

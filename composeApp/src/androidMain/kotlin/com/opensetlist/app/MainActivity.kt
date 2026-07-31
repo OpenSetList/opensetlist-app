@@ -6,6 +6,11 @@ import androidx.activity.compose.setContent
 import androidx.core.view.WindowCompat
 import com.opensetlist.app.data.DatabaseDriverFactory
 
+/**
+ * Activity principal do Android, que inicia o Compose.
+ *
+ * @author ruanitto
+ */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

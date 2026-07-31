@@ -8,6 +8,11 @@ import androidx.compose.ui.platform.LocalContext
 private const val PREFS_NAME = "opensetlist_settings"
 private const val KEY_DARK_MODE = "dark_mode"
 
+/**
+ * Persistência de preferências no Android (SharedPreferences).
+ *
+ * @author ruanitto
+ */
 @Composable
 actual fun rememberSettingsStore(): SettingsStore {
     val context = LocalContext.current.applicationContext

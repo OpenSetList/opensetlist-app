@@ -6,6 +6,11 @@ import platform.Foundation.NSUserDefaults
 
 private const val KEY_DARK_MODE = "dark_mode"
 
+/**
+ * Persistência de preferências no iOS (NSUserDefaults).
+ *
+ * @author ruanitto
+ */
 @Composable
 actual fun rememberSettingsStore(): SettingsStore {
     return remember {

@@ -37,6 +37,7 @@ import com.opensetlist.app.model.Setlist
 import com.opensetlist.app.model.Song
 import com.opensetlist.app.ui.components.SortMenu
 
+/** Critérios de ordenação da lista de músicas. */
 enum class SongListSort(val label: String) {
     TITLE_ASC(AppStrings.sortNameAsc),
     TITLE_DESC(AppStrings.sortNameDesc),
@@ -46,6 +47,11 @@ enum class SongListSort(val label: String) {
     CREATED_DESC(AppStrings.sortCreatedDesc)
 }
 
+/**
+ * Tela de listagem de todas as músicas, com busca e exclusão.
+ *
+ * @author ruanitto
+ */
 @Composable
 fun SongListScreen(
     songs: List<Song>,

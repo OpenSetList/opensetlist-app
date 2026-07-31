@@ -4,6 +4,11 @@ import com.opensetlist.app.model.ChordProLine
 import com.opensetlist.app.model.ChordProSegment
 import com.opensetlist.app.model.ParsedSong
 
+/**
+ * Parseador do formato ChordPro, transformando o texto bruto em uma [ParsedSong].
+ *
+ * @author ruanitto
+ */
 object ChordProParser {
 
     fun parse(body: String): ParsedSong {

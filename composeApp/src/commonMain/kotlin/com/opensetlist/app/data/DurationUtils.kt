@@ -1,5 +1,10 @@
 package com.opensetlist.app.data
 
+/**
+ * Converte uma duração em texto ("3:15", "1:02:30") para segundos.
+ *
+ * @author ruanitto
+ */
 fun parseDurationSeconds(text: String): Long {
     val t = text.trim()
     if (t.isEmpty()) return 0
@@ -13,6 +18,11 @@ fun parseDurationSeconds(text: String): Long {
     }
 }
 
+/**
+ * Formata segundos em uma duração legível ("3min", "1h 15min").
+ *
+ * @author ruanitto
+ */
 fun formatDuration(totalSeconds: Long): String {
     val secs = totalSeconds.coerceAtLeast(0)
     val hours = secs / 3600

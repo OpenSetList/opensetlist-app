@@ -12,6 +12,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import java.io.File
 
+/**
+ * Ações de arquivo no Android (documentos via SAF e compartilhamento via FileProvider).
+ *
+ * @author ruanitto
+ */
 @Composable
 actual fun rememberFileActions(
     getExportContent: () -> String?,

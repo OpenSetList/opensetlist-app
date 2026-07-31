@@ -75,6 +75,11 @@ private fun writeTempFileBytes(fileName: String, bytes: ByteArray): String? {
     return if (data.writeToFile(path, true)) path else null
 }
 
+/**
+ * Ações de arquivo no iOS (document picker e activity view controller).
+ *
+ * @author ruanitto
+ */
 @Composable
 actual fun rememberFileActions(
     getExportContent: () -> String?,

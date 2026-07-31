@@ -15,6 +15,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 
+/**
+ * Menu de seleção de critério de ordenação.
+ *
+ * @author ruanitto
+ */
 @Composable
 fun SortMenu(
     currentLabel: String,

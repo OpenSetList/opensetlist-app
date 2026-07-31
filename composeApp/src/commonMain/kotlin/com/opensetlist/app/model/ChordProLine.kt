@@ -1,10 +1,20 @@
 package com.opensetlist.app.model
 
+/**
+ * Segmento de texto de uma linha, com um acorde opcional sobreposto.
+ *
+ * @author ruanitto
+ */
 data class ChordProSegment(
     val text: String,
     val chord: String? = null
 )
 
+/**
+ * Estilo de comentário de uma linha ChordPro.
+ *
+ * @author ruanitto
+ */
 enum class CommentStyle {
     PLAIN,
     ITALIC,
@@ -12,6 +22,11 @@ enum class CommentStyle {
     HIGHLIGHT
 }
 
+/**
+ * Uma linha renderizável do ChordPro, com seus segmentos e marcadores.
+ *
+ * @author ruanitto
+ */
 data class ChordProLine(
     val segments: List<ChordProSegment>,
     val isSection: Boolean = false,
@@ -20,6 +35,11 @@ data class ChordProLine(
     val commentStyle: CommentStyle = CommentStyle.PLAIN
 )
 
+/**
+ * Música parseada no formato ChordPro, com metadados e linhas renderizáveis.
+ *
+ * @author ruanitto
+ */
 data class ParsedSong(
     val title: String = "",
     val subtitle: String = "",

@@ -45,6 +45,11 @@ import com.opensetlist.app.data.ChordProParser
 import com.opensetlist.app.model.Song
 import com.opensetlist.app.model.Tag
 
+/**
+ * Tela de edição/criação de música no formato ChordPro.
+ *
+ * @author ruanitto
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun EditorScreen(

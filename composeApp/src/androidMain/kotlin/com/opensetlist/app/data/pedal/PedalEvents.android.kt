@@ -32,6 +32,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import java.util.UUID
 
+/**
+ * Controlador BLE MIDI do pedal no Android (escaneia e assina características MIDI).
+ *
+ * @author ruanitto
+ */
 private class BleMidiPedalController(
     private val context: Context,
     private val onEvent: (PedalEvent) -> Unit
@@ -185,6 +190,11 @@ private fun requiredPermissions(): Array<String> =
         )
     }
 
+/**
+ * Conecta e observa eventos do pedal BLE MIDI no Android.
+ *
+ * @author ruanitto
+ */
 @Composable
 actual fun rememberPedalEvents(onEvent: (PedalEvent) -> Unit): PedalState {
     val context = LocalContext.current

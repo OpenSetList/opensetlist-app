@@ -17,6 +17,11 @@ import com.opensetlist.app.model.Song
 import com.opensetlist.app.model.Tag
 import java.io.File
 
+/**
+ * Ações de backup no Android (importa/exporta o banco SQLite via SAF).
+ *
+ * @author ruanitto
+ */
 @Composable
 actual fun rememberBackupActions(
     onImported: (BackupData?) -> Unit

@@ -38,6 +38,7 @@ import com.opensetlist.app.data.parseDurationSeconds
 import com.opensetlist.app.model.Setlist
 import com.opensetlist.app.ui.components.SortMenu
 
+/** Critérios de ordenação da lista de setlists. */
 enum class SetlistSort(val label: String) {
     NAME_ASC(AppStrings.sortNameAsc),
     NAME_DESC(AppStrings.sortNameDesc),
@@ -49,6 +50,11 @@ enum class SetlistSort(val label: String) {
     SONGS_DESC(AppStrings.sortSongsDesc)
 }
 
+/**
+ * Tela de listagem de setlists, com compartilhamento e exclusão.
+ *
+ * @author ruanitto
+ */
 @Composable
 fun SetlistListScreen(
     setlists: List<Setlist>,

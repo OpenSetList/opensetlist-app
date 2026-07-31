@@ -36,10 +36,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.opensetlist.app.AppStrings
 
+/** Destinos de backup em nuvem oferecidos nas configurações. */
 enum class CloudTarget {
     GOOGLE_DRIVE, DROPBOX
 }
 
+/**
+ * Tela de configurações: aparência, backups e importações.
+ *
+ * @author ruanitto
+ */
 @Composable
 fun SettingsScreen(
     onExportBackup: (share: Boolean) -> Unit,

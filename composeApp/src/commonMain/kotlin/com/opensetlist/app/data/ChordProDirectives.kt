@@ -2,8 +2,14 @@ package com.opensetlist.app.data
 
 import com.opensetlist.app.model.CommentStyle
 
+/**
+ * Catálogo de diretivas ChordPro conhecidas, com aliases e metadados de renderização.
+ *
+ * @author ruanitto
+ */
 object ChordProDirectives {
 
+    /** Categoria funcional de uma diretiva. */
     enum class Kind {
         METADATA,
         COMMENT,
@@ -13,6 +19,7 @@ object ChordProDirectives {
         IGNORE
     }
 
+    /** Uma diretiva resolvida, com o tipo, chave de metadado e rótulo de seção. */
     data class Directive(
         val name: String,
         val kind: Kind,

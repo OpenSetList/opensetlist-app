@@ -3,6 +3,11 @@ package com.opensetlist.app.data
 import com.opensetlist.app.model.Setlist
 import com.opensetlist.app.model.Song
 
+/**
+ * Músicas e setlists de exemplo exibidos na primeira execução.
+ *
+ * @author ruanitto
+ */
 object SampleSongs {
     val songs = listOf(
         Song(

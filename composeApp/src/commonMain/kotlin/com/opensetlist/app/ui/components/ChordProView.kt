@@ -29,6 +29,11 @@ import com.opensetlist.app.model.ChordProSegment
 import com.opensetlist.app.model.CommentStyle
 import com.opensetlist.app.model.ParsedSong
 
+/**
+ * Renderizador de uma música parseada em ChordPro, com acordes sobrepostos ao texto.
+ *
+ * @author ruanitto
+ */
 @Composable
 fun ChordProView(
     song: ParsedSong,

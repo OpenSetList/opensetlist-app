@@ -6,6 +6,11 @@ import com.opensetlist.app.model.Setlist
 import com.opensetlist.app.model.SetlistSongLink
 import com.opensetlist.app.model.Song
 
+/**
+ * Serialização e detecção dos formatos de transferência de dados do app.
+ *
+ * @author ruanitto
+ */
 object DataTransfer {
 
     private const val TYPE_BACKUP = "setlist_app_backup"
