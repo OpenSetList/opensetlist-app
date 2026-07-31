@@ -13,6 +13,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Backup
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.MusicNote
@@ -32,6 +35,10 @@ import androidx.compose.ui.unit.dp
 import com.opensetlist.app.AppStrings
 import com.opensetlist.app.model.Setlist
 
+enum class CloudTarget {
+    GOOGLE_DRIVE, DROPBOX
+}
+
 @Composable
 fun SettingsScreen(
     setlists: List<Setlist>,
@@ -42,6 +49,8 @@ fun SettingsScreen(
     onImportSet: () -> Unit,
     onShareSetlist: (Setlist) -> Unit,
     onImportSetlistHelper: () -> Unit,
+    onCloudExport: (CloudTarget) -> Unit,
+    onCloudImport: (CloudTarget) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -80,6 +89,48 @@ fun SettingsScreen(
                         Icon(
                             imageVector = Icons.Default.FileOpen,
                             contentDescription = AppStrings.importBackupFile
+                        )
+                    }
+                }
+            )
+        }
+
+        SettingsSection(
+            title = AppStrings.cloudTitle,
+            icon = Icons.Default.Cloud
+        ) {
+            SettingsRow(
+                label = AppStrings.googleDrive,
+                subtitle = AppStrings.cloudSyncSubtitle,
+                actions = {
+                    IconButton(onClick = { onCloudExport(CloudTarget.GOOGLE_DRIVE) }) {
+                        Icon(
+                            imageVector = Icons.Default.CloudUpload,
+                            contentDescription = AppStrings.exportToGoogleDrive
+                        )
+                    }
+                    IconButton(onClick = { onCloudImport(CloudTarget.GOOGLE_DRIVE) }) {
+                        Icon(
+                            imageVector = Icons.Default.CloudDownload,
+                            contentDescription = AppStrings.importFromGoogleDrive
+                        )
+                    }
+                }
+            )
+            SettingsRow(
+                label = AppStrings.dropbox,
+                subtitle = AppStrings.cloudSyncSubtitle,
+                actions = {
+                    IconButton(onClick = { onCloudExport(CloudTarget.DROPBOX) }) {
+                        Icon(
+                            imageVector = Icons.Default.CloudUpload,
+                            contentDescription = AppStrings.exportToDropbox
+                        )
+                    }
+                    IconButton(onClick = { onCloudImport(CloudTarget.DROPBOX) }) {
+                        Icon(
+                            imageVector = Icons.Default.CloudDownload,
+                            contentDescription = AppStrings.importFromDropbox
                         )
                     }
                 }

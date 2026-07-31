@@ -28,6 +28,7 @@ enum class DrawerSection {
 fun SideDrawer(
     currentSection: DrawerSection,
     onSectionSelected: (DrawerSection) -> Unit,
+    onSyncClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -85,6 +86,14 @@ fun SideDrawer(
             label = AppStrings.settingsTitle,
             isSelected = currentSection == DrawerSection.SETTINGS,
             onClick = { onSectionSelected(DrawerSection.SETTINGS) }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        DrawerItem(
+            label = AppStrings.syncTitle,
+            isSelected = false,
+            onClick = onSyncClick
         )
     }
 }

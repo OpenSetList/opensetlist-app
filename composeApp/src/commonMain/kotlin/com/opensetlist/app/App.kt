@@ -4,10 +4,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
@@ -57,6 +60,7 @@ import com.opensetlist.app.ui.components.DrawerSection
 import com.opensetlist.app.ui.components.SideDrawer
 import com.opensetlist.app.ui.screens.ArtistsScreen
 import com.opensetlist.app.ui.screens.ChordViewerScreen
+import com.opensetlist.app.ui.screens.CloudTarget
 import com.opensetlist.app.ui.screens.EditorScreen
 import com.opensetlist.app.ui.screens.FilteredSongListScreen
 import com.opensetlist.app.ui.screens.SetlistListScreen
@@ -102,6 +106,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
     var currentDrawerSection by remember { mutableStateOf(DrawerSection.ALL_SONGS) }
 
     var showNewSetlistDialog by remember { mutableStateOf(false) }
+    var showCloudSyncDialog by remember { mutableStateOf(false) }
     var showRenameSetlistDialog by remember { mutableStateOf(false) }
     var showDeleteSetlistDialog by remember { mutableStateOf(false) }
     var showRestoreConfirm by remember { mutableStateOf(false) }
@@ -337,6 +342,10 @@ fun App(driverFactory: DatabaseDriverFactory) {
                                 DrawerSection.SETTINGS -> Screen.Settings
                             }
                             scope.launch { drawerState.close() }
+                        },
+                        onSyncClick = {
+                            scope.launch { drawerState.close() }
+                            showCloudSyncDialog = true
                         }
                     )
                 }
@@ -548,7 +557,9 @@ fun App(driverFactory: DatabaseDriverFactory) {
                                 onShareSetlist = { setlist -> shareSetlist(setlist) },
                                 onImportSetlistHelper = {
                                     setlistHelperActions.importBackup()
-                                }
+                                },
+                                onCloudExport = { exportBackup(false) },
+                                onCloudImport = { fileActions.importFile() }
                             )
                         }
                         is Screen.ChordView -> {
@@ -654,6 +665,55 @@ fun App(driverFactory: DatabaseDriverFactory) {
                     }
                 }
             }
+        }
+
+        if (showCloudSyncDialog) {
+            AlertDialog(
+                onDismissRequest = { showCloudSyncDialog = false },
+                title = { Text(AppStrings.syncTitle) },
+                text = {
+                    Column {
+                        CloudSyncRow(
+                            icon = Icons.Default.CloudUpload,
+                            label = AppStrings.exportToGoogleDrive,
+                            onClick = {
+                                showCloudSyncDialog = false
+                                exportBackup(false)
+                            }
+                        )
+                        CloudSyncRow(
+                            icon = Icons.Default.CloudDownload,
+                            label = AppStrings.importFromGoogleDrive,
+                            onClick = {
+                                showCloudSyncDialog = false
+                                fileActions.importFile()
+                            }
+                        )
+                        CloudSyncRow(
+                            icon = Icons.Default.CloudUpload,
+                            label = AppStrings.exportToDropbox,
+                            onClick = {
+                                showCloudSyncDialog = false
+                                exportBackup(false)
+                            }
+                        )
+                        CloudSyncRow(
+                            icon = Icons.Default.CloudDownload,
+                            label = AppStrings.importFromDropbox,
+                            onClick = {
+                                showCloudSyncDialog = false
+                                fileActions.importFile()
+                            }
+                        )
+                    }
+                },
+                confirmButton = {},
+                dismissButton = {
+                    TextButton(onClick = { showCloudSyncDialog = false }) {
+                        Text(AppStrings.cancel)
+                    }
+                }
+            )
         }
 
         if (showNewSetlistDialog) {
@@ -897,6 +957,33 @@ fun App(driverFactory: DatabaseDriverFactory) {
                 }
             )
         }
+    }
+}
+
+@Composable
+private fun CloudSyncRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(end = 12.dp)
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
     }
 }
 
