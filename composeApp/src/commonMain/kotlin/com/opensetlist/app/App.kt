@@ -585,13 +585,11 @@ fun App(driverFactory: DatabaseDriverFactory) {
                         }
                         is Screen.Settings -> {
                             SettingsScreen(
-                                setlists = setlists,
                                 onExportBackup = { share -> exportBackup(share) },
                                 onImportBackup = { backupActions.importBackup() },
                                 onExportAllSongs = { share -> exportAllSongs(share) },
                                 onImportSongs = { fileActions.importFile() },
                                 onImportSet = { fileActions.importFile() },
-                                onShareSetlist = { setlist -> shareSetlist(setlist) },
                                 onImportSetlistHelper = {
                                     setlistHelperActions.importBackup()
                                 },

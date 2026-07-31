@@ -35,7 +35,6 @@ object AppStrings {
     val allSongsInSetlist = "Todas as músicas já estão nesta setlist."
     val noArtists = "Nenhum artista cadastrado"
     val noTags = "Nenhuma tag cadastrada"
-    val noSetlistsCreatedYet = "Nenhuma setlist criada ainda."
     val noSongsOfArtist = "Nenhuma música deste artista"
     val noSongsWithTag = "Nenhuma música com esta tag"
     val noSongsFound = "Nenhuma música encontrada"
@@ -197,6 +196,5 @@ object AppStrings {
     fun setlistImported(name: String) = "Setlist \"$name\" importada"
     fun slhImported(songCount: Int, setCount: Int) =
         "Importadas $songCount músicas e $setCount setlists do SetList Helper"
-    fun shareSetlistName(name: String) = "Compartilhar $name"
     fun metaKeyValue(label: String, value: String) = "$label: $value"
 }

@@ -35,7 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.opensetlist.app.AppStrings
-import com.opensetlist.app.model.Setlist
 
 enum class CloudTarget {
     GOOGLE_DRIVE, DROPBOX
@@ -43,13 +42,11 @@ enum class CloudTarget {
 
 @Composable
 fun SettingsScreen(
-    setlists: List<Setlist>,
     onExportBackup: (share: Boolean) -> Unit,
     onImportBackup: () -> Unit,
     onExportAllSongs: (share: Boolean) -> Unit,
     onImportSongs: () -> Unit,
     onImportSet: () -> Unit,
-    onShareSetlist: (Setlist) -> Unit,
     onImportSetlistHelper: () -> Unit,
     onCloudExport: (CloudTarget) -> Unit,
     onCloudImport: (CloudTarget) -> Unit,
@@ -223,32 +220,6 @@ fun SettingsScreen(
                     }
                 }
             )
-
-            if (setlists.isEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = AppStrings.noSetlistsCreatedYet,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 12.dp)
-                )
-            } else {
-                Spacer(modifier = Modifier.height(8.dp))
-                setlists.forEach { setlist ->
-                    SettingsRow(
-                        label = setlist.name,
-                        subtitle = AppStrings.songsCount(setlist.songs.size),
-                        actions = {
-                            IconButton(onClick = { onShareSetlist(setlist) }) {
-                                Icon(
-                                    imageVector = Icons.Default.Share,
-                                    contentDescription = AppStrings.shareSetlistName(setlist.name)
-                                )
-                            }
-                        }
-                    )
-                }
-            }
         }
     }
 }
