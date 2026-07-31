@@ -1,16 +1,29 @@
-*.iml
+# Gradle
 .gradle
+build/
 /local.properties
-/.idea
-.DS_Store
-/build
-/captures
+
+# Kotlin (KMP metadata / build artifacts)
+.kotlin/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Android
+captures/
 .externalNativeBuild
 .cxx
-local.properties
-/composeApp/build
-/iosApp/Pods
-/iosApp/.build
+
+# iOS
+iosApp/Pods
+iosApp/.build
 *.xcworkspace
 xcuserdata/
 DerivedData/
+
+# OS
+.DS_Store
+Thumbs.db
