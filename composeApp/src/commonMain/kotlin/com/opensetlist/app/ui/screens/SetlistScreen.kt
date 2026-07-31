@@ -347,45 +347,72 @@ private fun AddSongDialog(
     onAdd: (Song) -> Unit,
     onDismiss: () -> Unit
 ) {
+    var searchQuery by remember { mutableStateOf("") }
     val available = allSongs.filter { it.id !in currentSongIds }
+    val filtered = available.filter { song ->
+        searchQuery.isBlank() ||
+        song.title.contains(searchQuery, ignoreCase = true) ||
+        song.artist.contains(searchQuery, ignoreCase = true)
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(AppStrings.addSongs) },
         text = {
-            if (available.isEmpty()) {
-                Text(
-                    text = AppStrings.allSongsInSetlist,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            Column {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text(AppStrings.searchSongsToAddPlaceholder) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
-            } else {
-                LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                    itemsIndexed(available, key = { _, s -> s.id }) { _, song ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onAdd(song) }
-                                .padding(vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.List,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(end = 12.dp)
-                            )
-                            Column {
-                                Text(
-                                    text = song.title,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = song.artist,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                when {
+                    available.isEmpty() -> {
+                        Text(
+                            text = AppStrings.allSongsInSetlist,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 12.dp)
+                        )
+                    }
+                    filtered.isEmpty() -> {
+                        Text(
+                            text = AppStrings.noSongsFound,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 12.dp)
+                        )
+                    }
+                    else -> {
+                        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                            itemsIndexed(filtered, key = { _, s -> s.id }) { _, song ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { onAdd(song) }
+                                        .padding(vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.List,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.padding(end = 12.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = song.title,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = song.artist,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

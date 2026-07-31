@@ -24,6 +24,7 @@ object AppStrings {
     val searchArtistsPlaceholder = "Buscar artistas..."
     val searchTagsPlaceholder = "Buscar tags..."
     val searchInSongPlaceholder = "Buscar no texto..."
+    val searchSongsToAddPlaceholder = "Buscar músicas..."
     val setlistsHeader = "SETLISTS"
     val songsHeader = "MÚSICAS"
 
@@ -37,6 +38,7 @@ object AppStrings {
     val noSetlistsCreatedYet = "Nenhuma setlist criada ainda."
     val noSongsOfArtist = "Nenhuma música deste artista"
     val noSongsWithTag = "Nenhuma música com esta tag"
+    val noSongsFound = "Nenhuma música encontrada"
 
     val titleLabel = "Título"
     val artistLabel = "Artista"
