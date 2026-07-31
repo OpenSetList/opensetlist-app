@@ -13,7 +13,7 @@ App de setlists/cifras multiplataforma (Kotlin Multiplatform + Compose Multiplat
 - `composeApp/src/commonMain/kotlin/com/opensetlist/app/`
   - `App.kt` — estado global e roteamento (Scaffold + ModalNavigationDrawer), controla todo o fluxo
   - `AppStrings.kt` — TODAS as strings de UI centralizadas aqui (pt-BR); use `AppStrings.*` em vez de literais
-  - `data/` — `SongRepository.kt` (toda a lógica de banco), `ChordProParser.kt`, `Transposer.kt`, `DurationUtils.kt` (parse/format de duração "3:45"), `DataTransfer.kt`, `SampleSongs.kt`
+  - `data/` — `SongRepository.kt` (toda a lógica de banco), `ChordProParser.kt`, `Transposer.kt`, `DurationUtils.kt` (parse/format de duração "3:45"), `DataTransfer.kt`, `SampleSongs.kt`, `Timestamps.kt` (`currentTimestampIso`/`currentTimestampCompact` via expect/actual)
   - `model/` — `Song.kt`, `ChordProLine.kt` (modelos)
   - `ui/screens/` — telas: SongList, SetlistList, Setlist, Editor, ChordViewer, Artists, Tags, FilteredSongList, Settings
   - `ui/components/` — `ChordProView.kt`, `SideDrawer.kt`, `SortMenu.kt`, `BackHandler.kt`
@@ -34,6 +34,7 @@ App de setlists/cifras multiplataforma (Kotlin Multiplatform + Compose Multiplat
 `commonMain` declara `expect`; cada plataforma implementa `actual`:
 
 - `data/DatabaseDriverFactory.kt`
+- `data/Timestamps.kt` (data/hora atual — `SimpleDateFormat` no Android/desktop, `NSDateFormatter` no iOS)
 - `data/FileActions.kt`, `data/BackupActions.kt`, `data/SetlistHelperActions.kt` (operam via `expect fun rememberXxx()`)
 - `data/pedal/PedalEvents.kt` (bluetooth)
 - `ui/components/BackHandler.kt` (botão voltar do Android)
@@ -49,6 +50,14 @@ App de setlists/cifras multiplataforma (Kotlin Multiplatform + Compose Multiplat
 - Build Android com recompilação completa p/ confirmar mudanças: `./gradlew :composeApp:assembleDebug --rerun-tasks`
 - Validação runtime: emulador/dispositivo Android via adb (instalar `:composeApp:installDebug`); desktop via `java -jar composeApp/build/compose/jars/composeApp-linux-x64-*.jar` (cria/usa `~/.opensetlist/setlist.db`)
 - Sempre rodar o build após editar código (string errada/quebra de import quebra o build)
+
+## Release Android (R8 / ofuscação)
+
+- `buildTypes.release`: `isMinifyEnabled = true` + `isShrinkResources = true` + `proguard-rules.pro` (`composeApp/proguard-rules.pro`)
+- Regras mantidas: `MainActivity`, classes SQLDelight geradas (`com.opensetlist.app.data.db.**`), `-keepattributes *Annotation*, Signature, InnerClasses`, campos `volatile` de coroutines, `-dontwarn` p/ classes JVM ausentes
+- APK release: `composeApp/build/outputs/apk/release/composeApp-release.apk` (~2 MB com R8); `mapping.txt` em `build/outputs/mapping/release/` p/ deobfuscar crashes
+- Backup `.db` exportado com timestamp no nome: `setlist_backup_<aaaa-MM-dd_HH-mm-ss>.db`; JSON de backup tem `"createdAt"` ISO e `"version":2`
+- Ao alterar dependências/kotlin: rodar `:composeApp:assembleRelease` para validar o R8 (e não só `assembleDebug`)
 
 ## Regras de código
 

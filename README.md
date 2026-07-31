@@ -68,13 +68,14 @@ O projeto é livre e aberto: contribuições são bem-vindas.
 - [x] Importação de backup do SetList Helper
 - [x] Modo escuro persistente
 - [x] Nuvem via seletor do sistema (export/import)
+- [x] Minificação/ofuscação Android (R8 + `proguard-rules.pro`) e backup com timestamp no nome
 
 ### 🚀 Previsto
+- [ ] **Visualização web via host local da setlist** — servir a setlist atual em rede local (HTTP embutido + página HTML/QR code) para quem não tem o app instalado abrir no navegador/celular
 - [ ] **Sincronização por conta** — login em conta cloud e sincronização automática entre dispositivos (OAuth real com Google Drive/Dropbox)
 - [ ] **Obter cifras da internet** — busca e importação de cifras de APIs públicas de música
 - [ ] Keystore de release própria + publicação na Play Store
 - [ ] Publicação na App Store (iOS)
-- [ ] Minificação com `proguard-rules.pro`
 - [ ] Testes automatizados (parser ChordPro, transposer)
 
 ## Plataformas
