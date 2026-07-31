@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.HorizontalDivider
@@ -54,6 +55,7 @@ fun SetlistListScreen(
     onSetlistClick: (Setlist) -> Unit,
     onShare: (Setlist) -> Unit,
     onEdit: (Setlist) -> Unit,
+    onDelete: (Setlist) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var sortOrder by remember { mutableStateOf(SetlistSort.NAME_ASC) }
@@ -186,6 +188,12 @@ fun SetlistListScreen(
                                 Icon(
                                     imageVector = Icons.Default.Edit,
                                     contentDescription = AppStrings.editSetlist
+                                )
+                            }
+                            IconButton(onClick = { onDelete(setlist) }) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = AppStrings.deleteSetlist
                                 )
                             }
                         }

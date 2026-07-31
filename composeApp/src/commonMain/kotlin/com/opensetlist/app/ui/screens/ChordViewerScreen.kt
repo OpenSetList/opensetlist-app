@@ -27,6 +27,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -90,6 +91,7 @@ fun ChordViewerScreen(
     songTags: Map<String, List<Tag>> = emptyMap(),
     onBack: () -> Unit,
     onEdit: (Song) -> Unit,
+    onDelete: (Song) -> Unit,
     onNavigateTo: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -284,6 +286,13 @@ fun ChordViewerScreen(
                                 onClick = {
                                     menuOpen = false
                                     fileActions.openUrl(currentSong.youtubeUrl)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(AppStrings.deleteSong) },
+                                onClick = {
+                                    menuOpen = false
+                                    onDelete(currentSong)
                                 }
                             )
                         }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -54,6 +55,7 @@ fun EditorScreen(
     onSave: (Song, List<String>) -> Unit,
     onNewTag: (String) -> Unit,
     onCancel: () -> Unit,
+    onDelete: (Song) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var body by remember(song.id) { mutableStateOf(song.body) }
@@ -108,6 +110,12 @@ fun EditorScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { onDelete(song) }) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = AppStrings.deleteSong
+                        )
+                    }
                     TextButton(onClick = ::save) {
                         Text(AppStrings.save)
                     }

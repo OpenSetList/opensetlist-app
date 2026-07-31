@@ -112,7 +112,11 @@ fun App(driverFactory: DatabaseDriverFactory) {
     var showRestoreConfirm by remember { mutableStateOf(false) }
     var pendingRestoreData by remember { mutableStateOf<BackupData?>(null) }
     var pendingRenameSetlist by remember { mutableStateOf<Setlist?>(null) }
+    var pendingDeleteSetlist by remember { mutableStateOf<Setlist?>(null) }
     var dialogText by remember { mutableStateOf("") }
+
+    var showDeleteSongDialog by remember { mutableStateOf(false) }
+    var pendingDeleteSong by remember { mutableStateOf<Song?>(null) }
 
     var showNewArtistDialog by remember { mutableStateOf(false) }
     var showRenameArtistDialog by remember { mutableStateOf(false) }
@@ -152,6 +156,22 @@ fun App(driverFactory: DatabaseDriverFactory) {
         }
     }
 
+    fun navigateBackFromChord(chord: Screen.ChordView) {
+        when (val origin = chord.origin) {
+            is Screen.SetlistView -> {
+                val setlist = setlists.find { it.id == origin.setlist.id }
+                currentScreen = if (setlist != null) {
+                    Screen.SetlistView(setlist, origin.backTarget)
+                } else {
+                    Screen.SongList
+                }
+            }
+            is Screen.ArtistSongs -> currentScreen = Screen.ArtistSongs(origin.artist)
+            is Screen.TagSongs -> currentScreen = Screen.TagSongs(origin.tag)
+            else -> currentScreen = Screen.SongList
+        }
+    }
+
     fun goBack() {
         when (val screen = currentScreen) {
             is Screen.Editor -> {
@@ -166,19 +186,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
             }
             is Screen.ChordView -> {
                 reload()
-                when (val origin = screen.origin) {
-                    is Screen.SetlistView -> {
-                        val setlist = setlists.find { it.id == origin.setlist.id }
-                        currentScreen = if (setlist != null) {
-                            Screen.SetlistView(setlist, origin.backTarget)
-                        } else {
-                            Screen.SongList
-                        }
-                    }
-                    is Screen.ArtistSongs -> currentScreen = Screen.ArtistSongs(origin.artist)
-                    is Screen.TagSongs -> currentScreen = Screen.TagSongs(origin.tag)
-                    else -> currentScreen = Screen.SongList
-                }
+                navigateBackFromChord(screen)
             }
             is Screen.SetlistView -> {
                 reload()
@@ -196,6 +204,19 @@ fun App(driverFactory: DatabaseDriverFactory) {
                 reload()
                 currentScreen = Screen.SongList
             }
+        }
+    }
+
+    fun deleteSong(target: Song) {
+        repository.delete(target.id)
+        reload()
+        when (val screen = currentScreen) {
+            is Screen.Editor -> {
+                val origin = screen.returnTo
+                if (origin != null) navigateBackFromChord(origin) else currentScreen = Screen.SongList
+            }
+            is Screen.ChordView -> navigateBackFromChord(screen)
+            else -> currentScreen = Screen.SongList
         }
     }
 
@@ -472,6 +493,10 @@ fun App(driverFactory: DatabaseDriverFactory) {
                                 },
                                 onNewSong = {
                                     currentScreen = Screen.Editor(repository.newSong())
+                                },
+                                onDeleteSong = { song ->
+                                    pendingDeleteSong = song
+                                    showDeleteSongDialog = true
                                 }
                             )
                         }
@@ -487,6 +512,10 @@ fun App(driverFactory: DatabaseDriverFactory) {
                                     dialogText = setlist.name
                                     pendingRenameSetlist = setlist
                                     showRenameSetlistDialog = true
+                                },
+                                onDelete = { setlist ->
+                                    pendingDeleteSetlist = setlist
+                                    showDeleteSetlistDialog = true
                                 }
                             )
                         }
@@ -570,6 +599,10 @@ fun App(driverFactory: DatabaseDriverFactory) {
                                 onBack = { goBack() },
                                 onEdit = { song ->
                                     currentScreen = Screen.Editor(song, screen)
+                                },
+                                onDelete = { song ->
+                                    pendingDeleteSong = song
+                                    showDeleteSongDialog = true
                                 },
                                 onNavigateTo = { index ->
                                     if (index in screen.siblings.indices) {
@@ -659,7 +692,11 @@ fun App(driverFactory: DatabaseDriverFactory) {
                                     repository.createTag(name)
                                     reload()
                                 },
-                                onCancel = { goBack() }
+                                onCancel = { goBack() },
+                                onDelete = { song ->
+                                    pendingDeleteSong = song
+                                    showDeleteSongDialog = true
+                                }
                             )
                         }
                     }
@@ -754,27 +791,72 @@ fun App(driverFactory: DatabaseDriverFactory) {
 
         if (showDeleteSetlistDialog) {
             AlertDialog(
-                onDismissRequest = { showDeleteSetlistDialog = false },
+                onDismissRequest = {
+                    showDeleteSetlistDialog = false
+                    pendingDeleteSetlist = null
+                },
                 title = { Text(AppStrings.deleteSetlist) },
                 text = {
-                    val current = currentScreen as? Screen.SetlistView
-                    Text(AppStrings.deleteConfirmation.format(current?.setlist?.name ?: ""))
+                    val target = pendingDeleteSetlist
+                        ?: (currentScreen as? Screen.SetlistView)?.setlist
+                    Text(AppStrings.deleteConfirmation.format(target?.name ?: ""))
                 },
                 confirmButton = {
                     TextButton(onClick = {
+                        val target = pendingDeleteSetlist
                         val current = currentScreen as? Screen.SetlistView
-                        if (current != null) {
-                            repository.deleteSetlist(current.setlist.id)
-                            reload()
-                            currentScreen = current.backTarget ?: Screen.SongList
+                        when {
+                            target != null -> {
+                                repository.deleteSetlist(target.id)
+                                reload()
+                            }
+                            current != null -> {
+                                repository.deleteSetlist(current.setlist.id)
+                                reload()
+                                currentScreen = current.backTarget ?: Screen.SongList
+                            }
                         }
                         showDeleteSetlistDialog = false
+                        pendingDeleteSetlist = null
                     }) {
                         Text(AppStrings.delete, color = MaterialTheme.colorScheme.error)
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showDeleteSetlistDialog = false }) {
+                    TextButton(onClick = {
+                        showDeleteSetlistDialog = false
+                        pendingDeleteSetlist = null
+                    }) {
+                        Text(AppStrings.cancel)
+                    }
+                }
+            )
+        }
+
+        if (showDeleteSongDialog) {
+            val target = pendingDeleteSong
+            AlertDialog(
+                onDismissRequest = {
+                    showDeleteSongDialog = false
+                    pendingDeleteSong = null
+                },
+                title = { Text(AppStrings.deleteSong) },
+                text = { Text(AppStrings.deleteConfirmation.format(target?.title ?: "")) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        val song = target
+                        if (song != null) deleteSong(song)
+                        showDeleteSongDialog = false
+                        pendingDeleteSong = null
+                    }) {
+                        Text(AppStrings.delete, color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        showDeleteSongDialog = false
+                        pendingDeleteSong = null
+                    }) {
                         Text(AppStrings.cancel)
                     }
                 }

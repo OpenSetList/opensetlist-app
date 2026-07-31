@@ -71,6 +71,7 @@ object AppStrings {
     val renameArtist = "Renomear artista"
     val renameTag = "Renomear tag"
     val deleteSetlist = "Excluir setlist"
+    val deleteSong = "Excluir música"
     val deleteArtist = "Excluir artista"
     val deleteTag = "Excluir tag"
     val shareSetlist = "Compartilhar setlist"
