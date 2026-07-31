@@ -1,0 +1,3 @@
+ALTER TABLE setlist ADD COLUMN date TEXT;
+ALTER TABLE setlist ADD COLUMN location TEXT;
+ALTER TABLE setlist ADD COLUMN time TEXT;

@@ -1,0 +1,21 @@
+ALTER TABLE song ADD COLUMN youtube_url TEXT;
+
+CREATE TABLE artist (
+    id TEXT PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE tag (
+    id TEXT PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE song_tag (
+    song_id TEXT NOT NULL REFERENCES song(id) ON DELETE CASCADE,
+    tag_id TEXT NOT NULL REFERENCES tag(id) ON DELETE CASCADE,
+    PRIMARY KEY (song_id, tag_id)
+);
+
+INSERT INTO artist (id, name)
+SELECT 'artist_' || substr(replace(lower(name), ' ', '_'), 1, 12) || '_' || substr(hex(randomblob(4)), 1, 8), name
+FROM (SELECT DISTINCT artist AS name FROM song WHERE artist IS NOT NULL AND artist != '');

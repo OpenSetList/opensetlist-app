@@ -1,0 +1,196 @@
+CREATE TABLE song (
+    id TEXT PRIMARY KEY NOT NULL,
+    title TEXT NOT NULL,
+    artist TEXT NOT NULL,
+    key TEXT,
+    tempo TEXT,
+    capo TEXT,
+    duration TEXT,
+    body TEXT NOT NULL,
+    youtube_url TEXT,
+    sort_order INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE artist (
+    id TEXT PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE tag (
+    id TEXT PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE song_tag (
+    song_id TEXT NOT NULL REFERENCES song(id) ON DELETE CASCADE,
+    tag_id TEXT NOT NULL REFERENCES tag(id) ON DELETE CASCADE,
+    PRIMARY KEY (song_id, tag_id)
+);
+
+CREATE TABLE setlist (
+    id TEXT PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL,
+    date TEXT,
+    location TEXT,
+    time TEXT
+);
+
+CREATE TABLE setlist_song (
+    setlist_id TEXT NOT NULL REFERENCES setlist(id) ON DELETE CASCADE,
+    song_id TEXT NOT NULL REFERENCES song(id) ON DELETE CASCADE,
+    position INTEGER NOT NULL,
+    PRIMARY KEY (setlist_id, song_id)
+);
+
+selectAllSongs:
+SELECT * FROM song ORDER BY title COLLATE NOCASE ASC;
+
+selectSongById:
+SELECT * FROM song WHERE id = ?;
+
+selectSongByArtistAndTitle:
+SELECT * FROM song WHERE title = ? COLLATE NOCASE AND artist = ? COLLATE NOCASE LIMIT 1;
+
+selectSongsByArtistName:
+SELECT song.* FROM song WHERE song.artist = ? COLLATE NOCASE ORDER BY song.title COLLATE NOCASE ASC;
+
+songCountByArtist:
+SELECT song.artist AS name, COUNT(*) AS count FROM song GROUP BY song.artist;
+
+insertSong:
+INSERT OR REPLACE INTO song(id, title, artist, key, tempo, capo, duration, body, youtube_url, sort_order)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateSongBody:
+UPDATE song SET body = ?, title = ?, artist = ?, key = ?, tempo = ?, capo = ?, duration = ?, youtube_url = ? WHERE id = ?;
+
+updateSongArtist:
+UPDATE song SET artist = ? WHERE artist = ?;
+
+selectMaxSortOrder:
+SELECT COALESCE(MAX(sort_order), -1) + 1 FROM song;
+
+deleteSong:
+DELETE FROM song WHERE id = ?;
+
+selectAllArtists:
+SELECT * FROM artist ORDER BY name COLLATE NOCASE ASC;
+
+selectArtistById:
+SELECT * FROM artist WHERE id = ?;
+
+selectArtistByName:
+SELECT * FROM artist WHERE name = ? COLLATE NOCASE LIMIT 1;
+
+insertArtist:
+INSERT OR REPLACE INTO artist(id, name) VALUES (?, ?);
+
+renameArtist:
+UPDATE artist SET name = ? WHERE id = ?;
+
+deleteArtist:
+DELETE FROM artist WHERE id = ?;
+
+selectAllTags:
+SELECT * FROM tag ORDER BY name COLLATE NOCASE ASC;
+
+selectTagById:
+SELECT * FROM tag WHERE id = ?;
+
+selectTagByName:
+SELECT * FROM tag WHERE name = ? COLLATE NOCASE LIMIT 1;
+
+insertTag:
+INSERT OR REPLACE INTO tag(id, name) VALUES (?, ?);
+
+renameTag:
+UPDATE tag SET name = ? WHERE id = ?;
+
+deleteTag:
+DELETE FROM tag WHERE id = ?;
+
+deleteSongTagsByTag:
+DELETE FROM song_tag WHERE tag_id = ?;
+
+selectTagsForSong:
+SELECT tag.* FROM tag
+JOIN song_tag ON song_tag.tag_id = tag.id
+WHERE song_tag.song_id = ?
+ORDER BY tag.name COLLATE NOCASE ASC;
+
+selectAllSongTags:
+SELECT song_id, tag_id FROM song_tag;
+
+selectSongsByTag:
+SELECT song.* FROM song
+JOIN song_tag ON song_tag.song_id = song.id
+WHERE song_tag.tag_id = ?
+ORDER BY song.title COLLATE NOCASE ASC;
+
+songCountByTag:
+SELECT song_tag.tag_id AS tag_id, COUNT(*) AS count FROM song_tag GROUP BY song_tag.tag_id;
+
+deleteSongTags:
+DELETE FROM song_tag WHERE song_id = ?;
+
+insertSongTag:
+INSERT OR REPLACE INTO song_tag(song_id, tag_id) VALUES (?, ?);
+
+selectAllSetlists:
+SELECT * FROM setlist ORDER BY name COLLATE NOCASE ASC;
+
+insertSetlist:
+INSERT OR REPLACE INTO setlist(id, name, date, location, time) VALUES (?, ?, ?, ?, ?);
+
+renameSetlist:
+UPDATE setlist SET name = ? WHERE id = ?;
+
+updateSetlistInfo:
+UPDATE setlist SET date = ?, location = ?, time = ? WHERE id = ?;
+
+deleteSetlist:
+DELETE FROM setlist WHERE id = ?;
+
+deleteSetlistSong:
+DELETE FROM setlist_song WHERE setlist_id = ? AND song_id = ?;
+
+deleteAllSetlistSongs:
+DELETE FROM setlist_song WHERE setlist_id = ?;
+
+selectSongsNotInSetlist:
+SELECT song.* FROM song
+WHERE song.id NOT IN (SELECT song_id FROM setlist_song WHERE setlist_id = ?)
+ORDER BY song.title COLLATE NOCASE ASC;
+
+selectSongsInSetlist:
+SELECT song.* FROM song
+JOIN setlist_song ON setlist_song.song_id = song.id
+WHERE setlist_song.setlist_id = ?
+ORDER BY setlist_song.position ASC;
+
+insertSetlistSong:
+INSERT OR REPLACE INTO setlist_song(setlist_id, song_id, position) VALUES (?, ?, ?);
+
+nextPositionInSetlist:
+SELECT COALESCE(MAX(position), -1) + 1 FROM setlist_song WHERE setlist_id = ?;
+
+deleteSetlistSongBySong:
+DELETE FROM setlist_song WHERE song_id = ?;
+
+selectAllLinks:
+SELECT setlist_id, song_id, position FROM setlist_song ORDER BY setlist_id ASC, position ASC;
+
+deleteAllLinks:
+DELETE FROM setlist_song;
+
+deleteAllSetlists:
+DELETE FROM setlist;
+
+deleteAllSongs:
+DELETE FROM song;
+
+deleteAllSongTags:
+DELETE FROM song_tag;
+
+deleteAllArtists:
+DELETE FROM artist;
