@@ -17,6 +17,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,13 +46,18 @@ fun TagsScreen(
     onDelete: (Tag) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var searchQuery by remember { mutableStateOf("") }
     var sortOrder by remember { mutableStateOf(TagSort.NAME_ASC) }
 
-    val sortedTags = remember(tags, sortOrder) {
+    val filteredTags = tags.filter { tag ->
+        searchQuery.isBlank() || tag.name.contains(searchQuery, ignoreCase = true)
+    }
+
+    val sortedTags = remember(filteredTags, sortOrder) {
         if (sortOrder == TagSort.NAME_ASC) {
-            tags.sortedBy { it.name.lowercase() }
+            filteredTags.sortedBy { it.name.lowercase() }
         } else {
-            tags.sortedByDescending { it.name.lowercase() }
+            filteredTags.sortedByDescending { it.name.lowercase() }
         }
     }
 
@@ -81,6 +87,16 @@ fun TagsScreen(
                 onSelect = { sortOrder = TagSort.entries[it] }
             )
         }
+
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            placeholder = { Text(AppStrings.searchTagsPlaceholder) },
+            singleLine = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        )
 
         if (sortedTags.isEmpty()) {
             Box(

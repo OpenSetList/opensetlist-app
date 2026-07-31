@@ -17,6 +17,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,13 +46,18 @@ fun ArtistsScreen(
     onDelete: (Artist) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var searchQuery by remember { mutableStateOf("") }
     var sortOrder by remember { mutableStateOf(ArtistSort.NAME_ASC) }
 
-    val sortedArtists = remember(artists, sortOrder) {
+    val filteredArtists = artists.filter { artist ->
+        searchQuery.isBlank() || artist.name.contains(searchQuery, ignoreCase = true)
+    }
+
+    val sortedArtists = remember(filteredArtists, sortOrder) {
         if (sortOrder == ArtistSort.NAME_ASC) {
-            artists.sortedBy { it.name.lowercase() }
+            filteredArtists.sortedBy { it.name.lowercase() }
         } else {
-            artists.sortedByDescending { it.name.lowercase() }
+            filteredArtists.sortedByDescending { it.name.lowercase() }
         }
     }
 
@@ -81,6 +87,16 @@ fun ArtistsScreen(
                 onSelect = { sortOrder = ArtistSort.entries[it] }
             )
         }
+
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            placeholder = { Text(AppStrings.searchArtistsPlaceholder) },
+            singleLine = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        )
 
         if (sortedArtists.isEmpty()) {
             Box(

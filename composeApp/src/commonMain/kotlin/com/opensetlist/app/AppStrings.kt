@@ -21,6 +21,8 @@ object AppStrings {
 
     val searchSongsPlaceholder = "Buscar músicas e setlists..."
     val searchSetlistsPlaceholder = "Buscar setlist por nome ou local..."
+    val searchArtistsPlaceholder = "Buscar artistas..."
+    val searchTagsPlaceholder = "Buscar tags..."
     val searchInSongPlaceholder = "Buscar no texto..."
     val setlistsHeader = "SETLISTS"
     val songsHeader = "MÚSICAS"
