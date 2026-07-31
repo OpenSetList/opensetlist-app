@@ -30,7 +30,9 @@ object DataTransfer {
 
     fun buildBackupJson(data: BackupData): String {
         val sb = StringBuilder()
-        sb.append("{\"type\":\"$TYPE_BACKUP\",\"version\":1,\"songs\":[")
+        sb.append("{\"type\":\"$TYPE_BACKUP\",\"version\":2,\"createdAt\":")
+        sb.append(quote(currentTimestampIso()))
+        sb.append(",\"songs\":[")
         data.songs.forEachIndexed { i, s ->
             if (i > 0) sb.append(",")
             sb.append(songToJson(s))

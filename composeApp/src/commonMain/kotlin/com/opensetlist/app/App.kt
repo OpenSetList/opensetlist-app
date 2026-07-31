@@ -52,6 +52,7 @@ import com.opensetlist.app.data.rememberBackupActions
 import com.opensetlist.app.data.rememberFileActions
 import com.opensetlist.app.data.rememberSetlistHelperActions
 import com.opensetlist.app.data.rememberSettingsStore
+import com.opensetlist.app.data.currentTimestampCompact
 import com.opensetlist.app.model.Artist
 import com.opensetlist.app.model.BackupData
 import com.opensetlist.app.model.Setlist
@@ -340,8 +341,9 @@ fun App(driverFactory: DatabaseDriverFactory) {
         if (bytes != null) {
             pendingExportBytes = bytes
             pendingExportContent = null
-            if (share) fileActions.shareFile("setlist_backup.db", "application/octet-stream")
-            else fileActions.saveFile("setlist_backup.db", "application/octet-stream")
+            val fileName = "setlist_backup_${currentTimestampCompact()}.db"
+            if (share) fileActions.shareFile(fileName, "application/octet-stream")
+            else fileActions.saveFile(fileName, "application/octet-stream")
         } else {
             showMessage(AppStrings.dbReadFailed)
         }
