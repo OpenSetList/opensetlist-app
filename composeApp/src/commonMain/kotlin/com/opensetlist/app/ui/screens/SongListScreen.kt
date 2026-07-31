@@ -83,31 +83,44 @@ fun SongListScreen(
     }
 
     Column(modifier = modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 8.dp, top = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = AppStrings.allSongsTitle,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = AppStrings.songsCount(songs.size),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            SortMenu(
+                currentLabel = sortOrder.label,
+                options = SongListSort.entries.map { it.label },
+                onSelect = { sortOrder = SongListSort.entries[it] }
+            )
+        }
+
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            placeholder = { Text(AppStrings.searchSongsPlaceholder) },
+            singleLine = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        )
+
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text(AppStrings.searchSongsPlaceholder) },
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, end = 8.dp, bottom = 4.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    SortMenu(
-                        currentLabel = sortOrder.label,
-                        options = SongListSort.entries.map { it.label },
-                        onSelect = { sortOrder = SongListSort.entries[it] }
-                    )
-                }
-
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     if (filteredSetlists.isNotEmpty()) {
                         item(key = "setlists_header") {
