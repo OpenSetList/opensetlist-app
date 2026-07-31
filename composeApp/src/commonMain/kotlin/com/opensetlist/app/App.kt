@@ -1,6 +1,7 @@
 package com.opensetlist.app
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -50,6 +51,7 @@ import com.opensetlist.app.data.db.AppDatabase
 import com.opensetlist.app.data.rememberBackupActions
 import com.opensetlist.app.data.rememberFileActions
 import com.opensetlist.app.data.rememberSetlistHelperActions
+import com.opensetlist.app.data.rememberSettingsStore
 import com.opensetlist.app.model.Artist
 import com.opensetlist.app.model.BackupData
 import com.opensetlist.app.model.Setlist
@@ -94,6 +96,12 @@ sealed class Screen {
 fun App(driverFactory: DatabaseDriverFactory) {
     val database = remember { AppDatabase(driverFactory.createDriver()) }
     val repository = remember { SongRepository(database) }
+    val settingsStore = rememberSettingsStore()
+
+    val systemDark = isSystemInDarkTheme()
+    var darkMode by remember {
+        mutableStateOf(settingsStore.isDarkMode() ?: systemDark)
+    }
 
     var songs by remember { mutableStateOf(emptyList<Song>()) }
     var setlists by remember { mutableStateOf(emptyList<Setlist>()) }
@@ -339,7 +347,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
         doExport("set_${setlist.name}.json", "application/json", json, share = true)
     }
 
-    AppTheme {
+    AppTheme(darkTheme = darkMode) {
         val isTopLevel = currentScreen is Screen.SongList ||
             currentScreen is Screen.SetlistList ||
             currentScreen is Screen.ArtistList ||
@@ -588,7 +596,12 @@ fun App(driverFactory: DatabaseDriverFactory) {
                                     setlistHelperActions.importBackup()
                                 },
                                 onCloudExport = { exportBackup(false) },
-                                onCloudImport = { fileActions.importFile() }
+                                onCloudImport = { fileActions.importFile() },
+                                darkMode = darkMode,
+                                onDarkModeChange = { value ->
+                                    darkMode = value
+                                    settingsStore.setDarkMode(value)
+                                }
                             )
                         }
                         is Screen.ChordView -> {

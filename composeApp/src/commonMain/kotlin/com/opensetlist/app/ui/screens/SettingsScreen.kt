@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.FileOpen
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.MusicNote
@@ -26,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -51,6 +53,8 @@ fun SettingsScreen(
     onImportSetlistHelper: () -> Unit,
     onCloudExport: (CloudTarget) -> Unit,
     onCloudImport: (CloudTarget) -> Unit,
+    darkMode: Boolean,
+    onDarkModeChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -59,6 +63,21 @@ fun SettingsScreen(
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
+        SettingsSection(
+            title = AppStrings.appearanceTitle,
+            icon = Icons.Default.DarkMode
+        ) {
+            SettingsRow(
+                label = AppStrings.darkMode,
+                actions = {
+                    Switch(
+                        checked = darkMode,
+                        onCheckedChange = onDarkModeChange
+                    )
+                }
+            )
+        }
+
         SettingsSection(
             title = AppStrings.backupDbTitle,
             icon = Icons.Default.Backup

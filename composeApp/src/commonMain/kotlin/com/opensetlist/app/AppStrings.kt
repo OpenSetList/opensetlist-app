@@ -123,6 +123,8 @@ object AppStrings {
     val cloudTitle = "Nuvem"
     val cloudSyncSubtitle = "Escolha Google Drive ou Dropbox no seletor do sistema"
     val syncTitle = "Sincronizar"
+    val appearanceTitle = "Aparência"
+    val darkMode = "Modo escuro"
     val googleDrive = "Google Drive"
     val dropbox = "Dropbox"
     val exportToGoogleDrive = "Exportar para Google Drive"
