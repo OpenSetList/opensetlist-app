@@ -90,4 +90,23 @@ android {
     buildFeatures {
         compose = true
     }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt")
+            )
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
 }
