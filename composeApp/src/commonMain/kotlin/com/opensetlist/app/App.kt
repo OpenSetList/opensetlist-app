@@ -68,6 +68,7 @@ import com.opensetlist.app.ui.components.AppBackHandler
 import com.opensetlist.app.ui.components.DrawerSection
 import com.opensetlist.app.ui.components.SideDrawer
 import com.opensetlist.app.ui.screens.ArtistsScreen
+import com.opensetlist.app.ui.screens.AboutScreen
 import com.opensetlist.app.ui.screens.ChordViewerScreen
 import com.opensetlist.app.ui.screens.CloudTarget
 import com.opensetlist.app.ui.screens.EditorScreen
@@ -91,6 +92,7 @@ sealed class Screen {
     data object ArtistList : Screen()
     data object TagList : Screen()
     data object Settings : Screen()
+    data object About : Screen()
     data class ChordView(
         val song: Song,
         val siblings: List<Song> = listOf(song),
@@ -385,7 +387,8 @@ fun App(
             currentScreen is Screen.SetlistList ||
             currentScreen is Screen.ArtistList ||
             currentScreen is Screen.TagList ||
-            currentScreen is Screen.Settings
+            currentScreen is Screen.Settings ||
+            currentScreen is Screen.About
         val hidesTopBar = currentScreen is Screen.ChordView || currentScreen is Screen.Editor
         val keepScreenOn = keepScreenOnAlways ||
             (keepScreenOnViewer && currentScreen is Screen.ChordView) ||
@@ -407,6 +410,7 @@ fun App(
                                 DrawerSection.ARTISTS -> Screen.ArtistList
                                 DrawerSection.TAGS -> Screen.TagList
                                 DrawerSection.SETTINGS -> Screen.Settings
+                                DrawerSection.ABOUT -> Screen.About
                             }
                             scope.launch { drawerState.close() }
                         },
@@ -431,6 +435,7 @@ fun App(
                                         is Screen.ArtistList -> AppStrings.artistsTitle
                                         is Screen.TagList -> AppStrings.tagsTitle
                                         is Screen.Settings -> AppStrings.settingsTitle
+                                        is Screen.About -> AppStrings.aboutTitle
                                         is Screen.ChordView -> screen.song.title
                                         is Screen.SetlistView -> screen.setlist.name
                                         is Screen.ArtistSongs -> screen.artist.name
@@ -629,8 +634,7 @@ fun App(
                             )
                         }
                         is Screen.Settings -> {
-                            SettingsScreen(
-                                onExportBackup = { share -> exportBackup(share) },
+                            SettingsScreen(                                onExportBackup = { share -> exportBackup(share) },
                                 onImportBackup = { backupActions.importBackup() },
                                 onExportAllSongs = { share -> exportAllSongs(share) },
                                 onImportSongs = { fileActions.importFile() },
@@ -661,6 +665,9 @@ fun App(
                                     settingsStore.setKeepScreenOnAlways(value)
                                 }
                             )
+                        }
+                        is Screen.About -> {
+                            AboutScreen()
                         }
                         is Screen.ChordView -> {
                             ChordViewerScreen(
