@@ -56,6 +56,7 @@ import com.opensetlist.app.data.db.AppDatabase
 import com.opensetlist.app.data.rememberBackupActions
 import com.opensetlist.app.data.rememberFileActions
 import com.opensetlist.app.data.rememberSetlistHelperActions
+import com.opensetlist.app.data.KeepScreenOn
 import com.opensetlist.app.data.rememberSettingsStore
 import com.opensetlist.app.data.currentTimestampCompact
 import com.opensetlist.app.model.Artist
@@ -118,6 +119,9 @@ fun App(driverFactory: DatabaseDriverFactory) {
     var darkMode by remember {
         mutableStateOf(settingsStore.isDarkMode() ?: systemDark)
     }
+    var keepScreenOnViewer by remember { mutableStateOf(settingsStore.keepScreenOnViewer()) }
+    var keepScreenOnPlaylist by remember { mutableStateOf(settingsStore.keepScreenOnPlaylist()) }
+    var keepScreenOnAlways by remember { mutableStateOf(settingsStore.keepScreenOnAlways()) }
 
     var songs by remember { mutableStateOf(emptyList<Song>()) }
     var setlists by remember { mutableStateOf(emptyList<Setlist>()) }
@@ -371,6 +375,10 @@ fun App(driverFactory: DatabaseDriverFactory) {
             currentScreen is Screen.TagList ||
             currentScreen is Screen.Settings
         val hidesTopBar = currentScreen is Screen.ChordView || currentScreen is Screen.Editor
+        val keepScreenOn = keepScreenOnAlways ||
+            (keepScreenOnViewer && currentScreen is Screen.ChordView) ||
+            (keepScreenOnPlaylist && currentScreen is Screen.SetlistView)
+        KeepScreenOn(enabled = keepScreenOn)
         AppBackHandler(enabled = !isTopLevel, onBack = ::goBack)
 
         ModalNavigationDrawer(
@@ -624,6 +632,21 @@ fun App(driverFactory: DatabaseDriverFactory) {
                                 onDarkModeChange = { value ->
                                     darkMode = value
                                     settingsStore.setDarkMode(value)
+                                },
+                                keepScreenOnViewer = keepScreenOnViewer,
+                                onKeepScreenOnViewerChange = { value ->
+                                    keepScreenOnViewer = value
+                                    settingsStore.setKeepScreenOnViewer(value)
+                                },
+                                keepScreenOnPlaylist = keepScreenOnPlaylist,
+                                onKeepScreenOnPlaylistChange = { value ->
+                                    keepScreenOnPlaylist = value
+                                    settingsStore.setKeepScreenOnPlaylist(value)
+                                },
+                                keepScreenOnAlways = keepScreenOnAlways,
+                                onKeepScreenOnAlwaysChange = { value ->
+                                    keepScreenOnAlways = value
+                                    settingsStore.setKeepScreenOnAlways(value)
                                 }
                             )
                         }

@@ -9,7 +9,13 @@ import androidx.compose.runtime.Composable
  */
 class SettingsStore(
     val isDarkMode: () -> Boolean?,
-    val setDarkMode: (Boolean) -> Unit
+    val setDarkMode: (Boolean) -> Unit,
+    val keepScreenOnViewer: () -> Boolean,
+    val setKeepScreenOnViewer: (Boolean) -> Unit,
+    val keepScreenOnPlaylist: () -> Boolean,
+    val setKeepScreenOnPlaylist: (Boolean) -> Unit,
+    val keepScreenOnAlways: () -> Boolean,
+    val setKeepScreenOnAlways: (Boolean) -> Unit
 )
 
 /**

@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Backup
+import androidx.compose.material.icons.filled.BrightnessHigh
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,6 +60,12 @@ fun SettingsScreen(
     onCloudImport: (CloudTarget) -> Unit,
     darkMode: Boolean,
     onDarkModeChange: (Boolean) -> Unit,
+    keepScreenOnViewer: Boolean,
+    onKeepScreenOnViewerChange: (Boolean) -> Unit,
+    keepScreenOnPlaylist: Boolean,
+    onKeepScreenOnPlaylistChange: (Boolean) -> Unit,
+    keepScreenOnAlways: Boolean,
+    onKeepScreenOnAlwaysChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -76,6 +84,39 @@ fun SettingsScreen(
                     Switch(
                         checked = darkMode,
                         onCheckedChange = onDarkModeChange
+                    )
+                }
+            )
+        }
+
+        SettingsSection(
+            title = AppStrings.keepScreenOnTitle,
+            icon = Icons.Default.BrightnessHigh
+        ) {
+            SettingsRow(
+                label = AppStrings.keepScreenOnViewer,
+                actions = {
+                    Checkbox(
+                        checked = keepScreenOnViewer,
+                        onCheckedChange = onKeepScreenOnViewerChange
+                    )
+                }
+            )
+            SettingsRow(
+                label = AppStrings.keepScreenOnPlaylist,
+                actions = {
+                    Checkbox(
+                        checked = keepScreenOnPlaylist,
+                        onCheckedChange = onKeepScreenOnPlaylistChange
+                    )
+                }
+            )
+            SettingsRow(
+                label = AppStrings.keepScreenOnAlways,
+                actions = {
+                    Checkbox(
+                        checked = keepScreenOnAlways,
+                        onCheckedChange = onKeepScreenOnAlwaysChange
                     )
                 }
             )
