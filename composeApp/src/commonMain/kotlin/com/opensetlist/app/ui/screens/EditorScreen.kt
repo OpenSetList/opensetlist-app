@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -34,16 +36,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.opensetlist.app.AppStrings
 import com.opensetlist.app.data.ChordProParser
+import com.opensetlist.app.data.parseDurationSeconds
 import com.opensetlist.app.model.Song
 import com.opensetlist.app.model.Tag
+
+private val MUSIC_NOTES = listOf(
+    "C", "Cm", "C#", "C#m", "D", "Dm", "D#", "D#m", "E", "Em", "F", "Fm",
+    "F#", "F#m", "G", "Gm", "G#", "G#m", "A", "Am", "A#", "A#m", "B", "Bm"
+)
 
 /**
  * Tela de edição/criação de música no formato ChordPro.
@@ -67,14 +77,21 @@ fun EditorScreen(
     var title by remember(song.id) { mutableStateOf(song.title) }
     var artist by remember(song.id) { mutableStateOf(song.artist) }
     var key by remember(song.id) { mutableStateOf(song.key) }
+    var keyMenuOpen by remember(song.id) { mutableStateOf(false) }
     var tempo by remember(song.id) { mutableStateOf(song.tempo) }
     var capo by remember(song.id) { mutableStateOf(song.capo) }
-    var duration by remember(song.id) { mutableStateOf(song.duration) }
-    var time by remember(song.id) { mutableStateOf(song.time) }
     var youtubeUrl by remember(song.id) { mutableStateOf(song.youtubeUrl) }
     var selectedTagIds by remember(song.id) { mutableStateOf(initialTags.map { it.id }.toSet()) }
     var newTagText by remember { mutableStateOf("") }
     var artistMenuOpen by remember(song.id) { mutableStateOf(false) }
+
+    val initialTimeSplit = remember(song.id) { splitTimeSignature(song.time) }
+    var timeNum by remember(song.id) { mutableStateOf(initialTimeSplit.first) }
+    var timeDen by remember(song.id) { mutableStateOf(initialTimeSplit.second) }
+
+    val initialDurationSplit = remember(song.id) { splitDurationField(song.duration) }
+    var durationMin by remember(song.id) { mutableStateOf(initialDurationSplit.first) }
+    var durationSec by remember(song.id) { mutableStateOf(initialDurationSplit.second) }
 
     val filteredArtistSuggestions = remember(artist, artistSuggestions) {
         artistSuggestions
@@ -85,6 +102,18 @@ fun EditorScreen(
 
     fun save() {
         val parsed = ChordProParser.parse(body)
+        val computedTime = when {
+            timeNum.isBlank() && timeDen.isBlank() -> ""
+            timeNum.isBlank() -> "/${timeDen.trim()}"
+            timeDen.isBlank() -> timeNum.trim()
+            else -> "${timeNum.trim()}/${timeDen.trim()}"
+        }
+        val computedDuration = when {
+            durationMin.isBlank() && durationSec.isBlank() -> ""
+            durationSec.isBlank() -> durationMin.trim()
+            durationMin.isBlank() -> "0:${durationSec.trim().padStart(2, '0')}"
+            else -> "${durationMin.trim()}:${durationSec.trim().padStart(2, '0')}"
+        }
         val updated = song.copy(
             body = body,
             title = title.trim().ifBlank { parsed.title.ifBlank { song.title } },
@@ -92,8 +121,8 @@ fun EditorScreen(
             key = key.trim().ifBlank { parsed.key.ifBlank { song.key } },
             tempo = tempo.trim().ifBlank { parsed.tempo.ifBlank { song.tempo } },
             capo = capo.trim().ifBlank { parsed.capo.ifBlank { song.capo } },
-            duration = duration.trim().ifBlank { song.duration },
-            time = time.trim().ifBlank { parsed.time.ifBlank { song.time } },
+            duration = computedDuration.ifBlank { parsed.duration.ifBlank { song.duration } },
+            time = computedTime.ifBlank { parsed.time.ifBlank { song.time } },
             youtubeUrl = youtubeUrl.trim()
         )
         onSave(updated, selectedTagIds.toList())
@@ -187,50 +216,139 @@ fun EditorScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedTextField(
-                    value = key,
-                    onValueChange = { key = it },
-                    label = { Text(AppStrings.keyLabel) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f)
-                )
-                OutlinedTextField(
-                    value = time,
-                    onValueChange = { time = it },
-                    label = { Text(AppStrings.compassoLabel) },
-                    placeholder = { Text(AppStrings.compassoPlaceholder) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f)
-                )
-                OutlinedTextField(
-                    value = tempo,
-                    onValueChange = { tempo = it },
-                    label = { Text(AppStrings.bpmLabel) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f)
-                )
+                ExposedDropdownMenuBox(
+                    expanded = keyMenuOpen,
+                    onExpandedChange = { keyMenuOpen = it }
+                ) {
+                    OutlinedTextField(
+                        value = key,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text(AppStrings.keyLabel) },
+                        singleLine = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = keyMenuOpen) },
+                        modifier = Modifier
+                            .width(150.dp)
+                            .menuAnchor()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = keyMenuOpen,
+                        onDismissRequest = { keyMenuOpen = false }
+                    ) {
+                        MUSIC_NOTES.forEach { note ->
+                            DropdownMenuItem(
+                                text = { Text(note) },
+                                onClick = {
+                                    key = note
+                                    keyMenuOpen = false
+                                }
+                            )
+                        }
+                    }
+                }
+                Column(modifier = Modifier.width(96.dp)) {
+                    Text(
+                        text = AppStrings.bpmLabel,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                    )
+                    OutlinedTextField(
+                        value = tempo,
+                        onValueChange = { tempo = it.filter { c -> c.isDigit() }.take(3) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp),
+                    .padding(top = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedTextField(
-                    value = capo,
-                    onValueChange = { capo = it },
-                    label = { Text(AppStrings.capoLabel) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f)
+                Column(modifier = Modifier.width(168.dp)) {
+                    Text(
+                        text = AppStrings.compassoLabel,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = timeNum,
+                            onValueChange = { timeNum = it.filter { c -> c.isDigit() }.take(2) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text("/", style = MaterialTheme.typography.titleLarge)
+                        OutlinedTextField(
+                            value = timeDen,
+                            onValueChange = { timeDen = it.filter { c -> c.isDigit() }.take(2) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+                Column {
+                    Text(
+                        text = AppStrings.capoLabel,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                    )
+                    OutlinedTextField(
+                        value = capo,
+                        onValueChange = { newCapo ->
+                            val filtered = newCapo.filter { c -> c.isDigit() }.take(2)
+                            capo = filtered
+                            body = updateCapoDirective(body, filtered)
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.width(84.dp)
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+            ) {
+                Text(
+                    text = AppStrings.durationLabel,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
                 )
-                OutlinedTextField(
-                    value = duration,
-                    onValueChange = { duration = it },
-                    label = { Text(AppStrings.durationLabel) },
-                    placeholder = { Text(AppStrings.durationPlaceholder) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = durationMin,
+                        onValueChange = { durationMin = it.filter { c -> c.isDigit() }.take(3) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.width(96.dp)
+                    )
+                    Text(":", style = MaterialTheme.typography.titleLarge)
+                    OutlinedTextField(
+                        value = durationSec,
+                        onValueChange = { durationSec = it.filter { c -> c.isDigit() }.take(2) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.width(72.dp)
+                    )
+                }
             }
             OutlinedTextField(
                 value = youtubeUrl,
@@ -324,5 +442,41 @@ fun EditorScreen(
                 )
             )
         }
+    }
+}
+
+private fun splitTimeSignature(time: String): Pair<String, String> {
+    val parts = time.trim().split("/", limit = 2)
+    if (parts.size != 2) return "" to ""
+    return parts[0].trim() to parts[1].trim()
+}
+
+private fun splitDurationField(duration: String): Pair<String, String> {
+    val seconds = parseDurationSeconds(duration)
+    if (seconds <= 0) return "" to ""
+    return (seconds / 60).toString() to (seconds % 60).toString().padStart(2, '0')
+}
+
+private fun directiveNameOf(line: String): String? {
+    val trimmed = line.trim()
+    if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) return null
+    val inner = trimmed.removeSurrounding("{", "}")
+    var nameEnd = 0
+    while (nameEnd < inner.length && inner[nameEnd] != ':' && !inner[nameEnd].isWhitespace()) {
+        nameEnd++
+    }
+    if (nameEnd == 0) return null
+    return inner.substring(0, nameEnd).trim().lowercase()
+}
+
+private fun updateCapoDirective(body: String, capoValue: String): String {
+    if (body.isBlank() && capoValue.isBlank()) return body
+    val lines = body.lines()
+    val capoIndex = lines.indexOfFirst { directiveNameOf(it) == "capo" }
+    return when {
+        capoValue.isBlank() && capoIndex == -1 -> body
+        capoValue.isBlank() -> lines.filterIndexed { i, _ -> i != capoIndex }.joinToString("\n")
+        capoIndex == -1 -> "{capo: $capoValue}\n$body"
+        else -> lines.mapIndexed { i, line -> if (i == capoIndex) "{capo: $capoValue}" else line }.joinToString("\n")
     }
 }

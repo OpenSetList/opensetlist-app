@@ -10,6 +10,8 @@ object AppStrings {
 
     val cancel = "Cancelar"
     val save = "Salvar"
+    val ok = "OK"
+    val pickDate = "Escolher data"
     val delete = "Excluir"
     val create = "Criar"
     val close = "Fechar"
