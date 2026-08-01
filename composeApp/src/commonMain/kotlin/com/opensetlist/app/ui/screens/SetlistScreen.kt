@@ -18,9 +18,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -45,7 +50,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.opensetlist.app.AppStrings
 import com.opensetlist.app.data.formatDuration
+import com.opensetlist.app.data.fromDatePickerMillis
 import com.opensetlist.app.data.parseDurationSeconds
+import com.opensetlist.app.data.toDatePickerMillis
 import com.opensetlist.app.model.Setlist
 import com.opensetlist.app.model.Song
 import kotlin.math.roundToInt
@@ -283,6 +290,7 @@ fun SetlistScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GigInfoDialog(
     date: String,
@@ -294,6 +302,7 @@ private fun GigInfoDialog(
     var dateText by remember { mutableStateOf(date) }
     var locationText by remember { mutableStateOf(location) }
     var timeText by remember { mutableStateOf(time) }
+    var showDatePicker by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -302,10 +311,19 @@ private fun GigInfoDialog(
             Column {
                 OutlinedTextField(
                     value = dateText,
-                    onValueChange = { dateText = it },
+                    onValueChange = {},
+                    readOnly = true,
                     label = { Text(AppStrings.dateLabel) },
                     placeholder = { Text(AppStrings.datePlaceholder) },
                     singleLine = true,
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker = true }) {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = AppStrings.pickDate
+                            )
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
@@ -343,6 +361,30 @@ private fun GigInfoDialog(
             }
         }
     )
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = toDatePickerMillis(dateText)
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { dateText = fromDatePickerMillis(it) }
+                    showDatePicker = false
+                }) {
+                    Text(AppStrings.ok)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text(AppStrings.cancel)
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 }
 
 @Composable
