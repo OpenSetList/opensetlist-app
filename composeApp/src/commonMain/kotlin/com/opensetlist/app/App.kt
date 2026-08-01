@@ -108,9 +108,16 @@ sealed class Screen {
  *
  * @author ruanitto
  */
+
+/** MIME de arquivos compartilhados do app (setlists e músicas em formato .osl). */
+const val OSETLIST_MIME = "application/vnd.opensetlist.osl"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun App(driverFactory: DatabaseDriverFactory) {
+fun App(
+    driverFactory: DatabaseDriverFactory,
+    initialImport: String? = null
+) {
     val database = remember { AppDatabase(driverFactory.createDriver()) }
     val repository = remember { SongRepository(database) }
     val settingsStore = rememberSettingsStore()
@@ -305,6 +312,11 @@ fun App(driverFactory: DatabaseDriverFactory) {
         }
     }
 
+    LaunchedEffect(initialImport) {
+        val content = initialImport
+        if (content != null) handleImported(content)
+    }
+
     val fileActions = rememberFileActions(
         getExportContent = { pendingExportContent },
         onImported = { content -> handleImported(content) },
@@ -360,12 +372,12 @@ fun App(driverFactory: DatabaseDriverFactory) {
 
     fun exportAllSongs(share: Boolean) {
         val json = DataTransfer.buildSongsBundleJson(repository.allSongs())
-        doExport("setlist_musicas.json", "application/json", json, share)
+        doExport("setlist_musicas.osl", OSETLIST_MIME, json, share)
     }
 
     fun shareSetlist(setlist: Setlist) {
         val json = DataTransfer.buildSetJson(setlist, repository.songsInSetlist(setlist.id))
-        doExport("set_${setlist.name}.json", "application/json", json, share = true)
+        doExport("set_${setlist.name}.osl", OSETLIST_MIME, json, share = true)
     }
 
     AppTheme(darkTheme = darkMode) {
