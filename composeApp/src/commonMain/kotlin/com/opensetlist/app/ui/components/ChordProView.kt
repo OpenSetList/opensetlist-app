@@ -1,6 +1,7 @@
 package com.opensetlist.app.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,14 +14,24 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.opensetlist.app.AppStrings
@@ -260,33 +271,138 @@ private fun ChordLine(
 
     val hasAnyChord = segments.any { it.chord != null }
 
-    Column {
-        if (hasAnyChord) {
-            val chordLine = StringBuilder()
-            for (seg in segments) {
-                chordLine.append(" ".repeat(seg.text.length))
-                if (seg.chord != null) {
-                    chordLine.append(seg.chord)
-                }
-            }
-            Text(
-                text = chordLine.toString(),
-                fontFamily = FontFamily.Monospace,
-                fontSize = (fontSize - 1f).sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                lineHeight = (fontSize * 1.4f).sp,
-                style = if (isHighlighted) highlightStyle else TextStyle.Default
-            )
+    if (!hasAnyChord) {
+        if (textContent.isBlank()) return
+        Text(
+            text = textContent,
+            fontFamily = FontFamily.Monospace,
+            fontSize = fontSize.sp,
+            color = MaterialTheme.colorScheme.onSurface,
+            lineHeight = (fontSize * 1.6f).sp,
+            style = if (isHighlighted) highlightStyle else TextStyle.Default
+        )
+        return
+    }
+
+    // Coluna (0-based, no texto contínuo) de cada acorde do trecho.
+    val chordColumns = mutableListOf<Pair<Int, String>>()
+    var column = 0
+    for (seg in segments) {
+        if (seg.chord != null) chordColumns.add(column to seg.chord!!)
+        column += seg.text.length
+    }
+
+    // Linha com apenas acordes e sem letra: mantém a renderização legada.
+    if (textContent.isBlank()) {
+        val chordLine = StringBuilder()
+        for (seg in segments) {
+            chordLine.append(" ".repeat(seg.text.length))
+            if (seg.chord != null) chordLine.append(seg.chord)
         }
-        if (textContent.isNotBlank()) {
+        Text(
+            text = chordLine.toString(),
+            fontFamily = FontFamily.Monospace,
+            fontSize = (fontSize - 1f).sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+            lineHeight = (fontSize * 1.4f).sp,
+            style = if (isHighlighted) highlightStyle else TextStyle.Default
+        )
+        return
+    }
+
+    ChordOverlayText(
+        text = textContent,
+        chordColumns = chordColumns,
+        fontSize = fontSize,
+        isHighlighted = isHighlighted
+    )
+}
+
+/**
+ * Renderiza a letra em um único [Text] (quebra naturalmente por largura) e
+ * desenha os acordes por cima, alinhados à coluna de cada sílaba da mesma
+ * linha visual — assim uma quebra de linha da letra não desloca mais os
+ * acordes das linhas seguintes.
+ */
+@Composable
+private fun ChordOverlayText(
+    text: String,
+    chordColumns: List<Pair<Int, String>>,
+    fontSize: Float,
+    isHighlighted: Boolean
+) {
+    val density = LocalDensity.current
+    val chordLineHeight = with(density) { (fontSize * 1.4f).sp.toPx() }
+    val textMeasurer = rememberTextMeasurer()
+    val highlightStyle = TextStyle(
+        background = MaterialTheme.colorScheme.secondaryContainer
+    )
+
+    val chordStyle = TextStyle(
+        fontFamily = FontFamily.Monospace,
+        fontSize = (fontSize - 1f).sp,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.primary,
+        background = if (isHighlighted) {
+            MaterialTheme.colorScheme.secondaryContainer
+        } else {
+            Color.Unspecified
+        }
+    )
+
+    var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Column {
+            Spacer(modifier = Modifier.height(with(density) { chordLineHeight.toDp() }))
             Text(
-                text = textContent,
+                text = text,
                 fontFamily = FontFamily.Monospace,
                 fontSize = fontSize.sp,
                 color = MaterialTheme.colorScheme.onSurface,
-                lineHeight = (fontSize * 1.6f).sp,
-                style = if (isHighlighted) highlightStyle else TextStyle.Default
+                lineHeight = (fontSize * 2.0f).sp,
+                style = if (isHighlighted) highlightStyle else TextStyle.Default,
+                onTextLayout = { layoutResult = it }
+            )
+        }
+        ChordOverlay(
+            modifier = Modifier.matchParentSize(),
+            layoutResult = layoutResult,
+            textLength = text.length,
+            chordColumns = chordColumns,
+            textMeasurer = textMeasurer,
+            chordStyle = chordStyle,
+            chordLineHeight = chordLineHeight
+        )
+    }
+}
+
+@Composable
+private fun ChordOverlay(
+    modifier: Modifier,
+    layoutResult: TextLayoutResult?,
+    textLength: Int,
+    chordColumns: List<Pair<Int, String>>,
+    textMeasurer: TextMeasurer,
+    chordStyle: TextStyle,
+    chordLineHeight: Float
+) {
+    Canvas(modifier = modifier) {
+        if (layoutResult == null || chordColumns.isEmpty()) return@Canvas
+        val chordHeight = textMeasurer.measure("A", chordStyle).size.height.toFloat().coerceAtLeast(1f)
+        for ((column, chord) in chordColumns) {
+            val offset = column.coerceIn(0, (textLength - 1).coerceAtLeast(0))
+            val lineIndex = layoutResult.getLineForOffset(offset)
+            val rect = layoutResult.getBoundingBox(offset)
+            val lineTop = layoutResult.getLineTop(lineIndex)
+            val topLeft = Offset(rect.left, chordLineHeight + lineTop - chordHeight)
+            if (topLeft.x >= size.width || topLeft.y >= size.height) continue
+            drawText(
+                textMeasurer = textMeasurer,
+                text = chord,
+                topLeft = topLeft,
+                style = chordStyle
             )
         }
     }
