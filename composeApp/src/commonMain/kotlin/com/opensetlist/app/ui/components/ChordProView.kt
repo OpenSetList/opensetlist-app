@@ -19,7 +19,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
@@ -124,40 +127,83 @@ fun ChordProView(
                 index = visualIndex,
                 onOffset = onLineOffset
             ) {
-                when {
-                    line.isComment -> {
-                        CommentLine(
-                            text = line.segments.joinToString("") { it.text },
-                            style = line.commentStyle,
-                            fontSize = fontSize,
-                            highlightQuery = highlightQuery
-                        )
+                val content: @Composable () -> Unit = {
+                    when {
+                        line.isComment -> {
+                            CommentLine(
+                                text = line.segments.joinToString("") { it.text },
+                                style = line.commentStyle,
+                                fontSize = fontSize,
+                                highlightQuery = highlightQuery
+                            )
+                        }
+                        line.isSection -> {
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "[${line.sectionName}]",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = if (line.isChorus) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.secondary
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+                        line.segments.isEmpty() || line.segments.all { it.text.isBlank() && it.chord == null } -> {
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                        else -> {
+                            ChordLine(
+                                segments = line.segments,
+                                hideChords = hideChords,
+                                fontSize = fontSize,
+                                highlightQuery = highlightQuery
+                            )
+                        }
                     }
-                    line.isSection -> {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "[${line.sectionName}]",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
+                }
+                if (line.isChorus) {
+                    ChorusBox {
+                        content()
                     }
-                    line.segments.isEmpty() || line.segments.all { it.text.isBlank() && it.chord == null } -> {
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                    else -> {
-                        ChordLine(
-                            segments = line.segments,
-                            hideChords = hideChords,
-                            fontSize = fontSize,
-                            highlightQuery = highlightQuery
-                        )
-                    }
+                } else {
+                    content()
                 }
             }
             visualIndex++
         }
+    }
+}
+
+/**
+ * Envolve uma linha do coro com a barra lateral vertical à esquerda (igual ao
+ * ChordPro) e um recuo. As barras de linhas consecutivas se unem em uma única
+ * barra contínua.
+ */
+@Composable
+private fun ChorusBox(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    val density = LocalDensity.current
+    val barWidth = with(density) { 3.dp.toPx() }
+    val barColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .drawBehind {
+                drawRoundRect(
+                    color = barColor,
+                    topLeft = Offset(0f, 0f),
+                    size = Size(barWidth, size.height),
+                    cornerRadius = CornerRadius(barWidth / 2f, barWidth / 2f)
+                )
+            }
+            .padding(start = 14.dp)
+    ) {
+        content()
     }
 }
 
