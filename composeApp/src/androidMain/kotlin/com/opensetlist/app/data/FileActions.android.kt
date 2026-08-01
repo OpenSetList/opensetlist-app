@@ -137,6 +137,7 @@ actual fun rememberFileActions(
             importFile = {
                 importLauncher.launch(
                     arrayOf(
+                        "application/vnd.opensetlist.osl",
                         "application/json",
                         "text/plain",
                         "application/octet-stream",
@@ -145,9 +146,13 @@ actual fun rememberFileActions(
                 )
             },
             saveFile = { fileName, mimeType ->
-                if (mimeType == "application/json") saveJsonLauncher.launch(fileName)
-                else if (mimeType == "application/octet-stream") saveBinaryLauncher.launch(fileName)
-                else saveTextLauncher.launch(fileName)
+                if (mimeType == "application/json" || mimeType == "application/vnd.opensetlist.osl") {
+                    saveJsonLauncher.launch(fileName)
+                } else if (mimeType == "application/octet-stream") {
+                    saveBinaryLauncher.launch(fileName)
+                } else {
+                    saveTextLauncher.launch(fileName)
+                }
             },
             shareFile = ::shareFile,
             openUrl = { url ->
