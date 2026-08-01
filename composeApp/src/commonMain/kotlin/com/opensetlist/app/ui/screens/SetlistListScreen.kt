@@ -64,7 +64,7 @@ fun SetlistListScreen(
     onDelete: (Setlist) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var sortOrder by remember { mutableStateOf(SetlistSort.NAME_ASC) }
+    var sortOrder by remember { mutableStateOf(SetlistSort.DATE_DESC) }
     var searchQuery by remember { mutableStateOf("") }
 
     val filteredSetlists = setlists.filter { setlist ->
@@ -85,7 +85,10 @@ fun SetlistListScreen(
                     .thenByDescending { it.location.lowercase() }
             )
             SetlistSort.DATE_ASC -> filteredSetlists.sortedBy { dateSortKey(it) }
-            SetlistSort.DATE_DESC -> filteredSetlists.sortedByDescending { dateSortKey(it) }
+            SetlistSort.DATE_DESC -> filteredSetlists.sortedWith(
+                compareBy<Setlist> { it.date.isBlank() }
+                    .thenByDescending { dateSortKey(it) }
+            )
             SetlistSort.SONGS_ASC -> filteredSetlists.sortedBy { it.songs.size }
             SetlistSort.SONGS_DESC -> filteredSetlists.sortedByDescending { it.songs.size }
         }
