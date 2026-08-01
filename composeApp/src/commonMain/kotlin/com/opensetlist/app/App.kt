@@ -5,8 +5,12 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -27,6 +31,7 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -365,6 +370,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
             currentScreen is Screen.ArtistList ||
             currentScreen is Screen.TagList ||
             currentScreen is Screen.Settings
+        val isChordView = currentScreen is Screen.ChordView || Screen.Editor
         AppBackHandler(enabled = !isTopLevel, onBack = ::goBack)
 
         ModalNavigationDrawer(
@@ -395,107 +401,114 @@ fun App(driverFactory: DatabaseDriverFactory) {
             Scaffold(
                 snackbarHost = { SnackbarHost(snackbarHostState) },
                 topBar = {
-                    TopAppBar(
-                        title = {
-                            Text(
-                                text = when (val screen = currentScreen) {
-                                    is Screen.SongList -> AppStrings.allSongsTitle
-                                    is Screen.SetlistList -> AppStrings.setlistsTitle
-                                    is Screen.ArtistList -> AppStrings.artistsTitle
-                                    is Screen.TagList -> AppStrings.tagsTitle
-                                    is Screen.Settings -> AppStrings.settingsTitle
-                                    is Screen.ChordView -> screen.song.title
-                                    is Screen.SetlistView -> screen.setlist.name
-                                    is Screen.ArtistSongs -> screen.artist.name
-                                    is Screen.TagSongs -> screen.tag.name
-                                    is Screen.Editor -> AppStrings.editSongTitle
+                    if (!isChordView) {
+                        TopAppBar(
+                            title = {
+                                Text(
+                                    text = when (val screen = currentScreen) {
+                                        is Screen.SongList -> AppStrings.allSongsTitle
+                                        is Screen.SetlistList -> AppStrings.setlistsTitle
+                                        is Screen.ArtistList -> AppStrings.artistsTitle
+                                        is Screen.TagList -> AppStrings.tagsTitle
+                                        is Screen.Settings -> AppStrings.settingsTitle
+                                        is Screen.ChordView -> screen.song.title
+                                        is Screen.SetlistView -> screen.setlist.name
+                                        is Screen.ArtistSongs -> screen.artist.name
+                                        is Screen.TagSongs -> screen.tag.name
+                                        is Screen.Editor -> AppStrings.editSongTitle
+                                    }
+                                )
+                            },
+                            navigationIcon = {
+                                if (!isTopLevel) {
+                                    IconButton(onClick = { goBack() }) {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                            contentDescription = AppStrings.back
+                                        )
+                                    }
+                                } else {
+                                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Menu,
+                                            contentDescription = AppStrings.menu
+                                        )
+                                    }
                                 }
+                            },
+                            actions = {
+                                when (val screen = currentScreen) {
+                                    is Screen.SongList -> {
+                                        IconButton(onClick = { fileActions.importFile() }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Add,
+                                                contentDescription = AppStrings.importPro
+                                            )
+                                        }
+                                    }
+                                    is Screen.SetlistList -> {
+                                        IconButton(onClick = {
+                                            dialogText = ""
+                                            showNewSetlistDialog = true
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Add,
+                                                contentDescription = AppStrings.newSetlist
+                                            )
+                                        }
+                                    }
+                                    is Screen.ArtistList -> {
+                                        IconButton(onClick = { showNewArtistDialog = true }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Add,
+                                                contentDescription = AppStrings.newArtist
+                                            )
+                                        }
+                                    }
+                                    is Screen.TagList -> {
+                                        IconButton(onClick = { showNewTagDialog = true }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Add,
+                                                contentDescription = AppStrings.newTag
+                                            )
+                                        }
+                                    }
+                                    is Screen.SetlistView -> {
+                                        IconButton(onClick = { shareSetlist(screen.setlist) }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Share,
+                                                contentDescription = AppStrings.shareSetlist
+                                            )
+                                        }
+                                        IconButton(onClick = {
+                                            dialogText = screen.setlist.name
+                                            showRenameSetlistDialog = true
+                                        }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Edit,
+                                                contentDescription = AppStrings.renameSetlist
+                                            )
+                                        }
+                                        IconButton(onClick = { showDeleteSetlistDialog = true }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = AppStrings.deleteSetlist
+                                            )
+                                        }
+                                    }
+                                    else -> {}
+                                }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = MaterialTheme.colorScheme.surface
                             )
-                        },
-                        navigationIcon = {
-                            if (!isTopLevel) {
-                                IconButton(onClick = { goBack() }) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = AppStrings.back
-                                    )
-                                }
-                            } else {
-                                IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Menu,
-                                        contentDescription = AppStrings.menu
-                                    )
-                                }
-                            }
-                        },
-                        actions = {
-                            when (val screen = currentScreen) {
-                                is Screen.SongList -> {
-                                    IconButton(onClick = { fileActions.importFile() }) {
-                                        Icon(
-                                            imageVector = Icons.Default.Add,
-                                            contentDescription = AppStrings.importPro
-                                        )
-                                    }
-                                }
-                                is Screen.SetlistList -> {
-                                    IconButton(onClick = {
-                                        dialogText = ""
-                                        showNewSetlistDialog = true
-                                    }) {
-                                        Icon(
-                                            imageVector = Icons.Default.Add,
-                                            contentDescription = AppStrings.newSetlist
-                                        )
-                                    }
-                                }
-                                is Screen.ArtistList -> {
-                                    IconButton(onClick = { showNewArtistDialog = true }) {
-                                        Icon(
-                                            imageVector = Icons.Default.Add,
-                                            contentDescription = AppStrings.newArtist
-                                        )
-                                    }
-                                }
-                                is Screen.TagList -> {
-                                    IconButton(onClick = { showNewTagDialog = true }) {
-                                        Icon(
-                                            imageVector = Icons.Default.Add,
-                                            contentDescription = AppStrings.newTag
-                                        )
-                                    }
-                                }
-                                is Screen.SetlistView -> {
-                                    IconButton(onClick = { shareSetlist(screen.setlist) }) {
-                                        Icon(
-                                            imageVector = Icons.Default.Share,
-                                            contentDescription = AppStrings.shareSetlist
-                                        )
-                                    }
-                                    IconButton(onClick = {
-                                        dialogText = screen.setlist.name
-                                        showRenameSetlistDialog = true
-                                    }) {
-                                        Icon(
-                                            imageVector = Icons.Default.Edit,
-                                            contentDescription = AppStrings.renameSetlist
-                                        )
-                                    }
-                                    IconButton(onClick = { showDeleteSetlistDialog = true }) {
-                                        Icon(
-                                            imageVector = Icons.Default.Delete,
-                                            contentDescription = AppStrings.deleteSetlist
-                                        )
-                                    }
-                                }
-                                else -> {}
-                            }
-                        },
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.surface
                         )
-                    )
+                    }
+                },
+                contentWindowInsets = if (isChordView) {
+                    WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
+                } else {
+                    ScaffoldDefaults.contentWindowInsets
                 }
             ) { padding ->
                 Box(modifier = Modifier.padding(padding)) {
