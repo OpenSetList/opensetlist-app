@@ -22,7 +22,7 @@ import com.opensetlist.app.AppStrings
 
 /** Seções de navegação exibidas na gaveta lateral. */
 enum class DrawerSection {
-    ALL_SONGS, SETLISTS, ARTISTS, TAGS, SETTINGS
+    ALL_SONGS, SETLISTS, ARTISTS, TAGS, SETTINGS, ABOUT
 }
 
 /**
@@ -100,6 +100,14 @@ fun SideDrawer(
             label = AppStrings.syncTitle,
             isSelected = false,
             onClick = onSyncClick
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        DrawerItem(
+            label = AppStrings.aboutTitle,
+            isSelected = currentSection == DrawerSection.ABOUT,
+            onClick = { onSectionSelected(DrawerSection.ABOUT) }
         )
     }
 }
