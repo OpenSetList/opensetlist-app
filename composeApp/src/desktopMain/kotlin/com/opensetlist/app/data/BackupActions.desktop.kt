@@ -59,6 +59,17 @@ internal fun tableExists(conn: Connection, table: String): Boolean {
     }
 }
 
+private fun columnExists(conn: Connection, table: String, column: String): Boolean {
+    conn.createStatement().use { st ->
+        st.executeQuery("PRAGMA table_info($table)").use { rs ->
+            while (rs.next()) {
+                if (rs.getString("name") == column) return true
+            }
+        }
+    }
+    return false
+}
+
 private fun parseAppDatabase(file: File): BackupData? {
     return runCatching {
         var result: BackupData? = null
@@ -96,21 +107,27 @@ private fun parseAppDatabase(file: File): BackupData? {
             }
             val songs = mutableListOf<Song>()
             conn.createStatement().use { st ->
+                val hasSongTime = columnExists(conn, "song", "time")
                 st.executeQuery(
-                    "SELECT id, title, artist, key, tempo, capo, duration, body, youtube_url FROM song"
+                    if (hasSongTime) {
+                        "SELECT id, title, artist, key, tempo, capo, duration, time, body, youtube_url FROM song"
+                    } else {
+                        "SELECT id, title, artist, key, tempo, capo, duration, body, youtube_url FROM song"
+                    }
                 ).use { rs ->
                     while (rs.next()) {
                         songs.add(
                             Song(
-                                id = rs.getString(1),
-                                title = rs.getString(2),
-                                artist = rs.getString(3),
-                                key = rs.getString(4),
-                                tempo = rs.getString(5),
-                                capo = rs.getString(6),
-                                duration = rs.getString(7),
-                                body = rs.getString(8),
-                                youtubeUrl = rs.getString(9)
+                                id = rs.getString("id") ?: "",
+                                title = rs.getString("title") ?: "",
+                                artist = rs.getString("artist") ?: "",
+                                key = rs.getString("key") ?: "",
+                                tempo = rs.getString("tempo") ?: "",
+                                capo = rs.getString("capo") ?: "",
+                                duration = rs.getString("duration") ?: "",
+                                time = if (hasSongTime) rs.getString("time") ?: "" else "",
+                                body = rs.getString("body") ?: "",
+                                youtubeUrl = rs.getString("youtube_url") ?: ""
                             )
                         )
                     }

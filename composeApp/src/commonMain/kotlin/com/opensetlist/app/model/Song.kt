@@ -13,6 +13,7 @@ data class Song(
     val tempo: String = "",
     val capo: String = "",
     val duration: String = "",
+    val time: String = "",
     val youtubeUrl: String = "",
     val sortOrder: Long = 0,
     val body: String = ""

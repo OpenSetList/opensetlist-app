@@ -18,7 +18,7 @@ App de setlists/cifras multiplataforma (Kotlin Multiplatform + Compose Multiplat
   - `ui/screens/` — telas: SongList, SetlistList, Setlist, Editor, ChordViewer, Artists, Tags, FilteredSongList, Settings
   - `ui/components/` — `ChordProView.kt`, `SideDrawer.kt`, `SortMenu.kt`, `BackHandler.kt`
   - `ui/theme/Theme.kt` — Material 3 (dark/light)
-- `composeApp/src/commonMain/sqldelight/com/opensetlist/app/data/db/` — `AppDatabase.sq` + `migrations/` (atual: 5 via 2.sqm/3.sqm/4.sqm)
+- `composeApp/src/commonMain/sqldelight/com/opensetlist/app/data/db/` — `AppDatabase.sq` + `migrations/` (atual: 6 via 2.sqm/3.sqm/4.sqm/5.sqm)
 - `androidMain/` / `iosMain/` / `desktopMain/` — apenas `actual`s e entry points (`MainActivity.kt`, `MainViewController.kt`, `Main.kt`)
 
 ## Plataforma desktop

@@ -6,6 +6,7 @@ CREATE TABLE song (
     tempo TEXT,
     capo TEXT,
     duration TEXT,
+    time TEXT,
     body TEXT NOT NULL,
     youtube_url TEXT,
     sort_order INTEGER NOT NULL DEFAULT 0
@@ -58,11 +59,11 @@ songCountByArtist:
 SELECT song.artist AS name, COUNT(*) AS count FROM song GROUP BY song.artist;
 
 insertSong:
-INSERT OR REPLACE INTO song(id, title, artist, key, tempo, capo, duration, body, youtube_url, sort_order)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO song(id, title, artist, key, tempo, capo, duration, time, body, youtube_url, sort_order)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updateSongBody:
-UPDATE song SET body = ?, title = ?, artist = ?, key = ?, tempo = ?, capo = ?, duration = ?, youtube_url = ? WHERE id = ?;
+UPDATE song SET body = ?, title = ?, artist = ?, key = ?, tempo = ?, capo = ?, duration = ?, time = ?, youtube_url = ? WHERE id = ?;
 
 updateSongArtist:
 UPDATE song SET artist = ? WHERE artist = ?;
