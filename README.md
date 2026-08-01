@@ -54,6 +54,7 @@ O projeto é livre e aberto: contribuições são bem-vindas.
 
 ### Configurações
 - **Modo escuro/claro** com persistência da escolha;
+- **Manter tela acesa** por contexto (visualização de música, playlist ou o tempo todo);
 - Todas as ações de backup/importação/exportação centralizadas.
 
 ## Roadmap
@@ -67,6 +68,7 @@ O projeto é livre e aberto: contribuições são bem-vindas.
 - [x] Backup completo (`.db`), exportação/importação de músicas e setlists (JSON)
 - [x] Importação de backup do SetList Helper
 - [x] Modo escuro persistente
+- [x] Manter tela acesa por contexto (visualização de música, playlist ou o tempo todo)
 - [x] Nuvem via seletor do sistema (export/import)
 - [x] Minificação/ofuscação Android (R8 + `proguard-rules.pro`) e backup com timestamp no nome
 
