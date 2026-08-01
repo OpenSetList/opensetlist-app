@@ -95,7 +95,8 @@ data class SetShareData(
  */
 data class SetlistHelperBackup(
     val songs: List<Song>,
-    val setlists: List<HelperSetlist>
+    val setlists: List<HelperSetlist>,
+    val songTags: Map<String, List<String>> = emptyMap()
 )
 
 /**

@@ -147,7 +147,10 @@ insertSongTag:
 INSERT OR REPLACE INTO song_tag(song_id, tag_id) VALUES (?, ?);
 
 selectAllSetlists:
-SELECT * FROM setlist ORDER BY name COLLATE NOCASE ASC;
+SELECT * FROM setlist ORDER BY date COLLATE NOCASE DESC;
+
+selectSetlistByName:
+SELECT * FROM setlist WHERE name = ? COLLATE NOCASE LIMIT 1;
 
 insertSetlist:
 INSERT OR REPLACE INTO setlist(id, name, date, location, time) VALUES (?, ?, ?, ?, ?);

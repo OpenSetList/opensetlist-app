@@ -54,6 +54,7 @@ data class ParsedSong(
     val tempo: String = "",
     val duration: String = "",
     val capo: String = "",
+    val youtube: String = "",
     val sorttitle: String = "",
     val tags: List<String> = emptyList(),
     val customMeta: Map<String, String> = emptyMap(),

@@ -36,3 +36,21 @@ fun formatDuration(totalSeconds: Long): String {
         else -> ""
     }
 }
+
+/**
+ * Formata segundos no formato de relógio usado no campo duração ("4:20", "1:02:30").
+ *
+ * @author ruanitto
+ */
+fun formatSecondsClock(totalSeconds: Long): String {
+    val secs = totalSeconds.coerceAtLeast(0)
+    val hours = secs / 3600
+    val minutes = (secs % 3600) / 60
+    val seconds = secs % 60
+    return when {
+        hours > 0 ->
+            "$hours:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
+        minutes > 0 -> "$minutes:${seconds.toString().padStart(2, '0')}"
+        else -> "${seconds}s"
+    }
+}

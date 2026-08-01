@@ -100,6 +100,7 @@ object ChordProParser {
             tempo = meta["tempo"] ?: "",
             duration = meta["duration"] ?: "",
             capo = meta["capo"] ?: "",
+            youtube = meta["youtube"] ?: "",
             sorttitle = meta["sorttitle"] ?: "",
             tags = tags,
             customMeta = customMeta,
