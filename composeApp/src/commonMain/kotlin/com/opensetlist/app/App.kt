@@ -370,7 +370,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
             currentScreen is Screen.ArtistList ||
             currentScreen is Screen.TagList ||
             currentScreen is Screen.Settings
-        val isChordView = currentScreen is Screen.ChordView || Screen.Editor
+        val hidesTopBar = currentScreen is Screen.ChordView || currentScreen is Screen.Editor
         AppBackHandler(enabled = !isTopLevel, onBack = ::goBack)
 
         ModalNavigationDrawer(
@@ -401,7 +401,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
             Scaffold(
                 snackbarHost = { SnackbarHost(snackbarHostState) },
                 topBar = {
-                    if (!isChordView) {
+                    if (!hidesTopBar) {
                         TopAppBar(
                             title = {
                                 Text(
@@ -505,7 +505,7 @@ fun App(driverFactory: DatabaseDriverFactory) {
                         )
                     }
                 },
-                contentWindowInsets = if (isChordView) {
+                contentWindowInsets = if (hidesTopBar) {
                     WindowInsets.systemBars.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
                 } else {
                     ScaffoldDefaults.contentWindowInsets
