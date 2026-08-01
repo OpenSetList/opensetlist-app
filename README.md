@@ -60,8 +60,8 @@ O projeto é livre e aberto: contribuições são bem-vindas.
 
 ### ✅ Já implementado
 - [x] CRUD de músicas com busca e ordenação
-- [x] Editor ChordPro (título, artista, tom, BPM, capo, duração, YouTube, tags)
-- [x] Visualizador: transposição, rolagem automática, busca, ocultar acordes, pinch-to-zoom, pedal Bluetooth
+- [x] Editor ChordPro (título, artista, tom, compasso, BPM, capo, duração, YouTube, tags)
+- [x] Visualizador: transposição, rolagem automática, ocultar acordes, pinch-to-zoom, pedal Bluetooth, menu flutuante (compartilhar/editar), tela cheia no toque central
 - [x] CRUD de setlists com reordenação por arrastar e dados da gig
 - [x] Artistas e tags
 - [x] Backup completo (`.db`), exportação/importação de músicas e setlists (JSON)
@@ -71,6 +71,7 @@ O projeto é livre e aberto: contribuições são bem-vindas.
 - [x] Minificação/ofuscação Android (R8 + `proguard-rules.pro`) e backup com timestamp no nome
 
 ### 🚀 Previsto
+- [ ] **Metrônomo simples** — metrônomo com BPM e compasso para acompanhar durante o ensaio/apresentação
 - [ ] **Visualização web via host local da setlist** — servir a setlist atual em rede local (HTTP embutido + página HTML/QR code) para quem não tem o app instalado abrir no navegador/celular
 - [ ] **Sincronização por conta** — login em conta cloud e sincronização automática entre dispositivos (OAuth real com Google Drive/Dropbox)
 - [ ] **Obter cifras da internet** — busca e importação de cifras de APIs públicas de música

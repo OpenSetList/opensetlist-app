@@ -138,6 +138,7 @@ object DataTransfer {
             "\"tempo\":${quote(s.tempo)}," +
             "\"capo\":${quote(s.capo)}," +
             "\"duration\":${quote(s.duration)}," +
+            "\"time\":${quote(s.time)}," +
             "\"youtubeUrl\":${quote(s.youtubeUrl)}," +
             "\"body\":${quote(s.body)}}"
     }
@@ -150,6 +151,7 @@ object DataTransfer {
         tempo = (m["tempo"] as? String) ?: "",
         capo = (m["capo"] as? String) ?: "",
         duration = (m["duration"] as? String) ?: "",
+        time = (m["time"] as? String) ?: "",
         youtubeUrl = (m["youtubeUrl"] as? String) ?: "",
         body = (m["body"] as? String) ?: ""
     )

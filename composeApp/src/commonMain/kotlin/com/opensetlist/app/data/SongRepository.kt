@@ -30,7 +30,7 @@ class SongRepository(private val database: AppDatabase) {
             ensureArtist(song.artist)
             queries.insertSong(
                 song.id, song.title, song.artist, song.key, song.tempo, song.capo,
-                song.duration.ifBlank { null }, song.body,
+                song.duration.ifBlank { null }, song.time.ifBlank { null }, song.body,
                 song.youtubeUrl.ifBlank { null }, index.toLong()
             )
         }
@@ -67,6 +67,7 @@ class SongRepository(private val database: AppDatabase) {
             tempo = song.tempo.ifBlank { null },
             capo = song.capo.ifBlank { null },
             duration = song.duration.ifBlank { null },
+            time = song.time.ifBlank { null },
             body = song.body,
             youtube_url = song.youtubeUrl.ifBlank { null },
             sort_order = sortOrder
@@ -95,6 +96,7 @@ class SongRepository(private val database: AppDatabase) {
             key = parsed.key,
             tempo = parsed.tempo,
             capo = parsed.capo,
+            time = parsed.time,
             body = body
         )
         return importSongWithDedup(song)
@@ -184,6 +186,7 @@ class SongRepository(private val database: AppDatabase) {
                     song.id, song.title, song.artist,
                     song.key.ifBlank { null }, song.tempo.ifBlank { null },
                     song.capo.ifBlank { null }, song.duration.ifBlank { null },
+                    song.time.ifBlank { null },
                     song.body,
                     song.youtubeUrl.ifBlank { null }, index.toLong()
                 )
@@ -294,6 +297,7 @@ class SongRepository(private val database: AppDatabase) {
             tempo = source.tempo.ifBlank { existing?.tempo ?: null },
             capo = source.capo.ifBlank { existing?.capo ?: null },
             duration = source.duration.ifBlank { existing?.duration ?: null },
+            time = source.time.ifBlank { existing?.time ?: null },
             youtube_url = source.youtubeUrl.ifBlank { existing?.youtube_url ?: null },
             id = id
         )
@@ -412,6 +416,7 @@ class SongRepository(private val database: AppDatabase) {
         tempo = tempo ?: "",
         capo = capo ?: "",
         duration = duration ?: "",
+        time = time ?: "",
         youtubeUrl = youtube_url ?: "",
         sortOrder = sort_order,
         body = body

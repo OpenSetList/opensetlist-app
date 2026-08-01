@@ -113,8 +113,13 @@ private fun parseAppDatabase(file: File): BackupData? {
         }
 
         val songs = mutableListOf<Song>()
+        val hasSongTime = columnExists(db, "song", "time")
         db.rawQuery(
-            "SELECT id, title, artist, key, tempo, capo, duration, body, youtube_url FROM song",
+            if (hasSongTime) {
+                "SELECT id, title, artist, key, tempo, capo, duration, time, body, youtube_url FROM song"
+            } else {
+                "SELECT id, title, artist, key, tempo, capo, duration, body, youtube_url FROM song"
+            },
             null
         ).use { cursor ->
             while (cursor.moveToNext()) {
@@ -127,6 +132,7 @@ private fun parseAppDatabase(file: File): BackupData? {
                         tempo = cursor.getStringOrNullByName("tempo") ?: "",
                         capo = cursor.getStringOrNullByName("capo") ?: "",
                         duration = cursor.getStringOrNullByName("duration") ?: "",
+                        time = if (hasSongTime) cursor.getStringOrNullByName("time") ?: "" else "",
                         youtubeUrl = cursor.getStringOrNullByName("youtube_url") ?: "",
                         body = cursor.getStringOrNullByName("body") ?: ""
                     )
@@ -189,6 +195,15 @@ private fun tableExists(db: SQLiteDatabase, table: String): Boolean {
         "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
         arrayOf(table)
     ).use { cursor -> return cursor.moveToNext() }
+}
+
+private fun columnExists(db: SQLiteDatabase, table: String, column: String): Boolean {
+    db.rawQuery("PRAGMA table_info($table)", null).use { cursor ->
+        while (cursor.moveToNext()) {
+            if (cursor.getStringOrNullByName("name") == column) return true
+        }
+    }
+    return false
 }
 
 private fun Cursor.getLongByName(column: String): Long = getLong(getColumnIndexOrThrow(column))

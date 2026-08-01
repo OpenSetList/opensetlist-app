@@ -70,6 +70,7 @@ fun EditorScreen(
     var tempo by remember(song.id) { mutableStateOf(song.tempo) }
     var capo by remember(song.id) { mutableStateOf(song.capo) }
     var duration by remember(song.id) { mutableStateOf(song.duration) }
+    var time by remember(song.id) { mutableStateOf(song.time) }
     var youtubeUrl by remember(song.id) { mutableStateOf(song.youtubeUrl) }
     var selectedTagIds by remember(song.id) { mutableStateOf(initialTags.map { it.id }.toSet()) }
     var newTagText by remember { mutableStateOf("") }
@@ -92,6 +93,7 @@ fun EditorScreen(
             tempo = tempo.trim().ifBlank { parsed.tempo.ifBlank { song.tempo } },
             capo = capo.trim().ifBlank { parsed.capo.ifBlank { song.capo } },
             duration = duration.trim().ifBlank { song.duration },
+            time = time.trim().ifBlank { parsed.time.ifBlank { song.time } },
             youtubeUrl = youtubeUrl.trim()
         )
         onSave(updated, selectedTagIds.toList())
@@ -193,12 +195,27 @@ fun EditorScreen(
                     modifier = Modifier.weight(1f)
                 )
                 OutlinedTextField(
+                    value = time,
+                    onValueChange = { time = it },
+                    label = { Text(AppStrings.compassoLabel) },
+                    placeholder = { Text(AppStrings.compassoPlaceholder) },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
                     value = tempo,
                     onValueChange = { tempo = it },
                     label = { Text(AppStrings.bpmLabel) },
                     singleLine = true,
                     modifier = Modifier.weight(1f)
                 )
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 OutlinedTextField(
                     value = capo,
                     onValueChange = { capo = it },

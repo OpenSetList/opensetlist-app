@@ -50,10 +50,12 @@ object AppStrings {
     val bpmLabel = "BPM"
     val capoLabel = "Capo"
     val durationLabel = "Duração"
+    val compassoLabel = "Compasso"
     val youtubeLinkLabel = "Link do YouTube"
     val bodyLabel = "Letra / Cifra (ChordPro)"
 
     val durationPlaceholder = "3:45"
+    val compassoPlaceholder = "4/4"
     val youtubePlaceholder = "https://youtube.com/watch?v=..."
     val datePlaceholder = "ex.: 12/05/2026"
     val locationPlaceholder = "ex.: Bar do Zé"
