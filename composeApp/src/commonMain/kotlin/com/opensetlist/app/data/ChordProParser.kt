@@ -16,6 +16,7 @@ object ChordProParser {
         val tags = mutableListOf<String>()
         val customMeta = mutableMapOf<String, String>()
         val lines = mutableListOf<ChordProLine>()
+        var inChorus = false
 
         for (rawLine in body.lines()) {
             val directive = tryParseDirective(rawLine)
@@ -35,27 +36,34 @@ object ChordProParser {
                                 ChordProLine(
                                     segments = listOf(ChordProSegment(text = label)),
                                     isComment = true,
-                                    commentStyle = resolved.commentStyle ?: com.opensetlist.app.model.CommentStyle.PLAIN
+                                    commentStyle = resolved.commentStyle ?: com.opensetlist.app.model.CommentStyle.PLAIN,
+                                    isChorus = inChorus
                                 )
                             )
                         }
                         ChordProDirectives.Kind.SECTION_START -> {
+                            inChorus = resolved.name == "start_of_chorus"
                             val label = ChordProDirectives.sectionLabel(resolved, arg)
                             lines.add(
                                 ChordProLine(
                                     segments = listOf(ChordProSegment(text = label)),
                                     isSection = true,
-                                    sectionName = label
+                                    sectionName = label,
+                                    isChorus = inChorus
                                 )
                             )
                         }
-                        ChordProDirectives.Kind.SECTION_END -> Unit
+                        ChordProDirectives.Kind.SECTION_END -> {
+                            inChorus = false
+                        }
                         ChordProDirectives.Kind.CHORUS -> {
+                            val label = ChordProDirectives.sectionLabel(resolved, arg)
                             lines.add(
                                 ChordProLine(
-                                    segments = listOf(ChordProSegment(text = "Chorus")),
+                                    segments = listOf(ChordProSegment(text = label)),
                                     isSection = true,
-                                    sectionName = "Chorus"
+                                    sectionName = label,
+                                    isChorus = true
                                 )
                             )
                         }
@@ -63,7 +71,10 @@ object ChordProParser {
                     }
                 } else if (ChordProDirectives.isConditionalName(rawName) && arg != null) {
                     lines.add(
-                        ChordProLine(segments = listOf(ChordProSegment(text = arg)))
+                        ChordProLine(
+                            segments = listOf(ChordProSegment(text = arg)),
+                            isChorus = inChorus
+                        )
                     )
                 } else if (arg == null) {
                     val label = rawName.trim()
@@ -71,16 +82,20 @@ object ChordProParser {
                         ChordProLine(
                             segments = listOf(ChordProSegment(text = label)),
                             isSection = true,
-                            sectionName = label
+                            sectionName = label,
+                            isChorus = inChorus
                         )
                     )
                 }
             } else {
                 lines.add(
                     if (rawLine.isBlank()) {
-                        ChordProLine(segments = listOf(ChordProSegment(text = "")))
+                        ChordProLine(
+                            segments = listOf(ChordProSegment(text = "")),
+                            isChorus = inChorus
+                        )
                     } else {
-                        parseContentLine(rawLine, meta, tags, customMeta)
+                        parseContentLine(rawLine, meta, tags, customMeta).copy(isChorus = inChorus)
                     }
                 )
             }
