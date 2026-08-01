@@ -96,10 +96,18 @@ class SongRepository(private val database: AppDatabase) {
             key = parsed.key,
             tempo = parsed.tempo,
             capo = parsed.capo,
+            duration = parsed.duration,
             time = parsed.time,
+            youtubeUrl = parsed.youtube,
             body = body
         )
-        return importSongWithDedup(song)
+        var imported: Song? = null
+        database.transaction {
+            val result = importSongWithDedup(song)
+            addTagsToSong(result.id, parsed.tags)
+            imported = result
+        }
+        return imported ?: song
     }
 
     fun newSong(): Song = Song(
@@ -256,19 +264,41 @@ class SongRepository(private val database: AppDatabase) {
             data.songs.forEach { source ->
                 val newSong = importSongWithDedup(source)
                 idMap[source.id] = newSong.id
+                data.songTags[source.id]?.let { tagNames ->
+                    addTagsToSong(newSong.id, tagNames)
+                }
                 songCount++
             }
             data.setlists.forEach { helper ->
-                val setId = "setlist_${System.currentTimeMillis()}_${kotlin.random.Random.nextInt(1000)}"
-                queries.insertSetlist(
-                    setId, helper.name,
-                    helper.date.ifBlank { null },
-                    helper.location.ifBlank { null },
+                val mappedSongIds = helper.songIds.mapNotNull { idMap[it] }
+                val existing = if (helper.name.isNotBlank()) {
+                    queries.selectSetlistByName(helper.name).executeAsOneOrNull()
+                } else {
                     null
-                )
-                helper.songIds.forEachIndexed { pos, originalId ->
-                    val newSongId = idMap[originalId] ?: return@forEachIndexed
-                    queries.insertSetlistSong(setId, newSongId, pos.toLong())
+                }
+                if (existing != null) {
+                    queries.updateSetlistInfo(
+                        helper.date.ifBlank { null },
+                        helper.location.ifBlank { null },
+                        null,
+                        existing.id
+                    )
+                    queries.deleteAllSetlistSongs(existing.id)
+                    mappedSongIds.forEachIndexed { pos, songId ->
+                        queries.insertSetlistSong(existing.id, songId, pos.toLong())
+                    }
+                } else {
+                    val setId =
+                        "setlist_${System.currentTimeMillis()}_${kotlin.random.Random.nextInt(1000)}"
+                    queries.insertSetlist(
+                        setId, helper.name,
+                        helper.date.ifBlank { null },
+                        helper.location.ifBlank { null },
+                        null
+                    )
+                    mappedSongIds.forEachIndexed { pos, songId ->
+                        queries.insertSetlistSong(setId, songId, pos.toLong())
+                    }
                 }
                 setCount++
             }
@@ -285,6 +315,16 @@ class SongRepository(private val database: AppDatabase) {
         val newSong = source.copy(id = generateId())
         upsert(newSong)
         return newSong
+    }
+
+    private fun addTagsToSong(songId: String, tagNames: List<String>) {
+        val names = tagNames.map { it.trim() }.filter { it.isNotBlank() }.distinct()
+        if (names.isEmpty()) return
+        val tagIds = names.map { createTag(it).id }
+        val existingIds = queries.selectTagsForSong(songId).executeAsList().map { it.id }
+        (existingIds + tagIds).distinct().forEach { tagId ->
+            queries.insertSongTag(songId, tagId)
+        }
     }
 
     private fun updateSongFromSource(id: String, source: Song) {

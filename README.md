@@ -48,7 +48,7 @@ O projeto é livre e aberto: contribuições são bem-vindas.
 - **Exportar/importar backup completo** do banco (`.db`);
 - **Exportar/importar músicas** em lote (JSON);
 - **Importar setlist compartilhada** (JSON);
-- **Importar backup do SetList Helper** (`.db`);
+- **Importar backup do SetList Helper** (`.db`) — músicas, setlists, tags/gêneros, youtube, compasso, bpm, duração e observações; atualiza os dados existentes sem duplicar;
 - **Importar/exportar `.pro`** (ChordPro);
 - **Nuvem** — exportar/importar backup via seletor do sistema (Google Drive/Dropbox, SAF no Android, picker no desktop).
 
@@ -66,7 +66,7 @@ O projeto é livre e aberto: contribuições são bem-vindas.
 - [x] CRUD de setlists com reordenação por arrastar e dados da gig
 - [x] Artistas e tags
 - [x] Backup completo (`.db`), exportação/importação de músicas e setlists (JSON)
-- [x] Importação de backup do SetList Helper
+- [x] Importação de backup do SetList Helper (músicas, setlists, tags, gêneros, youtube, compasso, bpm, duração, observações) com atualização sem duplicar
 - [x] Modo escuro persistente
 - [x] Manter tela acesa por contexto (visualização de música, playlist ou o tempo todo)
 - [x] Nuvem via seletor do sistema (export/import)

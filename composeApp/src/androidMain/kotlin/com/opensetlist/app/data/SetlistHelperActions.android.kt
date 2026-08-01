@@ -76,9 +76,42 @@ private fun parseSetlistHelperDb(file: File): SetlistHelperBackup? {
             }
         }
 
+        val genres = mutableMapOf<Long, String>()
+        if (tableExists(db, "Genre")) {
+            db.rawQuery("SELECT _id, name FROM Genre", null).use { cursor ->
+                while (cursor.moveToNext()) {
+                    genres[cursor.getLongByName("_id")] = cursor.getStringByName("name")
+                }
+            }
+        }
+
+        val tagNamesById = mutableMapOf<Long, String>()
+        if (tableExists(db, "Tag")) {
+            db.rawQuery("SELECT _id, name FROM Tag", null).use { cursor ->
+                while (cursor.moveToNext()) {
+                    tagNamesById[cursor.getLongByName("_id")] = cursor.getStringByName("name")
+                }
+            }
+        }
+
+        val songTagNames = mutableMapOf<Long, MutableList<String>>()
+        if (tableExists(db, "TagSongs")) {
+            db.rawQuery("SELECT song_id, tag_id FROM TagSongs", null).use { cursor ->
+                while (cursor.moveToNext()) {
+                    val songId = cursor.getLongByName("song_id")
+                    val tagName = cursor.getLongOrNullByName("tag_id")?.let { tagNamesById[it] }
+                    if (tagName != null) {
+                        songTagNames.getOrPut(songId) { mutableListOf() }.add(tagName)
+                    }
+                }
+            }
+        }
+
         val songs = mutableListOf<Song>()
         db.rawQuery(
-            "SELECT _id, name, song_key, tempo, artist_id, lyrics FROM songs " +
+            "SELECT _id, name, song_key, tempo, artist_id, genre_id, youtube_url, " +
+                "time_signature_top, time_signature_bottom, song_length, notes, other, lyrics " +
+                "FROM songs " +
                 "WHERE deleted = 0 OR deleted IS NULL", null
         ).use { cursor ->
             while (cursor.moveToNext()) {
@@ -89,7 +122,25 @@ private fun parseSetlistHelperDb(file: File): SetlistHelperBackup? {
                 val key = cursor.getStringOrNullByName("song_key") ?: ""
                 val tempo = cursor.getLongOrNullByName("tempo")
                     ?.let { if (it > 0) it.toString() else "" } ?: ""
+                val time = SetlistHelperMapping.buildTimeSignature(
+                    cursor.getLongOrNullByName("time_signature_top"),
+                    cursor.getLongOrNullByName("time_signature_bottom")
+                )
+                val duration = cursor.getLongOrNullByName("song_length")
+                    ?.takeIf { it > 0 }
+                    ?.let { formatSecondsClock(it) } ?: ""
+                val youtube = cursor.getStringOrNullByName("youtube_url") ?: ""
                 val lyrics = cursor.getStringOrNullByName("lyrics") ?: ""
+                val body = SetlistHelperMapping.buildImportBody(
+                    cursor.getStringOrNullByName("notes") ?: "",
+                    cursor.getStringOrNullByName("other") ?: "",
+                    lyrics
+                )
+                val genreName = cursor.getLongOrNullByName("genre_id")?.let { genres[it] }
+                if (genreName != null) {
+                    songTagNames.getOrPut(cursor.getLongByName("_id")) { mutableListOf() }
+                        .add(genreName)
+                }
                 songs.add(
                     Song(
                         id = id,
@@ -98,11 +149,16 @@ private fun parseSetlistHelperDb(file: File): SetlistHelperBackup? {
                         key = key,
                         tempo = tempo,
                         capo = "",
-                        body = lyrics
+                        duration = duration,
+                        time = time,
+                        youtubeUrl = youtube,
+                        body = body
                     )
                 )
             }
         }
+
+        val songTags = songTagNames.mapKeys { it.key.toString() }.mapValues { it.value.distinct() }
 
         val importedSongIds = songs.map { it.id }.toSet()
 
@@ -147,7 +203,7 @@ private fun parseSetlistHelperDb(file: File): SetlistHelperBackup? {
             }
         }
 
-        return SetlistHelperBackup(songs, setlists)
+        return SetlistHelperBackup(songs, setlists, songTags)
     } finally {
         db.close()
     }

@@ -43,16 +43,20 @@ object ChordProDirectives {
         "copyright" to "copyright",
         "album" to "album",
         "year" to "year",
-        "key" to "key", "k" to "key",
-        "time" to "time",
-        "tempo" to "tempo",
-        "duration" to "duration",
+        "key" to "key", "k" to "key", "tom" to "key",
+        "time" to "time", "compasso" to "time", "time_signature" to "time",
+        "tempo" to "tempo", "bpm" to "tempo",
+        "duration" to "duration", "duracao" to "duration", "duração" to "duration",
         "capo" to "capo",
+        "youtube" to "youtube", "youtube_url" to "youtube", "url" to "youtube",
         "tag" to "tag",
         "meta" to "meta",
 
         // Formatting / comments
         "comment" to "comment", "c" to "comment",
+        "remark" to "remark",
+        "comentario" to "comment", "comentário" to "comment",
+        "observacao" to "comment", "observação" to "comment",
         "highlight" to "highlight",
         "comment_italic" to "comment_italic", "ci" to "comment_italic",
         "comment_box" to "comment_box", "cb" to "comment_box",
@@ -149,10 +153,12 @@ object ChordProDirectives {
         add("tempo", Kind.METADATA, metadataKey = "tempo")
         add("duration", Kind.METADATA, metadataKey = "duration")
         add("capo", Kind.METADATA, metadataKey = "capo")
+        add("youtube", Kind.METADATA, metadataKey = "youtube")
         add("tag", Kind.METADATA, metadataKey = "tag")
         add("meta", Kind.METADATA, metadataKey = "meta")
 
         add("comment", Kind.COMMENT, commentStyle = CommentStyle.PLAIN)
+        add("remark", Kind.COMMENT, commentStyle = CommentStyle.PLAIN)
         add("highlight", Kind.COMMENT, commentStyle = CommentStyle.HIGHLIGHT)
         add("comment_italic", Kind.COMMENT, commentStyle = CommentStyle.ITALIC)
         add("comment_box", Kind.COMMENT, commentStyle = CommentStyle.BOX)
