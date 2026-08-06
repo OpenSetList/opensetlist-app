@@ -165,24 +165,6 @@ fun ChordViewerScreen(
                 TopAppBar(
                     title = {
                         Box(modifier = Modifier.fillMaxWidth()) {
-                            if (pagerState.currentPage > 0) {
-                                Text(
-                                    text = songs[pagerState.currentPage - 1].title,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier
-                                        .align(Alignment.CenterStart)
-                                        .widthIn(max = 120.dp)
-                                        .padding(end = 12.dp)
-                                        .clickable {
-                                            scope.launch {
-                                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                                            }
-                                        }
-                                )
-                            }
                             Column(
                                 modifier = Modifier.align(Alignment.Center),
                                 horizontalAlignment = Alignment.CenterHorizontally
@@ -201,24 +183,6 @@ fun ChordViewerScreen(
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
-                            if (pagerState.currentPage < songs.lastIndex) {
-                                Text(
-                                    text = songs[pagerState.currentPage + 1].title,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier
-                                        .align(Alignment.CenterEnd)
-                                        .widthIn(max = 120.dp)
-                                        .padding(start = 12.dp)
-                                        .clickable {
-                                            scope.launch {
-                                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                                            }
-                                        }
-                                )
-                            }
                         }
                     },
                     navigationIcon = {
@@ -227,6 +191,55 @@ fun ChordViewerScreen(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = AppStrings.back
                             )
+                        }
+                    },
+                    actions = {
+                        Box {
+                            IconButton(onClick = { menuOpen = !menuOpen }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = AppStrings.moreOptions
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = menuOpen,
+                                onDismissRequest = { menuOpen = false },
+                                modifier = Modifier.align(Alignment.TopEnd)
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(AppStrings.edit) },
+                                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                                    onClick = {
+                                        menuOpen = false
+                                        onEdit(currentSong)
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(AppStrings.exportPro) },
+                                    leadingIcon = { Icon(Icons.Default.Share, contentDescription = null) },
+                                    onClick = {
+                                        menuOpen = false
+                                        fileActions.saveFile("${currentSong.title}.pro", "application/octet-stream")
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(AppStrings.viewOnYoutube) },
+                                    leadingIcon = { Icon(Icons.Default.Visibility, contentDescription = null) },
+                                    enabled = currentSong.youtubeUrl.isNotBlank(),
+                                    onClick = {
+                                        menuOpen = false
+                                        fileActions.openUrl(currentSong.youtubeUrl)
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(AppStrings.deleteSong) },
+                                    leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
+                                    onClick = {
+                                        menuOpen = false
+                                        onDelete(currentSong)
+                                    }
+                                )
+                            }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -253,62 +266,56 @@ fun ChordViewerScreen(
                 )
             }
         },
-        floatingActionButton = {
-            if (!isFullscreen) {
-                Box {
-                    FloatingActionButton(onClick = { menuOpen = !menuOpen }) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = AppStrings.moreOptions
+        modifier = modifier
+    ) { padding ->
+        Column(modifier = Modifier.padding(padding)) {
+            if (songs.size > 1 && !isFullscreen) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 2.dp),
+                ) {
+                    if (pagerState.currentPage > 0) {
+                        Text(
+                            text = songs[pagerState.currentPage - 1].title,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .align(Alignment.CenterStart)
+                                .widthIn(max = 120.dp)
+                                .padding(end = 12.dp)
+                                .clickable {
+                                    scope.launch {
+                                        pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                                    }
+                                }
                         )
                     }
-                    DropdownMenu(
-                        expanded = menuOpen,
-                        onDismissRequest = { menuOpen = false },
-                        modifier = Modifier.align(Alignment.TopEnd)
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(AppStrings.edit) },
-                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                            onClick = {
-                                menuOpen = false
-                                onEdit(currentSong)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(AppStrings.exportPro) },
-                            leadingIcon = { Icon(Icons.Default.Share, contentDescription = null) },
-                            onClick = {
-                                menuOpen = false
-                                fileActions.saveFile("${currentSong.title}.pro", "application/octet-stream")
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(AppStrings.viewOnYoutube) },
-                            leadingIcon = { Icon(Icons.Default.Visibility, contentDescription = null) },
-                            enabled = currentSong.youtubeUrl.isNotBlank(),
-                            onClick = {
-                                menuOpen = false
-                                fileActions.openUrl(currentSong.youtubeUrl)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(AppStrings.deleteSong) },
-                            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
-                            onClick = {
-                                menuOpen = false
-                                onDelete(currentSong)
-                            }
+                    if (pagerState.currentPage < songs.lastIndex) {
+                        Text(
+                            text = songs[pagerState.currentPage + 1].title,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .widthIn(max = 120.dp)
+                                .padding(start = 12.dp)
+                                .clickable {
+                                    scope.launch {
+                                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                    }
+                                }
                         )
                     }
                 }
             }
-        },
-        modifier = modifier
-    ) { padding ->
-        Column(modifier = Modifier.padding(padding)) {
             val currentTags = songTags[currentSong.id].orEmpty()
-            if (currentTags.isNotEmpty()) {
+            if (currentTags.isNotEmpty() && !isFullscreen) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
