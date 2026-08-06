@@ -2,8 +2,11 @@ package com.opensetlist.app.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -42,6 +45,7 @@ import com.opensetlist.app.model.ChordProLine
 import com.opensetlist.app.model.ChordProSegment
 import com.opensetlist.app.model.CommentStyle
 import com.opensetlist.app.model.ParsedSong
+import com.opensetlist.app.model.Tag
 
 /**
  * Renderizador de uma música parseada em ChordPro, com acordes sobrepostos ao texto.
@@ -51,6 +55,7 @@ import com.opensetlist.app.model.ParsedSong
 @Composable
 fun ChordProView(
     song: ParsedSong,
+    tags: List<Tag>,
     hideChords: Boolean = false,
     fontSize: Float = 14f,
     highlightQuery: String? = null,
@@ -62,8 +67,31 @@ fun ChordProView(
         modifier = modifier
             .fillMaxWidth()
             .verticalScroll(scrollState)
-            .padding(16.dp)
+            .padding(start = 16.dp, end = 16.dp, top = 2.dp, bottom = 4.dp)
     ) {
+        if (tags.isNotEmpty()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                tags.forEach { tag ->
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = MaterialTheme.colorScheme.secondaryContainer
+                    ) {
+                        Text(
+                            text = tag.name,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+            }
+        }
         Text(
             text = song.title,
             style = MaterialTheme.typography.headlineMedium,

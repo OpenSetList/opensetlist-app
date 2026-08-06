@@ -39,7 +39,6 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -314,30 +313,6 @@ fun ChordViewerScreen(
                     }
                 }
             }
-            val currentTags = songTags[currentSong.id].orEmpty()
-            if (currentTags.isNotEmpty() && !isFullscreen) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState())
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    currentTags.forEach { tag ->
-                        Surface(
-                            shape = MaterialTheme.shapes.small,
-                            color = MaterialTheme.colorScheme.secondaryContainer
-                        ) {
-                            Text(
-                                text = tag.name,
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                            )
-                        }
-                    }
-                }
-            }
 
             HorizontalPager(
                 state = pagerState,
@@ -371,6 +346,7 @@ fun ChordViewerScreen(
                 ) {
                     ChordProView(
                         song = pageParsed,
+                        tags = songTags[currentSong.id].orEmpty(),
                         hideChords = hideChords,
                         fontSize = fontSize,
                         scrollState = scrollState,
