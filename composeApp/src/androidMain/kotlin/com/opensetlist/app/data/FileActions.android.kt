@@ -1,13 +1,18 @@
 package com.opensetlist.app.data
 
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.provider.DocumentsContract
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import java.io.File
@@ -23,11 +28,14 @@ actual fun rememberFileActions(
     onImported: (String) -> Unit,
     onExported: (Boolean) -> Unit,
     onShared: (Boolean) -> Unit,
-    getExportBytes: () -> ByteArray?
+    getExportBytes: () -> ByteArray?,
+    onProBatchExported: (saved: Int, failed: Int) -> Unit
 ): FileActions {
     val context = LocalContext.current
     val currentContent = rememberUpdatedState(getExportContent)
     val currentBytes = rememberUpdatedState(getExportBytes)
+
+    var pendingProBatch by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
 
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -85,6 +93,41 @@ actual fun rememberFileActions(
                 }
             }.getOrDefault(false)
             onExported(ok)
+        }
+    }
+
+    val proBatchLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { treeUri: Uri? ->
+        if (treeUri != null) {
+            var saved = 0
+            val dirUri = DocumentsContract.buildDocumentUriUsingTree(
+                treeUri,
+                DocumentsContract.getTreeDocumentId(treeUri)
+            )
+            for ((fileName, content) in pendingProBatch) {
+                val ok = runCatching {
+                    val cleanName = sanitizeFileName(fileName)
+                    val existing = findDocumentUri(context.contentResolver, treeUri, cleanName)
+                    if (existing != null) {
+                        context.contentResolver.openOutputStream(existing, "wt")?.use {
+                            it.write(content.toByteArray())
+                        } != null
+                    } else {
+                        val doc = DocumentsContract.createDocument(
+                            context.contentResolver,
+                            dirUri,
+                            "application/octet-stream",
+                            cleanName
+                        ) ?: return@runCatching false
+                        context.contentResolver.openOutputStream(doc)?.use {
+                            it.write(content.toByteArray())
+                        } != null
+                    }
+                }.getOrDefault(false)
+                if (ok) saved++
+            }
+            onProBatchExported(saved, pendingProBatch.size - saved)
         }
     }
 
@@ -162,6 +205,10 @@ actual fun rememberFileActions(
                         Intent(Intent.ACTION_VIEW, uri)
                     )
                 }
+            },
+            saveProBatch = { files ->
+                pendingProBatch = files
+                proBatchLauncher.launch(null)
             }
         )
     }
@@ -186,4 +233,23 @@ private fun writeSharedFile(context: Context, fileName: String, content: String)
 }
 
 private fun sanitizeFileName(name: String): String =
-    name.replace(Regex("[^A-Za-z0-9._\\- ]"), "_")
+    name.replace(Regex("[^\\p{L}\\p{N}._\\- ]"), "_")
+
+private fun findDocumentUri(resolver: ContentResolver, treeUri: Uri, displayName: String): Uri? {
+    val treeDocId = DocumentsContract.getTreeDocumentId(treeUri)
+    val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, treeDocId)
+    val projection = arrayOf(
+        DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+        DocumentsContract.Document.COLUMN_DOCUMENT_ID
+    )
+    resolver.query(childrenUri, projection, null, null, null)?.use { cursor ->
+        val nameIdx = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
+        val idIdx = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
+        while (cursor.moveToNext()) {
+            if (cursor.getString(nameIdx) == displayName) {
+                return DocumentsContract.buildDocumentUriUsingTree(treeUri, cursor.getString(idIdx))
+            }
+        }
+    }
+    return null
+}

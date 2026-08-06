@@ -326,7 +326,10 @@ fun App(
             showMessage(if (ok) AppStrings.fileSaved else AppStrings.fileSaveFailed)
         },
         onShared = { showMessage(AppStrings.contentShared) },
-        getExportBytes = { pendingExportBytes }
+        getExportBytes = { pendingExportBytes },
+        onProBatchExported = { saved, failed ->
+            showMessage(AppStrings.proBatchExported(saved, failed))
+        }
     )
 
     val backupActions = rememberBackupActions(
@@ -373,8 +376,17 @@ fun App(
     }
 
     fun exportAllSongs(share: Boolean) {
-        val json = DataTransfer.buildSongsBundleJson(repository.allSongs())
-        doExport("setlist_musicas.osl", OSETLIST_MIME, json, share)
+        if (share) {
+            val json = DataTransfer.buildSongsBundleJson(repository.allSongs())
+            doExport("setlist_musicas.osl", OSETLIST_MIME, json, share = true)
+            return
+        }
+        val songs = repository.allSongs()
+        if (songs.isEmpty()) {
+            showMessage(AppStrings.noSongsToExport)
+            return
+        }
+        fileActions.saveProBatch(songs.map { song -> "${song.title}.pro" to buildProFileContent(song) })
     }
 
     fun shareSetlist(setlist: Setlist) {
@@ -1182,4 +1194,15 @@ private fun NameDialog(
             }
         }
     )
+}
+
+private fun buildProFileContent(song: Song): String = buildString {
+    appendLine("{title:${song.title}}")
+    if (song.artist.isNotBlank()) appendLine("{artist:${song.artist}}")
+    if (song.key.isNotBlank()) appendLine("{key:${song.key}}")
+    if (song.tempo.isNotBlank()) appendLine("{tempo:${song.tempo}}")
+    if (song.capo.isNotBlank()) appendLine("{capo:${song.capo}}")
+    if (song.time.isNotBlank()) appendLine("{time:${song.time}}")
+    appendLine()
+    append(song.body)
 }

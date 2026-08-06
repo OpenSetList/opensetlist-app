@@ -19,7 +19,8 @@ actual fun rememberFileActions(
     onImported: (String) -> Unit,
     onExported: (Boolean) -> Unit,
     onShared: (Boolean) -> Unit,
-    getExportBytes: () -> ByteArray?
+    getExportBytes: () -> ByteArray?,
+    onProBatchExported: (saved: Int, failed: Int) -> Unit
 ): FileActions {
     val currentContent = rememberUpdatedState(getExportContent)
     val currentBytes = rememberUpdatedState(getExportBytes)
@@ -79,6 +80,24 @@ actual fun rememberFileActions(
                         Desktop.getDesktop().browse(URI(url))
                     }
                 }
+            },
+            saveProBatch = { files ->
+                val chooser = JFileChooser().apply {
+                    dialogTitle = "Exportar músicas (.pro)"
+                    fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+                }
+                if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                    val dir = chooser.selectedFile
+                    var saved = 0
+                    for ((fileName, content) in files) {
+                        val ok = runCatching {
+                            File(dir, sanitizeFileName(fileName)).writeText(content)
+                            true
+                        }.getOrDefault(false)
+                        if (ok) saved++
+                    }
+                    onProBatchExported(saved, files.size - saved)
+                }
             }
         )
     }
@@ -88,4 +107,4 @@ private fun sharedDir(): File =
     File(System.getProperty("user.home"), ".opensetlist/shared").apply { mkdirs() }
 
 private fun sanitizeFileName(name: String): String =
-    name.replace(Regex("[^A-Za-z0-9._\\- ]"), "_")
+    name.replace(Regex("[^\\p{L}\\p{N}._\\- ]"), "_")

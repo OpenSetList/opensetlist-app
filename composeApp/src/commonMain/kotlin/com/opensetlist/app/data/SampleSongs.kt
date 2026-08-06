@@ -110,23 +110,18 @@ Que [Am7]nem posso explicar
 {artist: Tom Jobim}
 {key: Dm}
 
-[Dm6]Vai, minha tristeza
-[G7]E diz a ela que sem ela não pode ser
-[Bb7M]Diz-lhe numa prece
-[E7]Que ela regresse
-[A7]Que eu não posso mais sofrer
-[Dm6]Chega de saudade
-[G7]A realidade é que sem ela não há paz
-[Bb7M]Não há beleza
-[E7]É só tristeza
-[A7]E a melancolia que não sai de mim
-[Dm6]Eu não sei viver sem ela
-[G7]Não consigo ser feliz sem ela
-[Bb7M]Nem a luz da lua
-[E7]Me ilumina sem ela
-[A7]Sem ela tudo é tão sem graça
-[Dm6]Vem, me faz a graça
-[G7]De voltar pra mim
+[Gm9][Dm7][Dm7/C][Bdim][Bbm6][Dm7][A7+5]
+[Dm7]Vai mi[Dm7/C]nha tri[Bdim]steza e diz a [Bbm6]ela [A7/+5]que sem [Dm7]ela não pode ser
+Diz-lhe [Bm7/-5]nu-[F6]ma [Am7]prece que ela re[Bb6]gresse, porque eu não [A7]posso mais so[A7/+5]frer
+[Dm7]Chega de[Dm7/C] sau[Bdim]dade, a reali[Bbm6]dade é [A7/+5]que sem [Am6]ela não há [Adim]paz
+Não há be[Gm7]leza, é [A7]só tris[Dm7]teza e a mel[Dm7/C]ancolia que não [Bdim]sai de mim, [Bbm6]Não sai de mim, não [Dm7]sai[Em11] [Em7] [A7/6] [A7]
+[Dmaj7/F#]Mas[F#dim] se ela vol[E7/9]tar, se ela voltar, que coisa [Em7]linda,[A7/-9] que coisa [E13/-9]lou-[D7/F#]ca
+Pois há menos pei[E13/-9]xinhos a na[Em7]dar no mar, Do que os bei[E7/9]jinhos que eu darei na sua [Gm6]bo-[A7/-9]ca
+[Dmaj7/F#]Dentro   [D6/F#]dos meus braços os abraços [F#7]hão de [Bm7]ser mi[Bbm7]lhões de a[Am7]braços
+[Adim]Aper- [Gmaj7]tado assim, co[Gm6]lado assim, ca[F#m7]lado assim, A[F#dim]braços [B7]e beijinhos e ca[Em7]rinhos sem ter [F#7]fim
+Que é prá aca[B7]bar com esse negócio de vi[Em7]ver longe de [Dmaj7]mim[D6]
+Não quero [F#dim]mais esse negócio de vo[Em7]cê viver a[Dmaj7]ssim[D6]
+Vamos dei[F#dim]xar desse negócio de vo[Em7]cê viver sem [Dmaj7]mim[D6]
             """.trimIndent()
         ),
         Song(
