@@ -11,11 +11,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Ações de arquivo no Android (documentos via SAF e compartilhamento via FileProvider).
@@ -28,14 +32,17 @@ actual fun rememberFileActions(
     onImported: (String) -> Unit,
     onExported: (Boolean) -> Unit,
     onShared: (Boolean) -> Unit,
-    getExportBytes: () -> ByteArray?,
-    onProBatchExported: (saved: Int, failed: Int) -> Unit
+    getExportBytes: () -> ByteArray?
 ): FileActions {
     val context = LocalContext.current
     val currentContent = rememberUpdatedState(getExportContent)
     val currentBytes = rememberUpdatedState(getExportBytes)
+    val scope = rememberCoroutineScope()
 
     var pendingProBatch by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
+    var pendingProBatchProgress by remember {
+        mutableStateOf<(fileName: String, event: ProBatchEvent) -> Unit>({ _, _ -> })
+    }
 
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -99,13 +106,19 @@ actual fun rememberFileActions(
     val proBatchLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { treeUri: Uri? ->
-        if (treeUri != null) {
-            var saved = 0
+        if (treeUri == null) {
+            pendingProBatchProgress("", ProBatchEvent.CANCELLED)
+            return@rememberLauncherForActivityResult
+        }
+        scope.launch(Dispatchers.IO) {
             val dirUri = DocumentsContract.buildDocumentUriUsingTree(
                 treeUri,
                 DocumentsContract.getTreeDocumentId(treeUri)
             )
             for ((fileName, content) in pendingProBatch) {
+                withContext(Dispatchers.Main) {
+                    pendingProBatchProgress(fileName, ProBatchEvent.START)
+                }
                 val ok = runCatching {
                     val cleanName = sanitizeFileName(fileName)
                     val existing = findDocumentUri(context.contentResolver, treeUri, cleanName)
@@ -125,9 +138,16 @@ actual fun rememberFileActions(
                         } != null
                     }
                 }.getOrDefault(false)
-                if (ok) saved++
+                withContext(Dispatchers.Main) {
+                    pendingProBatchProgress(
+                        fileName,
+                        if (ok) ProBatchEvent.DONE else ProBatchEvent.FAILED
+                    )
+                }
             }
-            onProBatchExported(saved, pendingProBatch.size - saved)
+            withContext(Dispatchers.Main) {
+                pendingProBatchProgress("", ProBatchEvent.COMPLETED)
+            }
         }
     }
 
@@ -206,8 +226,9 @@ actual fun rememberFileActions(
                     )
                 }
             },
-            saveProBatch = { files ->
+            saveProBatch = { files, onProgress ->
                 pendingProBatch = files
+                pendingProBatchProgress = onProgress
                 proBatchLauncher.launch(null)
             }
         )

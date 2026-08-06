@@ -19,8 +19,7 @@ actual fun rememberFileActions(
     onImported: (String) -> Unit,
     onExported: (Boolean) -> Unit,
     onShared: (Boolean) -> Unit,
-    getExportBytes: () -> ByteArray?,
-    onProBatchExported: (saved: Int, failed: Int) -> Unit
+    getExportBytes: () -> ByteArray?
 ): FileActions {
     val currentContent = rememberUpdatedState(getExportContent)
     val currentBytes = rememberUpdatedState(getExportBytes)
@@ -81,22 +80,27 @@ actual fun rememberFileActions(
                     }
                 }
             },
-            saveProBatch = { files ->
+            saveProBatch = { files, onProgress ->
                 val chooser = JFileChooser().apply {
                     dialogTitle = "Exportar músicas (.pro)"
                     fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
                 }
                 if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
                     val dir = chooser.selectedFile
-                    var saved = 0
                     for ((fileName, content) in files) {
+                        onProgress(fileName, ProBatchEvent.START)
                         val ok = runCatching {
                             File(dir, sanitizeFileName(fileName)).writeText(content)
                             true
                         }.getOrDefault(false)
-                        if (ok) saved++
+                        onProgress(
+                            fileName,
+                            if (ok) ProBatchEvent.DONE else ProBatchEvent.FAILED
+                        )
                     }
-                    onProBatchExported(saved, files.size - saved)
+                    onProgress("", ProBatchEvent.COMPLETED)
+                } else {
+                    onProgress("", ProBatchEvent.CANCELLED)
                 }
             }
         )

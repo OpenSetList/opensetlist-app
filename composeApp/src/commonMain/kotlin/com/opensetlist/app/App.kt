@@ -42,6 +42,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -51,8 +52,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.opensetlist.app.data.DataTransfer
 import com.opensetlist.app.data.DatabaseDriverFactory
+import com.opensetlist.app.data.ProBatchEvent
 import com.opensetlist.app.data.SongRepository
 import com.opensetlist.app.data.db.AppDatabase
+import com.opensetlist.app.data.formatElapsedSeconds
 import com.opensetlist.app.data.rememberBackupActions
 import com.opensetlist.app.data.rememberFileActions
 import com.opensetlist.app.data.rememberSetlistHelperActions
@@ -61,6 +64,8 @@ import com.opensetlist.app.data.rememberSettingsStore
 import com.opensetlist.app.data.currentTimestampCompact
 import com.opensetlist.app.model.Artist
 import com.opensetlist.app.model.BackupData
+import com.opensetlist.app.model.ExportLogEntry
+import com.opensetlist.app.model.ExportLogKind
 import com.opensetlist.app.model.Setlist
 import com.opensetlist.app.model.Song
 import com.opensetlist.app.model.Tag
@@ -72,6 +77,7 @@ import com.opensetlist.app.ui.screens.AboutScreen
 import com.opensetlist.app.ui.screens.ChordViewerScreen
 import com.opensetlist.app.ui.screens.CloudTarget
 import com.opensetlist.app.ui.screens.EditorScreen
+import com.opensetlist.app.ui.screens.ExportProgressScreen
 import com.opensetlist.app.ui.screens.FilteredSongListScreen
 import com.opensetlist.app.ui.screens.SetlistListScreen
 import com.opensetlist.app.ui.screens.SetlistScreen
@@ -79,6 +85,8 @@ import com.opensetlist.app.ui.screens.SettingsScreen
 import com.opensetlist.app.ui.screens.SongListScreen
 import com.opensetlist.app.ui.screens.TagsScreen
 import com.opensetlist.app.ui.theme.AppTheme
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 import kotlinx.coroutines.launch
 
 /**
@@ -103,6 +111,7 @@ sealed class Screen {
     data class ArtistSongs(val artist: Artist) : Screen()
     data class TagSongs(val tag: Tag) : Screen()
     data class Editor(val song: Song, val returnTo: Screen.ChordView? = null) : Screen()
+    data object ExportProgress : Screen()
 }
 
 /**
@@ -169,6 +178,12 @@ fun App(
 
     var pendingExportContent by remember { mutableStateOf<String?>(null) }
     var pendingExportBytes by remember { mutableStateOf<ByteArray?>(null) }
+
+    val exportLog = remember { mutableStateListOf<ExportLogEntry>() }
+    var exportRunning by remember { mutableStateOf(false) }
+    var exportStartTime by remember { mutableStateOf<TimeMark?>(null) }
+    var exportSavedCount by remember { mutableStateOf(0) }
+    var exportFailedCount by remember { mutableStateOf(0) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -237,6 +252,7 @@ fun App(
                 reload()
                 currentScreen = Screen.TagList
             }
+            is Screen.ExportProgress -> currentScreen = Screen.Settings
             else -> {
                 reload()
                 currentScreen = Screen.SongList
@@ -326,10 +342,7 @@ fun App(
             showMessage(if (ok) AppStrings.fileSaved else AppStrings.fileSaveFailed)
         },
         onShared = { showMessage(AppStrings.contentShared) },
-        getExportBytes = { pendingExportBytes },
-        onProBatchExported = { saved, failed ->
-            showMessage(AppStrings.proBatchExported(saved, failed))
-        }
+        getExportBytes = { pendingExportBytes }
     )
 
     val backupActions = rememberBackupActions(
@@ -386,7 +399,55 @@ fun App(
             showMessage(AppStrings.noSongsToExport)
             return
         }
-        fileActions.saveProBatch(songs.map { song -> "${song.title}.pro" to buildProFileContent(song) })
+        exportLog.clear()
+        exportRunning = true
+        exportSavedCount = 0
+        exportFailedCount = 0
+        exportStartTime = TimeSource.Monotonic.markNow()
+        exportLog.add(ExportLogEntry(AppStrings.proExportStarting(songs.size)))
+        exportLog.add(ExportLogEntry(AppStrings.proExportWaitingFolder))
+        currentScreen = Screen.ExportProgress
+        fileActions.saveProBatch(
+            songs.map { song -> "${song.title}.pro" to buildProFileContent(song) }
+        ) { fileName, event ->
+            when (event) {
+                ProBatchEvent.START -> {
+                    exportLog.add(
+                        ExportLogEntry(AppStrings.proExportSongStarted(fileName), ExportLogKind.START)
+                    )
+                }
+                ProBatchEvent.DONE -> {
+                    exportSavedCount++
+                    exportLog.add(
+                        ExportLogEntry(AppStrings.proExportSongDone(fileName), ExportLogKind.DONE)
+                    )
+                }
+                ProBatchEvent.FAILED -> {
+                    exportFailedCount++
+                    exportLog.add(
+                        ExportLogEntry(AppStrings.proExportSongFailed(fileName), ExportLogKind.FAILED)
+                    )
+                }
+                ProBatchEvent.COMPLETED -> {
+                    exportRunning = false
+                    val start = exportStartTime
+                    exportLog.add(
+                        ExportLogEntry(
+                            AppStrings.proExportCompleted(
+                                if (start != null) formatElapsedSeconds(start) else "",
+                                exportSavedCount,
+                                exportFailedCount
+                            ),
+                            ExportLogKind.SUCCESS
+                        )
+                    )
+                }
+                ProBatchEvent.CANCELLED -> {
+                    exportRunning = false
+                    exportLog.add(ExportLogEntry(AppStrings.proExportCancelled))
+                }
+            }
+        }
     }
 
     fun shareSetlist(setlist: Setlist) {
@@ -453,6 +514,7 @@ fun App(
                                         is Screen.ArtistSongs -> screen.artist.name
                                         is Screen.TagSongs -> screen.tag.name
                                         is Screen.Editor -> AppStrings.editSongTitle
+                                        is Screen.ExportProgress -> AppStrings.exportProgressTitle
                                     }
                                 )
                             },
@@ -787,6 +849,13 @@ fun App(
                                     pendingDeleteSong = song
                                     showDeleteSongDialog = true
                                 }
+                            )
+                        }
+                        is Screen.ExportProgress -> {
+                            ExportProgressScreen(
+                                entries = exportLog,
+                                running = exportRunning,
+                                onClose = { currentScreen = Screen.Settings }
                             )
                         }
                     }
