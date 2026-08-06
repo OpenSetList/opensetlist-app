@@ -11,7 +11,8 @@ class FileActions(
     val importFile: () -> Unit,
     val saveFile: (fileName: String, mimeType: String) -> Unit,
     val shareFile: (fileName: String, mimeType: String) -> Unit,
-    val openUrl: (String) -> Unit
+    val openUrl: (String) -> Unit,
+    val saveProBatch: (List<Pair<String, String>>) -> Unit
 )
 
 /**
@@ -25,5 +26,6 @@ expect fun rememberFileActions(
     onImported: (String) -> Unit,
     onExported: (Boolean) -> Unit,
     onShared: (Boolean) -> Unit,
-    getExportBytes: () -> ByteArray?
+    getExportBytes: () -> ByteArray?,
+    onProBatchExported: (saved: Int, failed: Int) -> Unit
 ): FileActions

@@ -123,7 +123,8 @@ fun ChordViewerScreen(
         onImported = {},
         onExported = {},
         onShared = {},
-        getExportBytes = { null }
+        getExportBytes = { null },
+        onProBatchExported = { _, _ -> }
     )
 
     LaunchedEffect(pagerState.currentPage) {
