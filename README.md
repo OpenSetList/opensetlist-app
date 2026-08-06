@@ -73,6 +73,7 @@ O projeto é livre e aberto: contribuições são bem-vindas.
 - [x] Minificação/ofuscação Android (R8 + `proguard-rules.pro`) e backup com timestamp no nome
 
 ### 🚀 Previsto
+- [ ] **Exportar setlist e músicas em PDF** — exportar setlist e músicas (letra/cifra) em PDF para impressão/uso offline
 - [ ] **Metrônomo simples** — metrônomo com BPM e compasso para acompanhar durante o ensaio/apresentação
 - [ ] **Visualização web via host local da setlist** — servir a setlist atual em rede local (HTTP embutido + página HTML/QR code) para quem não tem o app instalado abrir no navegador/celular
 - [ ] **Sincronização por conta** — login em conta cloud e sincronização automática entre dispositivos (OAuth real com Google Drive/Dropbox)
