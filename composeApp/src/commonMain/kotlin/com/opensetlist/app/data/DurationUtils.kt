@@ -1,5 +1,7 @@
 package com.opensetlist.app.data
 
+import kotlin.time.TimeMark
+
 /**
  * Converte uma duração em texto ("3:15", "1:02:30") para segundos.
  *
@@ -53,4 +55,14 @@ fun formatSecondsClock(totalSeconds: Long): String {
         minutes > 0 -> "$minutes:${seconds.toString().padStart(2, '0')}"
         else -> "${seconds}s"
     }
+}
+
+/**
+ * Formata o tempo decorrido desde uma marca no formato "X,Y s".
+ *
+ * @author ruanitto
+ */
+fun formatElapsedSeconds(start: TimeMark): String {
+    val tenths = start.elapsedNow().inWholeMilliseconds / 100
+    return "${tenths / 10},${tenths % 10} s"
 }
