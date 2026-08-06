@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.opensetlist.app.AppStrings
@@ -228,7 +229,7 @@ fun EditorScreen(
                         singleLine = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = keyMenuOpen) },
                         modifier = Modifier
-                            .width(150.dp)
+                            .width(100.dp)
                             .menuAnchor()
                     )
                     ExposedDropdownMenu(
@@ -246,19 +247,30 @@ fun EditorScreen(
                         }
                     }
                 }
-                Column(modifier = Modifier.width(96.dp)) {
-                    Text(
-                        text = AppStrings.bpmLabel,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+                Column {
+                    OutlinedTextField(
+                        value = capo,
+                        onValueChange = { newCapo ->
+                            val filtered = newCapo.filter { c -> c.isDigit() }.take(2)
+                            capo = filtered
+                            body = updateCapoDirective(body, filtered)
+                        },
+                        label = { Text(AppStrings.capoLabel) },
+                        singleLine = true,
+                        textStyle = TextStyle(textAlign = TextAlign.End),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.width(84.dp)
                     )
+                }
+                Column {
                     OutlinedTextField(
                         value = tempo,
                         onValueChange = { tempo = it.filter { c -> c.isDigit() }.take(3) },
+                        label = { Text(AppStrings.bpmLabel) },
                         singleLine = true,
+                        textStyle = TextStyle(textAlign = TextAlign.End),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.width(96.dp)
                     )
                 }
             }
@@ -268,7 +280,7 @@ fun EditorScreen(
                     .padding(top = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column(modifier = Modifier.width(168.dp)) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = AppStrings.compassoLabel,
                         style = MaterialTheme.typography.labelMedium,
@@ -282,72 +294,53 @@ fun EditorScreen(
                     ) {
                         OutlinedTextField(
                             value = timeNum,
-                            onValueChange = { timeNum = it.filter { c -> c.isDigit() }.take(2) },
+                            onValueChange = { timeNum = it.filter { c -> c.isDigit() }.take(1) },
                             singleLine = true,
+                            textStyle = TextStyle(textAlign = TextAlign.End),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.width(60.dp)
                         )
                         Text("/", style = MaterialTheme.typography.titleLarge)
                         OutlinedTextField(
                             value = timeDen,
-                            onValueChange = { timeDen = it.filter { c -> c.isDigit() }.take(2) },
+                            onValueChange = { timeDen = it.filter { c -> c.isDigit() }.take(1) },
                             singleLine = true,
+                            textStyle = TextStyle(textAlign = TextAlign.End),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.width(60.dp)
                         )
                     }
                 }
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = AppStrings.capoLabel,
+                        text = AppStrings.durationLabel,
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
                     )
-                    OutlinedTextField(
-                        value = capo,
-                        onValueChange = { newCapo ->
-                            val filtered = newCapo.filter { c -> c.isDigit() }.take(2)
-                            capo = filtered
-                            body = updateCapoDirective(body, filtered)
-                        },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.width(84.dp)
-                    )
-                }
-            }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp)
-            ) {
-                Text(
-                    text = AppStrings.durationLabel,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    OutlinedTextField(
-                        value = durationMin,
-                        onValueChange = { durationMin = it.filter { c -> c.isDigit() }.take(3) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.width(96.dp)
-                    )
-                    Text(":", style = MaterialTheme.typography.titleLarge)
-                    OutlinedTextField(
-                        value = durationSec,
-                        onValueChange = { durationSec = it.filter { c -> c.isDigit() }.take(2) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.width(72.dp)
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = durationMin,
+                            onValueChange = { durationMin = it.filter { c -> c.isDigit() }.take(3) },
+                            singleLine = true,
+                            textStyle = TextStyle(textAlign = TextAlign.End),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(":", style = MaterialTheme.typography.titleLarge)
+                        OutlinedTextField(
+                            value = durationSec,
+                            onValueChange = { durationSec = it.filter { c -> c.isDigit() }.take(2) },
+                            singleLine = true,
+                            textStyle = TextStyle(textAlign = TextAlign.End),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
             }
             OutlinedTextField(

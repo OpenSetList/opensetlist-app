@@ -86,7 +86,8 @@ actual fun rememberFileActions(
     onImported: (String) -> Unit,
     onExported: (Boolean) -> Unit,
     onShared: (Boolean) -> Unit,
-    getExportBytes: () -> ByteArray?
+    getExportBytes: () -> ByteArray?,
+    onProBatchExported: (saved: Int, failed: Int) -> Unit
 ): FileActions {
     val currentExportContent = rememberUpdatedState(getExportContent)
     val currentExportBytes = rememberUpdatedState(getExportBytes)
@@ -140,6 +141,17 @@ actual fun rememberFileActions(
                 NSURL.URLWithString(url)?.let {
                     UIApplication.sharedApplication.openURL(it)
                 }
+            },
+            saveProBatch = { files ->
+                val urls = files.mapNotNull { (fileName, content) ->
+                    writeTempFile(fileName, content)?.let { NSURL.fileURLWithPath(it) }
+                }
+                val activityVC = UIActivityViewController(
+                    activityItems = urls,
+                    applicationActivities = null
+                )
+                presentViewController(activityVC)
+                onProBatchExported(urls.size, files.size - urls.size)
             }
         )
     }
