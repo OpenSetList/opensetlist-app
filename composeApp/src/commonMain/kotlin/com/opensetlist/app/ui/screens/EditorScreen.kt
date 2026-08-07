@@ -68,7 +68,7 @@ fun EditorScreen(
     allTags: List<Tag>,
     initialTags: List<Tag>,
     artistSuggestions: List<String>,
-    onSave: (Song, List<String>) -> Unit,
+    onSave: (Song, List<Long>) -> Unit,
     onNewTag: (String) -> Unit,
     onCancel: () -> Unit,
     onDelete: (Song) -> Unit,

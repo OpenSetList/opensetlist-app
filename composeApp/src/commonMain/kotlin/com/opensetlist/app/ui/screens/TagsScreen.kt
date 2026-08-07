@@ -46,7 +46,7 @@ enum class TagSort(val label: String) {
 @Composable
 fun TagsScreen(
     tags: List<Tag>,
-    songCounts: Map<String, Int>,
+    songCounts: Map<Long, Int>,
     onTagClick: (Tag) -> Unit,
     onEdit: (Tag) -> Unit,
     onDelete: (Tag) -> Unit,

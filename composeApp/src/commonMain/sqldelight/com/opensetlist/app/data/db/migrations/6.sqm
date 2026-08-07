@@ -1,0 +1,135 @@
+CREATE TABLE song_mig (
+    old_id TEXT NOT NULL UNIQUE,
+    new_id INTEGER PRIMARY KEY
+);
+
+INSERT INTO song_mig(old_id) SELECT id FROM song ORDER BY rowid;
+
+CREATE TABLE song_new (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    title TEXT NOT NULL,
+    artist TEXT NOT NULL,
+    key TEXT,
+    tempo TEXT,
+    capo TEXT,
+    duration TEXT,
+    time TEXT,
+    body TEXT NOT NULL,
+    youtube_url TEXT,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    creation_date INTEGER NOT NULL,
+    last_edit INTEGER NOT NULL
+);
+
+INSERT INTO song_new(title, artist, key, tempo, capo, duration, time, body, youtube_url, sort_order, creation_date, last_edit)
+SELECT title, artist, key, tempo, capo, duration, time, body, youtube_url, sort_order,
+       CAST(strftime('%s', 'now') AS INTEGER) * 1000,
+       CAST(strftime('%s', 'now') AS INTEGER) * 1000
+FROM song;
+
+CREATE TABLE artist_mig (
+    old_id TEXT NOT NULL UNIQUE,
+    new_id INTEGER PRIMARY KEY
+);
+
+INSERT INTO artist_mig(old_id) SELECT id FROM artist ORDER BY rowid;
+
+CREATE TABLE artist_new (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT NOT NULL,
+    creation_date INTEGER NOT NULL,
+    last_edit INTEGER NOT NULL
+);
+
+INSERT INTO artist_new(name, creation_date, last_edit)
+SELECT name,
+       CAST(strftime('%s', 'now') AS INTEGER) * 1000,
+       CAST(strftime('%s', 'now') AS INTEGER) * 1000
+FROM artist;
+
+CREATE TABLE tag_mig (
+    old_id TEXT NOT NULL UNIQUE,
+    new_id INTEGER PRIMARY KEY
+);
+
+INSERT INTO tag_mig(old_id) SELECT id FROM tag ORDER BY rowid;
+
+CREATE TABLE tag_new (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT NOT NULL,
+    creation_date INTEGER NOT NULL,
+    last_edit INTEGER NOT NULL
+);
+
+INSERT INTO tag_new(name, creation_date, last_edit)
+SELECT name,
+       CAST(strftime('%s', 'now') AS INTEGER) * 1000,
+       CAST(strftime('%s', 'now') AS INTEGER) * 1000
+FROM tag;
+
+CREATE TABLE setlist_mig (
+    old_id TEXT NOT NULL UNIQUE,
+    new_id INTEGER PRIMARY KEY
+);
+
+INSERT INTO setlist_mig(old_id) SELECT id FROM setlist ORDER BY rowid;
+
+CREATE TABLE setlist_new (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT NOT NULL,
+    date TEXT,
+    location TEXT,
+    time TEXT,
+    creation_date INTEGER NOT NULL,
+    last_edit INTEGER NOT NULL
+);
+
+INSERT INTO setlist_new(name, date, location, time, creation_date, last_edit)
+SELECT name, date, location, time,
+       CAST(strftime('%s', 'now') AS INTEGER) * 1000,
+       CAST(strftime('%s', 'now') AS INTEGER) * 1000
+FROM setlist;
+
+CREATE TABLE song_tag_new (
+    song_id INTEGER NOT NULL REFERENCES song_new(id) ON DELETE CASCADE,
+    tag_id INTEGER NOT NULL REFERENCES tag_new(id) ON DELETE CASCADE,
+    PRIMARY KEY (song_id, tag_id)
+);
+
+INSERT INTO song_tag_new(song_id, tag_id)
+SELECT sm.new_id, tm.new_id
+FROM song_tag st
+JOIN song_mig sm ON sm.old_id = st.song_id
+JOIN tag_mig tm ON tm.old_id = st.tag_id;
+
+CREATE TABLE setlist_song_new (
+    setlist_id INTEGER NOT NULL REFERENCES setlist_new(id) ON DELETE CASCADE,
+    song_id INTEGER NOT NULL REFERENCES song_new(id) ON DELETE CASCADE,
+    position INTEGER NOT NULL,
+    PRIMARY KEY (setlist_id, song_id)
+);
+
+INSERT INTO setlist_song_new(setlist_id, song_id, position)
+SELECT slm.new_id, sm.new_id, ssl.position
+FROM setlist_song ssl
+JOIN setlist_mig slm ON slm.old_id = ssl.setlist_id
+JOIN song_mig sm ON sm.old_id = ssl.song_id;
+
+DROP TABLE song_tag;
+DROP TABLE setlist_song;
+DROP TABLE song;
+DROP TABLE artist;
+DROP TABLE tag;
+DROP TABLE setlist;
+
+ALTER TABLE song_new RENAME TO song;
+ALTER TABLE artist_new RENAME TO artist;
+ALTER TABLE tag_new RENAME TO tag;
+ALTER TABLE setlist_new RENAME TO setlist;
+ALTER TABLE song_tag_new RENAME TO song_tag;
+ALTER TABLE setlist_song_new RENAME TO setlist_song;
+
+DROP TABLE song_mig;
+DROP TABLE artist_mig;
+DROP TABLE tag_mig;
+DROP TABLE setlist_mig;

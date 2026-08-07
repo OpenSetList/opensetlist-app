@@ -87,7 +87,7 @@ import kotlinx.coroutines.launch
 fun ChordViewerScreen(
     songs: List<Song>,
     initialIndex: Int,
-    songTags: Map<String, List<Tag>> = emptyMap(),
+    songTags: Map<Long, List<Tag>> = emptyMap(),
     onBack: () -> Unit,
     onEdit: (Song) -> Unit,
     onDelete: (Song) -> Unit,
@@ -108,7 +108,7 @@ fun ChordViewerScreen(
     var isFullscreen by remember { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
 
-    val scrollStates = remember { mutableStateMapOf<String, androidx.compose.foundation.ScrollState>() }
+    val scrollStates = remember { mutableStateMapOf<Long, androidx.compose.foundation.ScrollState>() }
     val scope = rememberCoroutineScope()
 
     val currentSong = songs.getOrElse(pagerState.currentPage) { songs[safeIndex] }

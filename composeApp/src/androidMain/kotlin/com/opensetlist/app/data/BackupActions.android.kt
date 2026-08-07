@@ -76,12 +76,14 @@ private fun parseAppDatabase(file: File): BackupData? {
 
         val artists = mutableListOf<Artist>()
         if (tableExists(db, "artist")) {
-            db.rawQuery("SELECT id, name FROM artist", null).use { cursor ->
+            db.rawQuery("SELECT id, name, creation_date, last_edit FROM artist", null).use { cursor ->
                 while (cursor.moveToNext()) {
                     artists.add(
                         Artist(
-                            id = cursor.getStringByName("id"),
-                            name = cursor.getStringOrNullByName("name") ?: ""
+                            id = cursor.getLongByName("id"),
+                            name = cursor.getStringOrNullByName("name") ?: "",
+                            creationDate = cursor.getLongOrNullByName("creation_date") ?: 0L,
+                            lastEdit = cursor.getLongOrNullByName("last_edit") ?: 0L
                         )
                     )
                 }
@@ -90,42 +92,47 @@ private fun parseAppDatabase(file: File): BackupData? {
 
         val tags = mutableListOf<Tag>()
         if (tableExists(db, "tag")) {
-            db.rawQuery("SELECT id, name FROM tag", null).use { cursor ->
+            db.rawQuery("SELECT id, name, creation_date, last_edit FROM tag", null).use { cursor ->
                 while (cursor.moveToNext()) {
                     tags.add(
                         Tag(
-                            id = cursor.getStringByName("id"),
-                            name = cursor.getStringOrNullByName("name") ?: ""
+                            id = cursor.getLongByName("id"),
+                            name = cursor.getStringOrNullByName("name") ?: "",
+                            creationDate = cursor.getLongOrNullByName("creation_date") ?: 0L,
+                            lastEdit = cursor.getLongOrNullByName("last_edit") ?: 0L
                         )
                     )
                 }
             }
         }
 
-        val songTags = mutableMapOf<String, MutableList<String>>()
+        val songTags = mutableMapOf<Long, MutableList<Long>>()
         if (tableExists(db, "song_tag")) {
             db.rawQuery("SELECT song_id, tag_id FROM song_tag", null).use { cursor ->
                 while (cursor.moveToNext()) {
-                    songTags.getOrPut(cursor.getStringByName("song_id")) { mutableListOf() }
-                        .add(cursor.getStringByName("tag_id"))
+                    songTags.getOrPut(cursor.getLongByName("song_id")) { mutableListOf() }
+                        .add(cursor.getLongByName("tag_id"))
                 }
             }
         }
 
         val songs = mutableListOf<Song>()
         val hasSongTime = columnExists(db, "song", "time")
+        val hasSongTimestamps = columnExists(db, "song", "creation_date")
         db.rawQuery(
             if (hasSongTime) {
-                "SELECT id, title, artist, key, tempo, capo, duration, time, body, youtube_url FROM song"
+                "SELECT id, title, artist, key, tempo, capo, duration, time, body, youtube_url, " +
+                    if (hasSongTimestamps) "creation_date, last_edit" else ""
             } else {
-                "SELECT id, title, artist, key, tempo, capo, duration, body, youtube_url FROM song"
+                "SELECT id, title, artist, key, tempo, capo, duration, body, youtube_url, " +
+                    if (hasSongTimestamps) "creation_date, last_edit" else ""
             },
             null
         ).use { cursor ->
             while (cursor.moveToNext()) {
                 songs.add(
                     Song(
-                        id = cursor.getStringByName("id"),
+                        id = cursor.getLongByName("id"),
                         title = cursor.getStringOrNullByName("title") ?: "",
                         artist = cursor.getStringOrNullByName("artist") ?: "",
                         key = cursor.getStringOrNullByName("key") ?: "",
@@ -134,7 +141,9 @@ private fun parseAppDatabase(file: File): BackupData? {
                         duration = cursor.getStringOrNullByName("duration") ?: "",
                         time = if (hasSongTime) cursor.getStringOrNullByName("time") ?: "" else "",
                         youtubeUrl = cursor.getStringOrNullByName("youtube_url") ?: "",
-                        body = cursor.getStringOrNullByName("body") ?: ""
+                        body = cursor.getStringOrNullByName("body") ?: "",
+                        creationDate = cursor.getLongOrNullByName("creation_date") ?: 0L,
+                        lastEdit = cursor.getLongOrNullByName("last_edit") ?: 0L
                     )
                 )
             }
@@ -144,17 +153,19 @@ private fun parseAppDatabase(file: File): BackupData? {
         val links = mutableListOf<SetlistSongLink>()
         if (tableExists(db, "setlist")) {
             db.rawQuery(
-                "SELECT id, name, date, location, time FROM setlist",
+                "SELECT id, name, date, location, time, creation_date, last_edit FROM setlist",
                 null
             ).use { cursor ->
                 while (cursor.moveToNext()) {
                     setlists.add(
                         Setlist(
-                            id = cursor.getStringByName("id"),
+                            id = cursor.getLongByName("id"),
                             name = cursor.getStringOrNullByName("name") ?: "",
                             date = cursor.getStringOrNullByName("date") ?: "",
                             location = cursor.getStringOrNullByName("location") ?: "",
-                            time = cursor.getStringOrNullByName("time") ?: ""
+                            time = cursor.getStringOrNullByName("time") ?: "",
+                            creationDate = cursor.getLongOrNullByName("creation_date") ?: 0L,
+                            lastEdit = cursor.getLongOrNullByName("last_edit") ?: 0L
                         )
                     )
                 }
@@ -168,8 +179,8 @@ private fun parseAppDatabase(file: File): BackupData? {
                 while (cursor.moveToNext()) {
                     links.add(
                         SetlistSongLink(
-                            setlistId = cursor.getStringByName("setlist_id"),
-                            songId = cursor.getStringByName("song_id"),
+                            setlistId = cursor.getLongByName("setlist_id"),
+                            songId = cursor.getLongByName("song_id"),
                             position = cursor.getLongByName("position").toInt()
                         )
                     )
@@ -207,6 +218,12 @@ private fun columnExists(db: SQLiteDatabase, table: String, column: String): Boo
 }
 
 private fun Cursor.getLongByName(column: String): Long = getLong(getColumnIndexOrThrow(column))
+
+private fun Cursor.getLongOrNullByName(column: String): Long? {
+    val index = getColumnIndex(column)
+    if (index < 0 || isNull(index)) return null
+    return getLong(index)
+}
 
 private fun Cursor.getStringByName(column: String): String = getString(getColumnIndexOrThrow(column))
 
