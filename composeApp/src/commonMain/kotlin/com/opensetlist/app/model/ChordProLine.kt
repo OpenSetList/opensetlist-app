@@ -59,5 +59,6 @@ data class ParsedSong(
     val sorttitle: String = "",
     val tags: List<String> = emptyList(),
     val customMeta: Map<String, String> = emptyMap(),
+    val transpose: Int = 0,
     val lines: List<ChordProLine> = emptyList()
 )

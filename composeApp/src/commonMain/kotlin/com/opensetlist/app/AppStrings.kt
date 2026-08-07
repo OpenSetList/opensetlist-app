@@ -54,6 +54,7 @@ object AppStrings {
     val keyLabel = "Tom"
     val bpmLabel = "BPM"
     val capoLabel = "Capo"
+    val transposeLabel = "Transposição"
     val durationLabel = "Duração"
     val compassoLabel = "Compasso"
     val youtubeLinkLabel = "Link do YouTube"

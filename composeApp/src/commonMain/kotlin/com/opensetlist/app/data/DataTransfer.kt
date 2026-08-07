@@ -30,7 +30,7 @@ object DataTransfer {
 
     fun buildBackupJson(data: BackupData): String {
         val sb = StringBuilder()
-        sb.append("{\"type\":\"$TYPE_BACKUP\",\"version\":3,\"createdAt\":")
+        sb.append("{\"type\":\"$TYPE_BACKUP\",\"version\":4,\"createdAt\":")
         sb.append(quote(currentTimestampIso()))
         sb.append(",\"songs\":[")
         data.songs.forEachIndexed { i, s ->
@@ -143,7 +143,8 @@ object DataTransfer {
             "\"youtubeUrl\":${quote(s.youtubeUrl)}," +
             "\"body\":${quote(s.body)}," +
             "\"creationDate\":${s.creationDate}," +
-            "\"lastEdit\":${s.lastEdit}}"
+            "\"lastEdit\":${s.lastEdit}," +
+            "\"transpose\":${s.transpose}}"
     }
 
     private fun songFromJson(m: Map<*, *>): Song = Song(
@@ -158,15 +159,15 @@ object DataTransfer {
         youtubeUrl = (m["youtubeUrl"] as? String) ?: "",
         body = (m["body"] as? String) ?: "",
         creationDate = m["creationDate"].toLongValue(),
-        lastEdit = m["lastEdit"].toLongValue()
+        lastEdit = m["lastEdit"].toLongValue(),
+        transpose = (m["transpose"] as? Number)?.toInt() ?: 0
     )
 
     private fun setlistToJson(l: Setlist): String {
         return "{\"id\":${l.id}," +
             "\"name\":${quote(l.name)}," +
-            "\"date\":${quote(l.date)}," +
+            "\"date\":${l.date}," +
             "\"location\":${quote(l.location)}," +
-            "\"time\":${quote(l.time)}," +
             "\"creationDate\":${l.creationDate}," +
             "\"lastEdit\":${l.lastEdit}}"
     }
@@ -174,12 +175,24 @@ object DataTransfer {
     private fun setlistFromJson(m: Map<*, *>): Setlist = Setlist(
         id = m["id"].toLongValue(),
         name = (m["name"] as? String) ?: "",
-        date = (m["date"] as? String) ?: "",
+        date = legacySetlistDate(m),
         location = (m["location"] as? String) ?: "",
-        time = (m["time"] as? String) ?: "",
         creationDate = m["creationDate"].toLongValue(),
         lastEdit = m["lastEdit"].toLongValue()
     )
+
+    private fun legacySetlistDate(m: Map<*, *>): Long {
+        return when (val date = m["date"]) {
+            is Number -> date.toLong()
+            is String -> {
+                if (date.isBlank()) return 0L
+                val dateMillis = toDatePickerMillis(date) ?: return 0L
+                val clock = (m["time"] as? String)?.let { parseClockTime(it) }
+                combineDateAndTime(dateMillis, clock?.first ?: 0, clock?.second ?: 0)
+            }
+            else -> 0L
+        }
+    }
 
     private fun Any?.toLongValue(): Long = when (this) {
         is Number -> toLong()

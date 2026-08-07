@@ -119,6 +119,7 @@ object ChordProParser {
             sorttitle = meta["sorttitle"] ?: "",
             tags = tags,
             customMeta = customMeta,
+            transpose = meta["transpose"]?.toIntOrNull() ?: 0,
             lines = lines
         )
     }
@@ -248,4 +249,30 @@ object ChordProParser {
             }
         }
     }
+}
+
+/** Insere, atualiza ou remove a diretiva [name] no corpo ChordPro. */
+fun setChordProDirective(body: String, name: String, value: String?): String {
+    val isBlank = value.isNullOrBlank()
+    if (body.isBlank() && isBlank) return body
+    val lines = body.lines()
+    val index = lines.indexOfFirst { line -> directiveNameOf(line) == name }
+    return when {
+        isBlank && index == -1 -> body
+        isBlank -> lines.filterIndexed { i, _ -> i != index }.joinToString("\n")
+        index == -1 -> "{$name: $value}\n$body"
+        else -> lines.mapIndexed { i, line -> if (i == index) "{$name: $value}" else line }.joinToString("\n")
+    }
+}
+
+private fun directiveNameOf(line: String): String? {
+    val trimmed = line.trim()
+    if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) return null
+    val inner = trimmed.removeSurrounding("{", "}")
+    var nameEnd = 0
+    while (nameEnd < inner.length && inner[nameEnd] != ':' && !inner[nameEnd].isWhitespace()) {
+        nameEnd++
+    }
+    if (nameEnd == 0) return null
+    return inner.substring(0, nameEnd).trim().lowercase()
 }

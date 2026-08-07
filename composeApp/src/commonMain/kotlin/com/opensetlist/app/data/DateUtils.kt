@@ -44,6 +44,44 @@ fun fromDatePickerMillis(millis: Long): String {
     return "${date.day.toString().padStart(2, '0')}/${date.month.toString().padStart(2, '0')}/${date.year}"
 }
 
+/** Formata epoch (ms) como "dd/MM/yyyy"; retorna "" quando inválido. */
+fun formatEpochDate(epochMillis: Long): String {
+    if (epochMillis <= 0) return ""
+    return fromDatePickerMillis(epochMillis)
+}
+
+/** Formata epoch (ms) como "HH:mm"; retorna "" quando inválido. */
+fun formatEpochTime(epochMillis: Long): String {
+    if (epochMillis <= 0) return ""
+    val localDay = epochMillis - utcOffsetMillis(epochMillis)
+    val seconds = ((localDay % 86_400_000L) + 86_400_000L) % 86_400_000L
+    val hour = (seconds / 3_600_000L).toInt()
+    val minute = ((seconds % 3_600_000L) / 60_000L).toInt()
+    return "${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}"
+}
+
+/** Formata epoch (ms) como "dd/MM/yyyy HH:mm" (apenas a data quando meia-noite). */
+fun formatEpochDateTime(epochMillis: Long): String {
+    if (epochMillis <= 0) return ""
+    val date = formatEpochDate(epochMillis)
+    val time = formatEpochTime(epochMillis)
+    return if (time == "00:00") date else "$date $time"
+}
+
+/** Combina millis do DatePicker (meia-noite local) com hora e minuto em um epoch. */
+fun combineDateAndTime(datePickerMillis: Long, hour: Int, minute: Int): Long =
+    datePickerMillis + hour * 3_600_000L + minute * 60_000L
+
+/** Converte "HH:mm" em hora e minuto; retorna null quando inválido. */
+fun parseClockTime(text: String): Pair<Int, Int>? {
+    val parts = text.trim().split(":")
+    if (parts.size != 2) return null
+    val hour = parts[0].toIntOrNull() ?: return null
+    val minute = parts[1].toIntOrNull() ?: return null
+    if (hour !in 0..23 || minute !in 0..59) return null
+    return hour to minute
+}
+
 /** Deslocamento do fuso horário local (em millis) no instante [utcTimeMillis]. */
 expect fun utcOffsetMillis(utcTimeMillis: Long): Long
 

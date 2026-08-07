@@ -49,8 +49,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.opensetlist.app.AppStrings
+import com.opensetlist.app.data.combineDateAndTime
 import com.opensetlist.app.data.formatDuration
+import com.opensetlist.app.data.formatEpochDate
+import com.opensetlist.app.data.formatEpochDateTime
+import com.opensetlist.app.data.formatEpochTime
 import com.opensetlist.app.data.fromDatePickerMillis
+import com.opensetlist.app.data.parseClockTime
 import com.opensetlist.app.data.parseDurationSeconds
 import com.opensetlist.app.data.toDatePickerMillis
 import com.opensetlist.app.model.Setlist
@@ -70,7 +75,7 @@ fun SetlistScreen(
     onSongClick: (Song) -> Unit,
     onRename: (String) -> Unit,
     onDelete: () -> Unit,
-    onUpdateInfo: (date: String, location: String, time: String) -> Unit,
+    onUpdateInfo: (date: Long, location: String) -> Unit,
     onReorder: (List<Song>) -> Unit,
     onAddSong: (Song) -> Unit,
     onRemoveSong: (Song) -> Unit,
@@ -127,17 +132,13 @@ fun SetlistScreen(
             }
         }
 
-        if (setlist.date.isNotBlank() || setlist.location.isNotBlank() || setlist.time.isNotBlank()) {
+        if (setlist.date > 0 || setlist.location.isNotBlank()) {
             Text(
                 text = buildString {
-                    if (setlist.date.isNotBlank()) append(setlist.date)
+                    if (setlist.date > 0) append(formatEpochDateTime(setlist.date))
                     if (setlist.location.isNotBlank()) {
                         if (isNotEmpty()) append("  ·  ")
                         append(setlist.location)
-                    }
-                    if (setlist.time.isNotBlank()) {
-                        if (isNotEmpty()) append("  ·  ")
-                        append(setlist.time)
                     }
                 },
                 style = MaterialTheme.typography.bodyMedium,
@@ -280,9 +281,8 @@ fun SetlistScreen(
         GigInfoDialog(
             date = setlist.date,
             location = setlist.location,
-            time = setlist.time,
-            onSave = { date, location, time ->
-                onUpdateInfo(date, location, time)
+            onSave = { date, location ->
+                onUpdateInfo(date, location)
                 showGigDialog = false
             },
             onDismiss = { showGigDialog = false }
@@ -293,15 +293,14 @@ fun SetlistScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GigInfoDialog(
-    date: String,
+    date: Long,
     location: String,
-    time: String,
-    onSave: (date: String, location: String, time: String) -> Unit,
+    onSave: (date: Long, location: String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var dateText by remember { mutableStateOf(date) }
+    var dateText by remember { mutableStateOf(formatEpochDate(date)) }
     var locationText by remember { mutableStateOf(location) }
-    var timeText by remember { mutableStateOf(time) }
+    var timeText by remember { mutableStateOf(formatEpochTime(date)) }
     var showDatePicker by remember { mutableStateOf(false) }
 
     AlertDialog(
@@ -338,7 +337,9 @@ private fun GigInfoDialog(
                 )
                 OutlinedTextField(
                     value = timeText,
-                    onValueChange = { timeText = it },
+                    onValueChange = {
+                        timeText = it.filter { c -> c.isDigit() || c == ':' }.take(5)
+                    },
                     label = { Text(AppStrings.timeLabel) },
                     placeholder = { Text(AppStrings.timePlaceholder) },
                     singleLine = true,
@@ -350,7 +351,16 @@ private fun GigInfoDialog(
         },
         confirmButton = {
             TextButton(onClick = {
-                onSave(dateText.trim(), locationText.trim(), timeText.trim())
+                val dateMillis = toDatePickerMillis(dateText)
+                val clock = parseClockTime(timeText)
+                onSave(
+                    if (dateMillis != null) {
+                        combineDateAndTime(dateMillis, clock?.first ?: 0, clock?.second ?: 0)
+                    } else {
+                        0L
+                    },
+                    locationText.trim()
+                )
             }) {
                 Text(AppStrings.save)
             }

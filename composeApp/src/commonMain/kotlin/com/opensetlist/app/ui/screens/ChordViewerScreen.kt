@@ -92,6 +92,7 @@ fun ChordViewerScreen(
     onEdit: (Song) -> Unit,
     onDelete: (Song) -> Unit,
     onNavigateTo: (Int) -> Unit,
+    onUpdateTranspose: (Song, Int) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
     val safeIndex = initialIndex.coerceIn(0, (songs.size - 1).coerceAtLeast(0))
@@ -127,6 +128,7 @@ fun ChordViewerScreen(
 
     LaunchedEffect(pagerState.currentPage) {
         menuOpen = false
+        transpose = currentSong.transpose
         onNavigateTo(pagerState.currentPage)
     }
 
@@ -250,7 +252,10 @@ fun ChordViewerScreen(
             if (!isFullscreen) {
                 ViewerControls(
                     transpose = transpose,
-                    onTransposeChange = { transpose = it },
+                    onTransposeChange = { newValue ->
+                        transpose = newValue
+                        onUpdateTranspose(currentSong, newValue)
+                    },
                     fontSize = fontSize,
                     onFontSizeChange = { fontSize = it },
                     hideChords = hideChords,

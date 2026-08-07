@@ -55,6 +55,7 @@ import com.opensetlist.app.data.DataTransfer
 import com.opensetlist.app.data.DatabaseDriverFactory
 import com.opensetlist.app.data.ProBatchEvent
 import com.opensetlist.app.data.SongRepository
+import com.opensetlist.app.data.setChordProDirective
 import com.opensetlist.app.data.db.AppDatabase
 import com.opensetlist.app.data.formatElapsedSeconds
 import com.opensetlist.app.data.rememberBackupActions
@@ -774,6 +775,18 @@ fun App(
                                     pendingDeleteSong = song
                                     showDeleteSongDialog = true
                                 },
+                                onUpdateTranspose = { song, value ->
+                                    repository.upsert(
+                                        song.copy(
+                                            transpose = value,
+                                            body = setChordProDirective(
+                                                song.body,
+                                                "transpose",
+                                                value.takeIf { it != 0 }?.toString()
+                                            )
+                                        )
+                                    )
+                                },
                                 onNavigateTo = { index ->
                                     if (index in screen.siblings.indices) {
                                         currentScreen = screen.copy(
@@ -808,12 +821,11 @@ fun App(
                                     reload()
                                     currentScreen = screen.backTarget ?: Screen.SongList
                                 },
-                                onUpdateInfo = { date, location, time ->
+                                onUpdateInfo = { date, location ->
                                     repository.updateSetlistInfo(
                                         screen.setlist.id,
                                         date,
-                                        location,
-                                        time
+                                        location
                                     )
                                     refreshSetlistScreen()
                                 },
@@ -1311,6 +1323,7 @@ private fun buildProFileContent(song: Song): String = buildString {
     if (song.key.isNotBlank()) appendLine("{key:${song.key}}")
     if (song.tempo.isNotBlank()) appendLine("{tempo:${song.tempo}}")
     if (song.capo.isNotBlank()) appendLine("{capo:${song.capo}}")
+    if (song.transpose != 0) appendLine("{transpose:${song.transpose}}")
     if (song.time.isNotBlank()) appendLine("{time:${song.time}}")
     appendLine()
     append(song.body)

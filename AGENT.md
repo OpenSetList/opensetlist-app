@@ -18,7 +18,7 @@ App de setlists/cifras multiplataforma (Kotlin Multiplatform + Compose Multiplat
   - `ui/screens/` — telas: SongList, SetlistList, Setlist, Editor, ChordViewer, Artists, Tags, FilteredSongList, Settings
   - `ui/components/` — `ChordProView.kt`, `SideDrawer.kt`, `SortMenu.kt`, `BackHandler.kt`
   - `ui/theme/Theme.kt` — Material 3 (dark/light)
-- `composeApp/src/commonMain/sqldelight/com/opensetlist/app/data/db/` — `AppDatabase.sq` + `migrations/` (atual: 6 via 2.sqm/3.sqm/4.sqm/5.sqm)
+- `composeApp/src/commonMain/sqldelight/com/opensetlist/app/data/db/` — `AppDatabase.sq` + `migrations/` (atual: 8 via 2.sqm/3.sqm/4.sqm/5.sqm/6.sqm/7.sqm)
 - `androidMain/` / `iosMain/` / `desktopMain/` — apenas `actual`s e entry points (`MainActivity.kt`, `MainViewController.kt`, `Main.kt`)
 
 ## Plataforma desktop
@@ -56,7 +56,7 @@ App de setlists/cifras multiplataforma (Kotlin Multiplatform + Compose Multiplat
 - `buildTypes.release`: `isMinifyEnabled = true` + `isShrinkResources = true` + `proguard-rules.pro` (`composeApp/proguard-rules.pro`)
 - Regras mantidas: `MainActivity`, classes SQLDelight geradas (`com.opensetlist.app.data.db.**`), `-keepattributes *Annotation*, Signature, InnerClasses`, campos `volatile` de coroutines, `-dontwarn` p/ classes JVM ausentes
 - APK release: `composeApp/build/outputs/apk/release/composeApp-release.apk` (~2 MB com R8); `mapping.txt` em `build/outputs/mapping/release/` p/ deobfuscar crashes
-- Backup `.db` exportado com timestamp no nome: `setlist_backup_<aaaa-MM-dd_HH-mm-ss>.db`; JSON de backup tem `"createdAt"` ISO e `"version":2`
+- Backup `.db` exportado com timestamp no nome: `setlist_backup_<aaaa-MM-dd_HH-mm-ss>.db`; JSON de backup tem `"createdAt"` ISO e `"version":4` (ids numéricos e `creationDate`/`lastEdit` epoch ms; `transpose` INT na música; `date` INT epoch ms na setlist; tabelas cadastrais `song`/`artist`/`tag`/`setlist` usam `id` INTEGER AUTOINCREMENT + `creation_date`/`last_edit`)
 - Ao alterar dependências/kotlin: rodar `:composeApp:assembleRelease` para validar o R8 (e não só `assembleDebug`)
 
 ## Regras de código
