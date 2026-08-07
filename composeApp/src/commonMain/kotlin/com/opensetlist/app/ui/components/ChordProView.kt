@@ -435,7 +435,7 @@ private fun ChordOverlayText(
                 fontFamily = FontFamily.Monospace,
                 fontSize = fontSize.sp,
                 color = MaterialTheme.colorScheme.onSurface,
-                lineHeight = (fontSize * 2.0f).sp,
+                lineHeight = (fontSize * 2.4f).sp,
                 style = if (isHighlighted) highlightStyle else TextStyle.Default,
                 onTextLayout = { layoutResult = it }
             )
@@ -446,8 +446,7 @@ private fun ChordOverlayText(
             textLength = text.length,
             chordColumns = chordColumns,
             textMeasurer = textMeasurer,
-            chordStyle = chordStyle,
-            chordLineHeight = chordLineHeight
+            chordStyle = chordStyle
         )
     }
 }
@@ -459,18 +458,28 @@ private fun ChordOverlay(
     textLength: Int,
     chordColumns: List<Pair<Int, String>>,
     textMeasurer: TextMeasurer,
-    chordStyle: TextStyle,
-    chordLineHeight: Float
+    chordStyle: TextStyle
 ) {
     Canvas(modifier = modifier) {
         if (layoutResult == null || chordColumns.isEmpty()) return@Canvas
         val chordHeight = textMeasurer.measure("A", chordStyle).size.height.toFloat().coerceAtLeast(1f)
+        val chordGap = 2.dp.toPx()
+        var currentLine = -1
+        var lastChordRight = Float.NEGATIVE_INFINITY
         for ((column, chord) in chordColumns) {
             val offset = column.coerceIn(0, (textLength - 1).coerceAtLeast(0))
-            val lineIndex = layoutResult.getLineForOffset(offset)
             val rect = layoutResult.getBoundingBox(offset)
-            val lineTop = layoutResult.getLineTop(lineIndex)
-            val topLeft = Offset(rect.left, chordLineHeight + lineTop - chordHeight)
+            val lineIndex = layoutResult.getLineForOffset(offset)
+            if (lineIndex != currentLine) {
+                currentLine = lineIndex
+                lastChordRight = Float.NEGATIVE_INFINITY
+            }
+            val chordWidth = textMeasurer.measure(chord, chordStyle).size.width.toFloat()
+            val topLeft = Offset(
+                x = maxOf(rect.left, lastChordRight + chordGap),
+                y = (rect.top - chordHeight - chordGap).coerceAtLeast(0f)
+            )
+            lastChordRight = topLeft.x + chordWidth
             if (topLeft.x >= size.width || topLeft.y >= size.height) continue
             drawText(
                 textMeasurer = textMeasurer,
