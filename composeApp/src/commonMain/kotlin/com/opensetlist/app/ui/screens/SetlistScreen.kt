@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
@@ -32,7 +34,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -298,10 +302,9 @@ private fun GigInfoDialog(
     onSave: (date: Long, location: String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var dateText by remember { mutableStateOf(formatEpochDate(date)) }
+    var currentDate by remember { mutableStateOf(date) }
     var locationText by remember { mutableStateOf(location) }
-    var timeText by remember { mutableStateOf(formatEpochTime(date)) }
-    var showDatePicker by remember { mutableStateOf(false) }
+    var showPicker by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -309,21 +312,23 @@ private fun GigInfoDialog(
         text = {
             Column {
                 OutlinedTextField(
-                    value = dateText,
+                    value = formatEpochDateTime(currentDate),
                     onValueChange = {},
                     readOnly = true,
                     label = { Text(AppStrings.dateLabel) },
                     placeholder = { Text(AppStrings.datePlaceholder) },
                     singleLine = true,
                     trailingIcon = {
-                        IconButton(onClick = { showDatePicker = true }) {
+                        IconButton(onClick = { showPicker = true }) {
                             Icon(
                                 imageVector = Icons.Default.DateRange,
                                 contentDescription = AppStrings.pickDate
                             )
                         }
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showPicker = true }
                 )
                 OutlinedTextField(
                     value = locationText,
@@ -335,32 +340,11 @@ private fun GigInfoDialog(
                         .fillMaxWidth()
                         .padding(top = 12.dp)
                 )
-                OutlinedTextField(
-                    value = timeText,
-                    onValueChange = {
-                        timeText = it.filter { c -> c.isDigit() || c == ':' }.take(5)
-                    },
-                    label = { Text(AppStrings.timeLabel) },
-                    placeholder = { Text(AppStrings.timePlaceholder) },
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp)
-                )
             }
         },
         confirmButton = {
             TextButton(onClick = {
-                val dateMillis = toDatePickerMillis(dateText)
-                val clock = parseClockTime(timeText)
-                onSave(
-                    if (dateMillis != null) {
-                        combineDateAndTime(dateMillis, clock?.first ?: 0, clock?.second ?: 0)
-                    } else {
-                        0L
-                    },
-                    locationText.trim()
-                )
+                onSave(currentDate, locationText.trim())
             }) {
                 Text(AppStrings.save)
             }
@@ -372,27 +356,64 @@ private fun GigInfoDialog(
         }
     )
 
-    if (showDatePicker) {
+    if (showPicker) {
+        val initialDate = currentDate.takeIf { it > 0 }
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = toDatePickerMillis(dateText)
+            initialSelectedDateMillis = initialDate?.let { toDatePickerMillis(fromDatePickerMillis(it)) }
+        )
+        val clock = initialDate?.let { parseClockTime(formatEpochTime(it)) }
+        val timePickerState = rememberTimePickerState(
+            initialHour = clock?.first ?: 0,
+            initialMinute = clock?.second ?: 0,
+            is24Hour = true
         )
         DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
+            onDismissRequest = { showPicker = false },
             confirmButton = {
                 TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let { dateText = fromDatePickerMillis(it) }
-                    showDatePicker = false
+                    val pickedDate = datePickerState.selectedDateMillis
+                    if (pickedDate != null) {
+                        currentDate = combineDateAndTime(
+                            pickedDate,
+                            timePickerState.hour,
+                            timePickerState.minute
+                        )
+                        onSave(currentDate, locationText.trim())
+                    }
+                    showPicker = false
                 }) {
-                    Text(AppStrings.ok)
+                    Text(AppStrings.apply)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
+                TextButton(onClick = { showPicker = false }) {
                     Text(AppStrings.cancel)
                 }
             }
         ) {
-            DatePicker(state = datePickerState)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(top = 24.dp)
+            ) {
+                DatePicker(
+                    state = datePickerState,
+                    title = { Text(AppStrings.dateLabel) },
+                    showModeToggle = false
+                )
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                Text(
+                    text = AppStrings.timeLabel,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                )
+                TimePicker(
+                    state = timePickerState,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            }
         }
     }
 }
