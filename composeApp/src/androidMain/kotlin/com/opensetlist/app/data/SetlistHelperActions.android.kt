@@ -110,12 +110,13 @@ private fun parseSetlistHelperDb(file: File): SetlistHelperBackup? {
         val songs = mutableListOf<Song>()
         db.rawQuery(
             "SELECT _id, name, song_key, tempo, artist_id, genre_id, youtube_url, " +
-                "time_signature_top, time_signature_bottom, song_length, notes, other, lyrics " +
+                "time_signature_top, time_signature_bottom, song_length, notes, other, lyrics, " +
+                "creation_date, last_edit " +
                 "FROM songs " +
                 "WHERE deleted = 0 OR deleted IS NULL", null
         ).use { cursor ->
             while (cursor.moveToNext()) {
-                val id = cursor.getLongByName("_id").toString()
+                val id = cursor.getLongByName("_id")
                 val title = cursor.getStringByName("name").ifBlank { "Música sem título" }
                 val artist = cursor.getLongOrNullByName("artist_id")?.let { artists[it] }
                     ?: "Artista desconhecido"
@@ -138,9 +139,17 @@ private fun parseSetlistHelperDb(file: File): SetlistHelperBackup? {
                 )
                 val genreName = cursor.getLongOrNullByName("genre_id")?.let { genres[it] }
                 if (genreName != null) {
-                    songTagNames.getOrPut(cursor.getLongByName("_id")) { mutableListOf() }
-                        .add(genreName)
+                    songTagNames.getOrPut(id) { mutableListOf() }.add(genreName)
                 }
+                val now = System.currentTimeMillis()
+                val creation = normalizeEpoch(
+                    cursor.getLongOrNullByName("creation_date"),
+                    now
+                )
+                val lastEdit = normalizeEpoch(
+                    cursor.getLongOrNullByName("last_edit"),
+                    now
+                ).coerceAtLeast(creation)
                 songs.add(
                     Song(
                         id = id,
@@ -152,26 +161,28 @@ private fun parseSetlistHelperDb(file: File): SetlistHelperBackup? {
                         duration = duration,
                         time = time,
                         youtubeUrl = youtube,
-                        body = body
+                        body = body,
+                        creationDate = creation,
+                        lastEdit = lastEdit
                     )
                 )
             }
         }
 
-        val songTags = songTagNames.mapKeys { it.key.toString() }.mapValues { it.value.distinct() }
+        val songTags = songTagNames.mapKeys { it.key }.mapValues { it.value.distinct() }
 
         val importedSongIds = songs.map { it.id }.toSet()
 
         val setlists = mutableListOf<HelperSetlist>()
         if (tableExists(db, "setlist") && tableExists(db, "setlistsong")) {
-            val songIdBySetlist = mutableMapOf<Long, MutableList<String>>()
+            val songIdBySetlist = mutableMapOf<Long, MutableList<Long>>()
             db.rawQuery(
                 "SELECT songid, setlistid, displaysequencenumber FROM setlistsong " +
                     "ORDER BY setlistid ASC, displaysequencenumber ASC", null
             ).use { cursor ->
                 while (cursor.moveToNext()) {
                     val setId = cursor.getLongByName("setlistid")
-                    val songId = cursor.getLongByName("songid").toString()
+                    val songId = cursor.getLongByName("songid")
                     if (songId in importedSongIds) {
                         songIdBySetlist.getOrPut(setId) { mutableListOf() }.add(songId)
                     }
@@ -207,6 +218,11 @@ private fun parseSetlistHelperDb(file: File): SetlistHelperBackup? {
     } finally {
         db.close()
     }
+}
+
+private fun normalizeEpoch(value: Long?, fallback: Long): Long {
+    if (value == null || value <= 0) return fallback
+    return value
 }
 
 private fun tableExists(db: SQLiteDatabase, table: String): Boolean {

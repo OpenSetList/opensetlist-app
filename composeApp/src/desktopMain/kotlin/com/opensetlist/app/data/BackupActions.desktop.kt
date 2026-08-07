@@ -78,9 +78,16 @@ private fun parseAppDatabase(file: File): BackupData? {
             val artists = mutableListOf<Artist>()
             if (tableExists(conn, "artist")) {
                 conn.createStatement().use { st ->
-                    st.executeQuery("SELECT id, name FROM artist").use { rs ->
+                    st.executeQuery("SELECT id, name, creation_date, last_edit FROM artist").use { rs ->
                         while (rs.next()) {
-                            artists.add(Artist(id = rs.getString(1), name = rs.getString(2)))
+                            artists.add(
+                                Artist(
+                                    id = rs.getLong(1),
+                                    name = rs.getString(2),
+                                    creationDate = rs.getLong(3).takeIf { !rs.wasNull() } ?: 0L,
+                                    lastEdit = rs.getLong(4).takeIf { !rs.wasNull() } ?: 0L
+                                )
+                            )
                         }
                     }
                 }
@@ -88,19 +95,26 @@ private fun parseAppDatabase(file: File): BackupData? {
             val tags = mutableListOf<Tag>()
             if (tableExists(conn, "tag")) {
                 conn.createStatement().use { st ->
-                    st.executeQuery("SELECT id, name FROM tag").use { rs ->
+                    st.executeQuery("SELECT id, name, creation_date, last_edit FROM tag").use { rs ->
                         while (rs.next()) {
-                            tags.add(Tag(id = rs.getString(1), name = rs.getString(2)))
+                            tags.add(
+                                Tag(
+                                    id = rs.getLong(1),
+                                    name = rs.getString(2),
+                                    creationDate = rs.getLong(3).takeIf { !rs.wasNull() } ?: 0L,
+                                    lastEdit = rs.getLong(4).takeIf { !rs.wasNull() } ?: 0L
+                                )
+                            )
                         }
                     }
                 }
             }
-            val songTags = mutableMapOf<String, MutableList<String>>()
+            val songTags = mutableMapOf<Long, MutableList<Long>>()
             if (tableExists(conn, "song_tag")) {
                 conn.createStatement().use { st ->
                     st.executeQuery("SELECT song_id, tag_id FROM song_tag").use { rs ->
                         while (rs.next()) {
-                            songTags.getOrPut(rs.getString(1)) { mutableListOf() }.add(rs.getString(2))
+                            songTags.getOrPut(rs.getLong(1)) { mutableListOf() }.add(rs.getLong(2))
                         }
                     }
                 }
@@ -108,17 +122,20 @@ private fun parseAppDatabase(file: File): BackupData? {
             val songs = mutableListOf<Song>()
             conn.createStatement().use { st ->
                 val hasSongTime = columnExists(conn, "song", "time")
+                val hasSongTimestamps = columnExists(conn, "song", "creation_date")
                 st.executeQuery(
                     if (hasSongTime) {
-                        "SELECT id, title, artist, key, tempo, capo, duration, time, body, youtube_url FROM song"
+                        "SELECT id, title, artist, key, tempo, capo, duration, time, body, youtube_url, " +
+                            if (hasSongTimestamps) "creation_date, last_edit" else ""
                     } else {
-                        "SELECT id, title, artist, key, tempo, capo, duration, body, youtube_url FROM song"
+                        "SELECT id, title, artist, key, tempo, capo, duration, body, youtube_url, " +
+                            if (hasSongTimestamps) "creation_date, last_edit" else ""
                     }
                 ).use { rs ->
                     while (rs.next()) {
                         songs.add(
                             Song(
-                                id = rs.getString("id") ?: "",
+                                id = rs.getLong("id"),
                                 title = rs.getString("title") ?: "",
                                 artist = rs.getString("artist") ?: "",
                                 key = rs.getString("key") ?: "",
@@ -127,7 +144,9 @@ private fun parseAppDatabase(file: File): BackupData? {
                                 duration = rs.getString("duration") ?: "",
                                 time = if (hasSongTime) rs.getString("time") ?: "" else "",
                                 body = rs.getString("body") ?: "",
-                                youtubeUrl = rs.getString("youtube_url") ?: ""
+                                youtubeUrl = rs.getString("youtube_url") ?: "",
+                                creationDate = rs.getLong("creation_date").takeIf { !rs.wasNull() } ?: 0L,
+                                lastEdit = rs.getLong("last_edit").takeIf { !rs.wasNull() } ?: 0L
                             )
                         )
                     }
@@ -137,15 +156,19 @@ private fun parseAppDatabase(file: File): BackupData? {
             val links = mutableListOf<SetlistSongLink>()
             if (tableExists(conn, "setlist")) {
                 conn.createStatement().use { st ->
-                    st.executeQuery("SELECT id, name, date, location, time FROM setlist").use { rs ->
+                    st.executeQuery(
+                        "SELECT id, name, date, location, time, creation_date, last_edit FROM setlist"
+                    ).use { rs ->
                         while (rs.next()) {
                             setlists.add(
                                 Setlist(
-                                    id = rs.getString(1),
+                                    id = rs.getLong(1),
                                     name = rs.getString(2),
                                     date = rs.getString(3),
                                     location = rs.getString(4),
-                                    time = rs.getString(5)
+                                    time = rs.getString(5),
+                                    creationDate = rs.getLong(6).takeIf { !rs.wasNull() } ?: 0L,
+                                    lastEdit = rs.getLong(7).takeIf { !rs.wasNull() } ?: 0L
                                 )
                             )
                         }
@@ -161,8 +184,8 @@ private fun parseAppDatabase(file: File): BackupData? {
                         while (rs.next()) {
                             links.add(
                                 SetlistSongLink(
-                                    setlistId = rs.getString(1),
-                                    songId = rs.getString(2),
+                                    setlistId = rs.getLong(1),
+                                    songId = rs.getLong(2),
                                     position = rs.getLong(3).toInt()
                                 )
                             )

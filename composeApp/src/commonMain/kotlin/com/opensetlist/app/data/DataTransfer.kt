@@ -30,7 +30,7 @@ object DataTransfer {
 
     fun buildBackupJson(data: BackupData): String {
         val sb = StringBuilder()
-        sb.append("{\"type\":\"$TYPE_BACKUP\",\"version\":2,\"createdAt\":")
+        sb.append("{\"type\":\"$TYPE_BACKUP\",\"version\":3,\"createdAt\":")
         sb.append(quote(currentTimestampIso()))
         sb.append(",\"songs\":[")
         data.songs.forEachIndexed { i, s ->
@@ -45,8 +45,8 @@ object DataTransfer {
         sb.append("],\"links\":[")
         data.links.forEachIndexed { i, l ->
             if (i > 0) sb.append(",")
-            sb.append("{\"setlistId\":").append(quote(l.setlistId))
-                .append(",\"songId\":").append(quote(l.songId))
+            sb.append("{\"setlistId\":").append(l.setlistId)
+                .append(",\"songId\":").append(l.songId)
                 .append(",\"position\":").append(l.position).append("}")
         }
         sb.append("]}")
@@ -70,8 +70,9 @@ object DataTransfer {
         val links = mutableListOf<SetlistSongLink>()
         (parsed["links"] as? List<*>)?.forEach { raw ->
             val map = raw as? Map<*, *> ?: return@forEach
-            val setlistId = map["setlistId"] as? String ?: return@forEach
-            val songId = map["songId"] as? String ?: return@forEach
+            val setlistId = map["setlistId"].toLongValue()
+            val songId = map["songId"].toLongValue()
+            if (setlistId == 0L || songId == 0L) return@forEach
             links.add(
                 SetlistSongLink(
                     setlistId = setlistId,
@@ -131,7 +132,7 @@ object DataTransfer {
     }
 
     private fun songToJson(s: Song): String {
-        return "{\"id\":${quote(s.id)}," +
+        return "{\"id\":${s.id}," +
             "\"title\":${quote(s.title)}," +
             "\"artist\":${quote(s.artist)}," +
             "\"key\":${quote(s.key)}," +
@@ -140,11 +141,13 @@ object DataTransfer {
             "\"duration\":${quote(s.duration)}," +
             "\"time\":${quote(s.time)}," +
             "\"youtubeUrl\":${quote(s.youtubeUrl)}," +
-            "\"body\":${quote(s.body)}}"
+            "\"body\":${quote(s.body)}," +
+            "\"creationDate\":${s.creationDate}," +
+            "\"lastEdit\":${s.lastEdit}}"
     }
 
     private fun songFromJson(m: Map<*, *>): Song = Song(
-        id = (m["id"] as? String) ?: "",
+        id = m["id"].toLongValue(),
         title = (m["title"] as? String) ?: "",
         artist = (m["artist"] as? String) ?: "",
         key = (m["key"] as? String) ?: "",
@@ -153,24 +156,36 @@ object DataTransfer {
         duration = (m["duration"] as? String) ?: "",
         time = (m["time"] as? String) ?: "",
         youtubeUrl = (m["youtubeUrl"] as? String) ?: "",
-        body = (m["body"] as? String) ?: ""
+        body = (m["body"] as? String) ?: "",
+        creationDate = m["creationDate"].toLongValue(),
+        lastEdit = m["lastEdit"].toLongValue()
     )
 
     private fun setlistToJson(l: Setlist): String {
-        return "{\"id\":${quote(l.id)}," +
+        return "{\"id\":${l.id}," +
             "\"name\":${quote(l.name)}," +
             "\"date\":${quote(l.date)}," +
             "\"location\":${quote(l.location)}," +
-            "\"time\":${quote(l.time)}}"
+            "\"time\":${quote(l.time)}," +
+            "\"creationDate\":${l.creationDate}," +
+            "\"lastEdit\":${l.lastEdit}}"
     }
 
     private fun setlistFromJson(m: Map<*, *>): Setlist = Setlist(
-        id = (m["id"] as? String) ?: "",
+        id = m["id"].toLongValue(),
         name = (m["name"] as? String) ?: "",
         date = (m["date"] as? String) ?: "",
         location = (m["location"] as? String) ?: "",
-        time = (m["time"] as? String) ?: ""
+        time = (m["time"] as? String) ?: "",
+        creationDate = m["creationDate"].toLongValue(),
+        lastEdit = m["lastEdit"].toLongValue()
     )
+
+    private fun Any?.toLongValue(): Long = when (this) {
+        is Number -> toLong()
+        is String -> toLongOrNull() ?: 0L
+        else -> 0L
+    }
 
     private fun quote(value: String): String {
         val sb = StringBuilder("\"")

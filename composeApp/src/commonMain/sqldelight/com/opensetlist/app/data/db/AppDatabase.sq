@@ -1,5 +1,5 @@
 CREATE TABLE song (
-    id TEXT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     title TEXT NOT NULL,
     artist TEXT NOT NULL,
     key TEXT,
@@ -9,36 +9,44 @@ CREATE TABLE song (
     time TEXT,
     body TEXT NOT NULL,
     youtube_url TEXT,
-    sort_order INTEGER NOT NULL DEFAULT 0
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    creation_date INTEGER NOT NULL,
+    last_edit INTEGER NOT NULL
 );
 
 CREATE TABLE artist (
-    id TEXT PRIMARY KEY NOT NULL,
-    name TEXT NOT NULL
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT NOT NULL,
+    creation_date INTEGER NOT NULL,
+    last_edit INTEGER NOT NULL
 );
 
 CREATE TABLE tag (
-    id TEXT PRIMARY KEY NOT NULL,
-    name TEXT NOT NULL
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT NOT NULL,
+    creation_date INTEGER NOT NULL,
+    last_edit INTEGER NOT NULL
 );
 
 CREATE TABLE song_tag (
-    song_id TEXT NOT NULL REFERENCES song(id) ON DELETE CASCADE,
-    tag_id TEXT NOT NULL REFERENCES tag(id) ON DELETE CASCADE,
+    song_id INTEGER NOT NULL REFERENCES song(id) ON DELETE CASCADE,
+    tag_id INTEGER NOT NULL REFERENCES tag(id) ON DELETE CASCADE,
     PRIMARY KEY (song_id, tag_id)
 );
 
 CREATE TABLE setlist (
-    id TEXT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name TEXT NOT NULL,
     date TEXT,
     location TEXT,
-    time TEXT
+    time TEXT,
+    creation_date INTEGER NOT NULL,
+    last_edit INTEGER NOT NULL
 );
 
 CREATE TABLE setlist_song (
-    setlist_id TEXT NOT NULL REFERENCES setlist(id) ON DELETE CASCADE,
-    song_id TEXT NOT NULL REFERENCES song(id) ON DELETE CASCADE,
+    setlist_id INTEGER NOT NULL REFERENCES setlist(id) ON DELETE CASCADE,
+    song_id INTEGER NOT NULL REFERENCES song(id) ON DELETE CASCADE,
     position INTEGER NOT NULL,
     PRIMARY KEY (setlist_id, song_id)
 );
@@ -59,14 +67,21 @@ songCountByArtist:
 SELECT song.artist AS name, COUNT(*) AS count FROM song GROUP BY song.artist;
 
 insertSong:
-INSERT OR REPLACE INTO song(id, title, artist, key, tempo, capo, duration, time, body, youtube_url, sort_order)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO song(title, artist, key, tempo, capo, duration, time, body, youtube_url, sort_order, creation_date, last_edit)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+insertSongWithId:
+INSERT OR REPLACE INTO song(id, title, artist, key, tempo, capo, duration, time, body, youtube_url, sort_order, creation_date, last_edit)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+lastInsertRowId:
+SELECT last_insert_rowid();
 
 updateSongBody:
-UPDATE song SET body = ?, title = ?, artist = ?, key = ?, tempo = ?, capo = ?, duration = ?, time = ?, youtube_url = ? WHERE id = ?;
+UPDATE song SET body = ?, title = ?, artist = ?, key = ?, tempo = ?, capo = ?, duration = ?, time = ?, youtube_url = ?, last_edit = ? WHERE id = ?;
 
 updateSongArtist:
-UPDATE song SET artist = ? WHERE artist = ?;
+UPDATE song SET artist = ?, last_edit = ? WHERE artist = ?;
 
 selectMaxSortOrder:
 SELECT COALESCE(MAX(sort_order), -1) + 1 FROM song;
@@ -84,10 +99,13 @@ selectArtistByName:
 SELECT * FROM artist WHERE name = ? COLLATE NOCASE LIMIT 1;
 
 insertArtist:
-INSERT OR REPLACE INTO artist(id, name) VALUES (?, ?);
+INSERT INTO artist(name, creation_date, last_edit) VALUES (?, ?, ?);
+
+insertArtistWithId:
+INSERT OR REPLACE INTO artist(id, name, creation_date, last_edit) VALUES (?, ?, ?, ?);
 
 renameArtist:
-UPDATE artist SET name = ? WHERE id = ?;
+UPDATE artist SET name = ?, last_edit = ? WHERE id = ?;
 
 deleteArtist:
 DELETE FROM artist WHERE id = ?;
@@ -111,10 +129,13 @@ selectTagByName:
 SELECT * FROM tag WHERE name = ? COLLATE NOCASE LIMIT 1;
 
 insertTag:
-INSERT OR REPLACE INTO tag(id, name) VALUES (?, ?);
+INSERT INTO tag(name, creation_date, last_edit) VALUES (?, ?, ?);
+
+insertTagWithId:
+INSERT OR REPLACE INTO tag(id, name, creation_date, last_edit) VALUES (?, ?, ?, ?);
 
 renameTag:
-UPDATE tag SET name = ? WHERE id = ?;
+UPDATE tag SET name = ?, last_edit = ? WHERE id = ?;
 
 deleteTag:
 DELETE FROM tag WHERE id = ?;
@@ -153,13 +174,16 @@ selectSetlistByName:
 SELECT * FROM setlist WHERE name = ? COLLATE NOCASE LIMIT 1;
 
 insertSetlist:
-INSERT OR REPLACE INTO setlist(id, name, date, location, time) VALUES (?, ?, ?, ?, ?);
+INSERT INTO setlist(name, date, location, time, creation_date, last_edit) VALUES (?, ?, ?, ?, ?, ?);
+
+insertSetlistWithId:
+INSERT OR REPLACE INTO setlist(id, name, date, location, time, creation_date, last_edit) VALUES (?, ?, ?, ?, ?, ?, ?);
 
 renameSetlist:
-UPDATE setlist SET name = ? WHERE id = ?;
+UPDATE setlist SET name = ?, last_edit = ? WHERE id = ?;
 
 updateSetlistInfo:
-UPDATE setlist SET date = ?, location = ?, time = ? WHERE id = ?;
+UPDATE setlist SET date = ?, location = ?, time = ?, last_edit = ? WHERE id = ?;
 
 deleteSetlist:
 DELETE FROM setlist WHERE id = ?;

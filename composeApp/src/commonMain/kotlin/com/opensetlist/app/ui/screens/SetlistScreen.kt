@@ -77,7 +77,7 @@ fun SetlistScreen(
     modifier: Modifier = Modifier
 ) {
     var songs by remember(setlist.id) { mutableStateOf(setlist.songs) }
-    var draggingSongId by remember(setlist.id) { mutableStateOf<String?>(null) }
+    var draggingSongId by remember(setlist.id) { mutableStateOf<Long?>(null) }
     var dragAccum by remember(setlist.id) { mutableStateOf(0f) }
     var showAddDialog by remember { mutableStateOf(false) }
     var showGigDialog by remember { mutableStateOf(false) }
@@ -390,7 +390,7 @@ private fun GigInfoDialog(
 @Composable
 private fun AddSongDialog(
     allSongs: List<Song>,
-    currentSongIds: Set<String>,
+    currentSongIds: Set<Long>,
     onAdd: (Song) -> Unit,
     onDismiss: () -> Unit
 ) {

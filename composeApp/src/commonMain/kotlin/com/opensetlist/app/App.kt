@@ -147,8 +147,8 @@ fun App(
     var artists by remember { mutableStateOf(emptyList<Artist>()) }
     var tags by remember { mutableStateOf(emptyList<Tag>()) }
     var artistSongCounts by remember { mutableStateOf(emptyMap<String, Int>()) }
-    var tagSongCounts by remember { mutableStateOf(emptyMap<String, Int>()) }
-    var tagsBySong by remember { mutableStateOf(emptyMap<String, List<Tag>>()) }
+    var tagSongCounts by remember { mutableStateOf(emptyMap<Long, Int>()) }
+    var tagsBySong by remember { mutableStateOf(emptyMap<Long, List<Tag>>()) }
     var currentScreen by remember { mutableStateOf<Screen>(Screen.SongList) }
     var currentDrawerSection by remember { mutableStateOf(DrawerSection.ALL_SONGS) }
 
@@ -841,21 +841,21 @@ fun App(
                                 initialTags = tagsBySong[screen.song.id].orEmpty(),
                                 artistSuggestions = artists.map { it.name },
                                 onSave = { updated, tagIds ->
-                                    repository.upsert(updated)
-                                    repository.setSongTags(updated.id, tagIds)
+                                    val saved = repository.upsert(updated)
+                                    repository.setSongTags(saved.id, tagIds)
                                     songs = repository.allSongs()
                                     setlists = repository.allSetlists()
                                     reload()
                                     currentScreen = if (screen.returnTo != null) {
                                         val siblings = screen.returnTo.siblings.map {
-                                            if (it.id == updated.id) updated else it
+                                            if (it.id == saved.id) saved else it
                                         }
                                         screen.returnTo.copy(
-                                            song = updated,
+                                            song = saved,
                                             siblings = siblings
                                         )
                                     } else {
-                                        Screen.ChordView(updated)
+                                        Screen.ChordView(saved)
                                     }
                                 },
                                 onNewTag = { name ->

@@ -97,12 +97,13 @@ private fun parseSetlistHelperDb(file: File): SetlistHelperBackup? {
             conn.createStatement().use { st ->
                 st.executeQuery(
                     "SELECT _id, name, song_key, tempo, artist_id, genre_id, youtube_url, " +
-                        "time_signature_top, time_signature_bottom, song_length, notes, other, lyrics " +
+                        "time_signature_top, time_signature_bottom, song_length, notes, other, lyrics, " +
+                        "creation_date, last_edit " +
                         "FROM songs " +
                         "WHERE deleted = 0 OR deleted IS NULL"
                 ).use { rs ->
                     while (rs.next()) {
-                        val id = rs.getLong(1).toString()
+                        val id = rs.getLong(1)
                         val title = rs.getString(2)?.ifBlank { "Música sem título" }
                             ?: "Música sem título"
                         val artistId = rs.getLong(5)
@@ -123,8 +124,12 @@ private fun parseSetlistHelperDb(file: File): SetlistHelperBackup? {
                         val genreId = rs.getLong(6)
                         val genreName = if (rs.wasNull()) null else genres[genreId]
                         if (genreName != null) {
-                            songTagNames.getOrPut(rs.getLong(1)) { mutableListOf() }.add(genreName)
+                            songTagNames.getOrPut(id) { mutableListOf() }.add(genreName)
                         }
+                        val now = System.currentTimeMillis()
+                        val creationDate = rs.getLong(14).takeIf { it > 0 } ?: now
+                        val lastEdit = (rs.getLong(15).takeIf { it > 0 } ?: now)
+                            .coerceAtLeast(creationDate)
                         songs.add(
                             Song(
                                 id = id,
@@ -136,19 +141,21 @@ private fun parseSetlistHelperDb(file: File): SetlistHelperBackup? {
                                 duration = duration,
                                 time = time,
                                 youtubeUrl = rs.getString(7) ?: "",
-                                body = body
+                                body = body,
+                                creationDate = creationDate,
+                                lastEdit = lastEdit
                             )
                         )
                     }
                 }
             }
 
-            val songTags = songTagNames.mapKeys { it.key.toString() }.mapValues { it.value.distinct() }
+            val songTags = songTagNames.mapValues { it.value.distinct() }
 
             val importedSongIds = songs.map { it.id }.toSet()
             val setlists = mutableListOf<HelperSetlist>()
             if (tableExists(conn, "setlist") && tableExists(conn, "setlistsong")) {
-                val songIdBySetlist = mutableMapOf<Long, MutableList<String>>()
+                val songIdBySetlist = mutableMapOf<Long, MutableList<Long>>()
                 conn.createStatement().use { st ->
                     st.executeQuery(
                         "SELECT songid, setlistid, displaysequencenumber FROM setlistsong " +
@@ -156,7 +163,7 @@ private fun parseSetlistHelperDb(file: File): SetlistHelperBackup? {
                     ).use { rs ->
                         while (rs.next()) {
                             val setId = rs.getLong(2)
-                            val songId = rs.getLong(1).toString()
+                            val songId = rs.getLong(1)
                             if (songId in importedSongIds) {
                                 songIdBySetlist.getOrPut(setId) { mutableListOf() }.add(songId)
                             }

@@ -6,7 +6,7 @@ package com.opensetlist.app.model
  * @author ruanitto
  */
 data class Song(
-    val id: String,
+    val id: Long,
     val title: String,
     val artist: String,
     val key: String = "",
@@ -16,7 +16,9 @@ data class Song(
     val time: String = "",
     val youtubeUrl: String = "",
     val sortOrder: Long = 0,
-    val body: String = ""
+    val body: String = "",
+    val creationDate: Long = 0L,
+    val lastEdit: Long = 0L
 )
 
 /**
@@ -25,8 +27,10 @@ data class Song(
  * @author ruanitto
  */
 data class Artist(
-    val id: String,
-    val name: String
+    val id: Long,
+    val name: String,
+    val creationDate: Long = 0L,
+    val lastEdit: Long = 0L
 )
 
 /**
@@ -35,8 +39,10 @@ data class Artist(
  * @author ruanitto
  */
 data class Tag(
-    val id: String,
-    val name: String
+    val id: Long,
+    val name: String,
+    val creationDate: Long = 0L,
+    val lastEdit: Long = 0L
 )
 
 /**
@@ -45,12 +51,14 @@ data class Tag(
  * @author ruanitto
  */
 data class Setlist(
-    val id: String,
+    val id: Long,
     val name: String,
     val date: String = "",
     val location: String = "",
     val time: String = "",
-    val songs: List<Song> = emptyList()
+    val songs: List<Song> = emptyList(),
+    val creationDate: Long = 0L,
+    val lastEdit: Long = 0L
 )
 
 /**
@@ -59,8 +67,8 @@ data class Setlist(
  * @author ruanitto
  */
 data class SetlistSongLink(
-    val setlistId: String,
-    val songId: String,
+    val setlistId: Long,
+    val songId: Long,
     val position: Int
 )
 
@@ -75,7 +83,7 @@ data class BackupData(
     val links: List<SetlistSongLink>,
     val artists: List<Artist> = emptyList(),
     val tags: List<Tag> = emptyList(),
-    val songTags: Map<String, List<String>> = emptyMap()
+    val songTags: Map<Long, List<Long>> = emptyMap()
 )
 
 /**
@@ -96,7 +104,7 @@ data class SetShareData(
 data class SetlistHelperBackup(
     val songs: List<Song>,
     val setlists: List<HelperSetlist>,
-    val songTags: Map<String, List<String>> = emptyMap()
+    val songTags: Map<Long, List<String>> = emptyMap()
 )
 
 /**
@@ -108,5 +116,5 @@ data class HelperSetlist(
     val name: String,
     val date: String,
     val location: String,
-    val songIds: List<String>
+    val songIds: List<Long>
 )

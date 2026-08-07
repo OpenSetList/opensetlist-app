@@ -26,21 +26,24 @@ class SongRepository(private val database: AppDatabase) {
 
     fun seedIfEmpty() {
         if (queries.selectAllSongs().executeAsList().isNotEmpty()) return
+        val now = System.currentTimeMillis()
         SampleSongs.songs.forEachIndexed { index, song ->
             ensureArtist(song.artist)
-            queries.insertSong(
+            queries.insertSongWithId(
                 song.id, song.title, song.artist, song.key, song.tempo, song.capo,
                 song.duration.ifBlank { null }, song.time.ifBlank { null }, song.body,
-                song.youtubeUrl.ifBlank { null }, index.toLong()
+                song.youtubeUrl.ifBlank { null }, index.toLong(), now, now
             )
         }
         SampleSongs.allSetlists.forEach { setlist ->
-            queries.insertSetlist(
+            queries.insertSetlistWithId(
                 setlist.id,
                 setlist.name,
                 setlist.date.ifBlank { null },
                 setlist.location.ifBlank { null },
-                setlist.time.ifBlank { null }
+                setlist.time.ifBlank { null },
+                now,
+                now
             )
             setlist.songs.forEachIndexed { pos, song ->
                 queries.insertSetlistSong(setlist.id, song.id, pos.toLong())
@@ -51,16 +54,39 @@ class SongRepository(private val database: AppDatabase) {
     fun allSongs(): List<Song> =
         queries.selectAllSongs().executeAsList().map { it.toModel() }
 
-    fun getSong(id: String): Song? =
+    fun getSong(id: Long): Song? =
         queries.selectSongById(id).executeAsOneOrNull()?.toModel()
 
-    fun upsert(song: Song) {
+    fun upsert(song: Song): Song {
         ensureArtist(song.artist)
-        val existing = queries.selectSongById(song.id).executeAsOneOrNull()
-        val sortOrder = existing?.sort_order
-            ?: queries.selectMaxSortOrder().executeAsOne()
+        val now = System.currentTimeMillis()
+        val existing = if (song.id != 0L) {
+            queries.selectSongById(song.id).executeAsOneOrNull()
+        } else {
+            null
+        }
+        if (existing != null) {
+            queries.updateSongBody(
+                body = song.body,
+                title = song.title,
+                artist = song.artist,
+                key = if (song.key.isBlank()) existing.key else song.key,
+                tempo = if (song.tempo.isBlank()) existing.tempo else song.tempo,
+                capo = if (song.capo.isBlank()) existing.capo else song.capo,
+                duration = if (song.duration.isBlank()) existing.duration else song.duration,
+                time = if (song.time.isBlank()) existing.time else song.time,
+                youtube_url = if (song.youtubeUrl.isBlank()) existing.youtube_url else song.youtubeUrl,
+                last_edit = now,
+                id = existing.id
+            )
+            return song.copy(
+                id = existing.id,
+                creationDate = existing.creation_date,
+                lastEdit = now
+            )
+        }
+        val creation = maxOf(song.creationDate, song.lastEdit).takeIf { it > 0 } ?: now
         queries.insertSong(
-            id = song.id,
             title = song.title,
             artist = song.artist,
             key = song.key.ifBlank { null },
@@ -70,11 +96,15 @@ class SongRepository(private val database: AppDatabase) {
             time = song.time.ifBlank { null },
             body = song.body,
             youtube_url = song.youtubeUrl.ifBlank { null },
-            sort_order = sortOrder
+            sort_order = queries.selectMaxSortOrder().executeAsOne(),
+            creation_date = creation,
+            last_edit = creation
         )
+        val newId = queries.lastInsertRowId().executeAsOne()
+        return song.copy(id = newId, creationDate = creation, lastEdit = creation)
     }
 
-    fun delete(id: String) {
+    fun delete(id: Long) {
         database.transaction {
             queries.deleteSetlistSongBySong(id)
             queries.deleteSong(id)
@@ -84,13 +114,13 @@ class SongRepository(private val database: AppDatabase) {
     fun allSetlists(): List<Setlist> =
         queries.selectAllSetlists().executeAsList().map { it.toModel() }
 
-    fun songsInSetlist(setlistId: String): List<Song> =
+    fun songsInSetlist(setlistId: Long): List<Song> =
         queries.selectSongsInSetlist(setlistId).executeAsList().map { it.toModel() }
 
     fun importSong(body: String): Song {
         val parsed = ChordProParser.parse(body)
         val song = Song(
-            id = generateId(),
+            id = 0L,
             title = parsed.title.ifBlank { AppStrings.untitledSong },
             artist = parsed.artist.ifBlank { AppStrings.unknownArtist },
             key = parsed.key,
@@ -111,7 +141,7 @@ class SongRepository(private val database: AppDatabase) {
     }
 
     fun newSong(): Song = Song(
-        id = generateId(),
+        id = 0L,
         title = AppStrings.newSongTitle,
         artist = AppStrings.defaultArtistName,
         key = "",
@@ -121,41 +151,43 @@ class SongRepository(private val database: AppDatabase) {
     )
 
     fun createSetlist(name: String): Setlist {
-        val id = "setlist_${System.currentTimeMillis()}"
-        queries.insertSetlist(id, name, null, null, null)
-        return Setlist(id = id, name = name, songs = emptyList())
+        val now = System.currentTimeMillis()
+        queries.insertSetlist(name, null, null, null, now, now)
+        val newId = queries.lastInsertRowId().executeAsOne()
+        return Setlist(id = newId, name = name, songs = emptyList(), creationDate = now, lastEdit = now)
     }
 
-    fun renameSetlist(id: String, name: String) {
-        queries.renameSetlist(name, id)
+    fun renameSetlist(id: Long, name: String) {
+        queries.renameSetlist(name, System.currentTimeMillis(), id)
     }
 
-    fun updateSetlistInfo(id: String, date: String, location: String, time: String) {
+    fun updateSetlistInfo(id: Long, date: String, location: String, time: String) {
         queries.updateSetlistInfo(
             date.ifBlank { null },
             location.ifBlank { null },
             time.ifBlank { null },
+            System.currentTimeMillis(),
             id
         )
     }
 
-    fun deleteSetlist(id: String) {
+    fun deleteSetlist(id: Long) {
         database.transaction {
             queries.deleteAllSetlistSongs(id)
             queries.deleteSetlist(id)
         }
     }
 
-    fun addSongToSetlist(setlistId: String, songId: String) {
+    fun addSongToSetlist(setlistId: Long, songId: Long) {
         val position = queries.nextPositionInSetlist(setlistId).executeAsOne()
         queries.insertSetlistSong(setlistId, songId, position)
     }
 
-    fun removeSongFromSetlist(setlistId: String, songId: String) {
+    fun removeSongFromSetlist(setlistId: Long, songId: Long) {
         queries.deleteSetlistSong(setlistId, songId)
     }
 
-    fun reorderSetlistSongs(setlistId: String, orderedSongIds: List<String>) {
+    fun reorderSetlistSongs(setlistId: Long, orderedSongIds: List<Long>) {
         database.transaction {
             queries.deleteAllSetlistSongs(setlistId)
             orderedSongIds.forEachIndexed { index, songId ->
@@ -164,7 +196,7 @@ class SongRepository(private val database: AppDatabase) {
         }
     }
 
-    fun songsNotInSetlist(setlistId: String): List<Song> =
+    fun songsNotInSetlist(setlistId: Long): List<Song> =
         queries.selectSongsNotInSetlist(setlistId).executeAsList().map { it.toModel() }
 
     fun backupData(): BackupData {
@@ -176,6 +208,10 @@ class SongRepository(private val database: AppDatabase) {
 
     fun restoreBackup(data: BackupData): Boolean {
         if (data.songs.isEmpty() && data.setlists.isEmpty()) return false
+        val now = System.currentTimeMillis()
+        val songIdMap = mutableMapOf<Long, Long>()
+        val tagIdMap = mutableMapOf<Long, Long>()
+        val setlistIdMap = mutableMapOf<Long, Long>()
         database.transaction {
             queries.deleteAllSongTags()
             queries.deleteAllLinks()
@@ -183,37 +219,68 @@ class SongRepository(private val database: AppDatabase) {
             queries.deleteAllSongs()
             queries.deleteAllArtists()
             data.artists.forEach { artist ->
-                queries.insertArtist(artist.id, artist.name)
+                val creation = artist.creationDate.takeIf { it > 0 } ?: now
+                val lastEdit = artist.lastEdit.takeIf { it > 0 } ?: creation
+                queries.insertArtist(
+                    name = artist.name,
+                    creation_date = creation,
+                    last_edit = lastEdit
+                )
             }
             data.tags.forEach { tag ->
-                queries.insertTag(tag.id, tag.name)
+                val creation = tag.creationDate.takeIf { it > 0 } ?: now
+                val lastEdit = tag.lastEdit.takeIf { it > 0 } ?: creation
+                queries.insertTag(
+                    name = tag.name,
+                    creation_date = creation,
+                    last_edit = lastEdit
+                )
+                tagIdMap[tag.id] = queries.lastInsertRowId().executeAsOne()
             }
             data.songs.forEachIndexed { index, song ->
                 ensureArtist(song.artist)
+                val creation = song.creationDate.takeIf { it > 0 } ?: now
+                val lastEdit = song.lastEdit.takeIf { it > 0 } ?: creation
                 queries.insertSong(
-                    song.id, song.title, song.artist,
-                    song.key.ifBlank { null }, song.tempo.ifBlank { null },
-                    song.capo.ifBlank { null }, song.duration.ifBlank { null },
-                    song.time.ifBlank { null },
-                    song.body,
-                    song.youtubeUrl.ifBlank { null }, index.toLong()
+                    title = song.title,
+                    artist = song.artist,
+                    key = song.key.ifBlank { null },
+                    tempo = song.tempo.ifBlank { null },
+                    capo = song.capo.ifBlank { null },
+                    duration = song.duration.ifBlank { null },
+                    time = song.time.ifBlank { null },
+                    body = song.body,
+                    youtube_url = song.youtubeUrl.ifBlank { null },
+                    sort_order = index.toLong(),
+                    creation_date = creation,
+                    last_edit = lastEdit
                 )
+                songIdMap[song.id] = queries.lastInsertRowId().executeAsOne()
             }
             data.songTags.forEach { (songId, tagIds) ->
+                val mappedSong = songIdMap[songId] ?: return@forEach
                 tagIds.distinct().forEach { tagId ->
-                    queries.insertSongTag(songId, tagId)
+                    val mappedTag = tagIdMap[tagId] ?: return@forEach
+                    queries.insertSongTag(mappedSong, mappedTag)
                 }
             }
             data.setlists.forEach { setlist ->
+                val creation = setlist.creationDate.takeIf { it > 0 } ?: now
+                val lastEdit = setlist.lastEdit.takeIf { it > 0 } ?: creation
                 queries.insertSetlist(
-                    setlist.id, setlist.name,
-                    setlist.date.ifBlank { null },
-                    setlist.location.ifBlank { null },
-                    setlist.time.ifBlank { null }
+                    name = setlist.name,
+                    date = setlist.date.ifBlank { null },
+                    location = setlist.location.ifBlank { null },
+                    time = setlist.time.ifBlank { null },
+                    creation_date = creation,
+                    last_edit = lastEdit
                 )
+                setlistIdMap[setlist.id] = queries.lastInsertRowId().executeAsOne()
             }
             data.links.forEach { link ->
-                queries.insertSetlistSong(link.setlistId, link.songId, link.position.toLong())
+                val mappedSetlist = setlistIdMap[link.setlistId] ?: return@forEach
+                val mappedSong = songIdMap[link.songId] ?: return@forEach
+                queries.insertSetlistSong(mappedSetlist, mappedSong, link.position.toLong())
             }
         }
         return true
@@ -231,20 +298,24 @@ class SongRepository(private val database: AppDatabase) {
     }
 
     fun importSet(data: SetShareData): Setlist {
-        val setlistId = "setlist_${System.currentTimeMillis()}"
+        val now = System.currentTimeMillis()
         val newSongs = mutableListOf<Song>()
-        database.transaction {
+        val setlistId = database.transactionWithResult {
             queries.insertSetlist(
-                setlistId, data.setlist.name,
+                data.setlist.name,
                 data.setlist.date.ifBlank { null },
                 data.setlist.location.ifBlank { null },
-                data.setlist.time.ifBlank { null }
+                data.setlist.time.ifBlank { null },
+                now,
+                now
             )
+            val id = queries.lastInsertRowId().executeAsOne()
             data.songs.forEachIndexed { pos, source ->
                 val newSong = importSongWithDedup(source)
                 newSongs.add(newSong)
-                queries.insertSetlistSong(setlistId, newSong.id, pos.toLong())
+                queries.insertSetlistSong(id, newSong.id, pos.toLong())
             }
+            id
         }
         return Setlist(
             id = setlistId,
@@ -260,7 +331,7 @@ class SongRepository(private val database: AppDatabase) {
         var songCount = 0
         var setCount = 0
         database.transaction {
-            val idMap = mutableMapOf<String, String>()
+            val idMap = mutableMapOf<Long, Long>()
             data.songs.forEach { source ->
                 val newSong = importSongWithDedup(source)
                 idMap[source.id] = newSong.id
@@ -281,6 +352,7 @@ class SongRepository(private val database: AppDatabase) {
                         helper.date.ifBlank { null },
                         helper.location.ifBlank { null },
                         null,
+                        System.currentTimeMillis(),
                         existing.id
                     )
                     queries.deleteAllSetlistSongs(existing.id)
@@ -288,14 +360,16 @@ class SongRepository(private val database: AppDatabase) {
                         queries.insertSetlistSong(existing.id, songId, pos.toLong())
                     }
                 } else {
-                    val setId =
-                        "setlist_${System.currentTimeMillis()}_${kotlin.random.Random.nextInt(1000)}"
+                    val now = System.currentTimeMillis()
                     queries.insertSetlist(
-                        setId, helper.name,
+                        helper.name,
                         helper.date.ifBlank { null },
                         helper.location.ifBlank { null },
-                        null
+                        null,
+                        now,
+                        now
                     )
+                    val setId = queries.lastInsertRowId().executeAsOne()
                     mappedSongIds.forEachIndexed { pos, songId ->
                         queries.insertSetlistSong(setId, songId, pos.toLong())
                     }
@@ -312,12 +386,10 @@ class SongRepository(private val database: AppDatabase) {
             updateSongFromSource(existing.id, source)
             return getSong(existing.id) ?: source.copy(id = existing.id)
         }
-        val newSong = source.copy(id = generateId())
-        upsert(newSong)
-        return newSong
+        return upsert(source.copy(id = 0L))
     }
 
-    private fun addTagsToSong(songId: String, tagNames: List<String>) {
+    private fun addTagsToSong(songId: Long, tagNames: List<String>) {
         val names = tagNames.map { it.trim() }.filter { it.isNotBlank() }.distinct()
         if (names.isEmpty()) return
         val tagIds = names.map { createTag(it).id }
@@ -327,18 +399,19 @@ class SongRepository(private val database: AppDatabase) {
         }
     }
 
-    private fun updateSongFromSource(id: String, source: Song) {
+    private fun updateSongFromSource(id: Long, source: Song) {
         val existing = queries.selectSongById(id).executeAsOneOrNull()
         queries.updateSongBody(
             body = source.body,
             title = source.title,
             artist = source.artist,
-            key = source.key.ifBlank { existing?.key ?: null },
-            tempo = source.tempo.ifBlank { existing?.tempo ?: null },
-            capo = source.capo.ifBlank { existing?.capo ?: null },
-            duration = source.duration.ifBlank { existing?.duration ?: null },
-            time = source.time.ifBlank { existing?.time ?: null },
-            youtube_url = source.youtubeUrl.ifBlank { existing?.youtube_url ?: null },
+            key = if (source.key.isBlank()) existing?.key else source.key,
+            tempo = if (source.tempo.isBlank()) existing?.tempo else source.tempo,
+            capo = if (source.capo.isBlank()) existing?.capo else source.capo,
+            duration = if (source.duration.isBlank()) existing?.duration else source.duration,
+            time = if (source.time.isBlank()) existing?.time else source.time,
+            youtube_url = if (source.youtubeUrl.isBlank()) existing?.youtube_url else source.youtubeUrl,
+            last_edit = maxOf(source.lastEdit, System.currentTimeMillis()),
             id = id
         )
     }
@@ -350,9 +423,10 @@ class SongRepository(private val database: AppDatabase) {
         val clean = name.trim()
         val existing = queries.selectArtistByName(clean).executeAsOneOrNull()
         if (existing != null) return existing.toModel()
-        val artist = Artist(id = "artist_${System.currentTimeMillis()}_${kotlin.random.Random.nextInt(1000)}", name = clean)
-        queries.insertArtist(artist.id, artist.name)
-        return artist
+        val now = System.currentTimeMillis()
+        queries.insertArtist(clean, now, now)
+        val newId = queries.lastInsertRowId().executeAsOne()
+        return Artist(id = newId, name = clean, creationDate = now, lastEdit = now)
     }
 
     fun ensureArtist(name: String): Artist? {
@@ -360,21 +434,22 @@ class SongRepository(private val database: AppDatabase) {
         return createArtist(name)
     }
 
-    fun renameArtist(id: String, newName: String) {
+    fun renameArtist(id: Long, newName: String) {
         val existing = queries.selectArtistById(id).executeAsOneOrNull() ?: return
         val clean = newName.trim()
         if (clean.isBlank() || clean == existing.name) return
         database.transaction {
-            queries.renameArtist(clean, id)
-            queries.updateSongArtist(clean, existing.name)
+            val now = System.currentTimeMillis()
+            queries.renameArtist(clean, now, id)
+            queries.updateSongArtist(clean, now, existing.name)
         }
     }
 
-    fun deleteArtist(id: String) {
+    fun deleteArtist(id: Long) {
         queries.deleteArtist(id)
     }
 
-    fun deleteArtistAndSongs(id: String) {
+    fun deleteArtistAndSongs(id: Long) {
         val existing = queries.selectArtistById(id).executeAsOneOrNull() ?: return
         database.transaction {
             queries.deleteSongTagsByArtist(existing.name)
@@ -397,32 +472,33 @@ class SongRepository(private val database: AppDatabase) {
         val clean = name.trim()
         val existing = queries.selectTagByName(clean).executeAsOneOrNull()
         if (existing != null) return existing.toModel()
-        val tag = Tag(id = "tag_${System.currentTimeMillis()}_${kotlin.random.Random.nextInt(1000)}", name = clean)
-        queries.insertTag(tag.id, tag.name)
-        return tag
+        val now = System.currentTimeMillis()
+        queries.insertTag(clean, now, now)
+        val newId = queries.lastInsertRowId().executeAsOne()
+        return Tag(id = newId, name = clean, creationDate = now, lastEdit = now)
     }
 
-    fun renameTag(id: String, newName: String) {
+    fun renameTag(id: Long, newName: String) {
         val clean = newName.trim()
         if (clean.isBlank()) return
-        queries.renameTag(clean, id)
+        queries.renameTag(clean, System.currentTimeMillis(), id)
     }
 
-    fun deleteTag(id: String) {
+    fun deleteTag(id: Long) {
         database.transaction {
             queries.deleteSongTagsByTag(id)
             queries.deleteTag(id)
         }
     }
 
-    fun tagsForSong(songId: String): List<Tag> =
+    fun tagsForSong(songId: Long): List<Tag> =
         queries.selectTagsForSong(songId).executeAsList().map { it.toModel() }
 
-    fun tagsBySong(): Map<String, List<Tag>> {
+    fun tagsBySong(): Map<Long, List<Tag>> {
         val tagsById = queries.selectAllTags().executeAsList()
             .associateBy { it.id }
             .mapValues { it.value.toModel() }
-        val result = mutableMapOf<String, MutableList<Tag>>()
+        val result = mutableMapOf<Long, MutableList<Tag>>()
         queries.selectAllSongTags().executeAsList().forEach { link ->
             val tag = tagsById[link.tag_id] ?: return@forEach
             result.getOrPut(link.song_id) { mutableListOf() }.add(tag)
@@ -430,13 +506,13 @@ class SongRepository(private val database: AppDatabase) {
         return result.mapValues { it.value.sortedBy { t -> t.name.lowercase() } }
     }
 
-    fun songsByTag(tagId: String): List<Song> =
+    fun songsByTag(tagId: Long): List<Song> =
         queries.selectSongsByTag(tagId).executeAsList().map { it.toModel() }
 
-    fun songCountByTag(): Map<String, Int> =
+    fun songCountByTag(): Map<Long, Int> =
         queries.songCountByTag().executeAsList().associate { it.tag_id to it.count.toInt() }
 
-    fun setSongTags(songId: String, tagIds: List<String>) {
+    fun setSongTags(songId: Long, tagIds: List<Long>) {
         database.transaction {
             queries.deleteSongTags(songId)
             tagIds.distinct().forEach { tagId ->
@@ -444,9 +520,6 @@ class SongRepository(private val database: AppDatabase) {
             }
         }
     }
-
-    private fun generateId(): String =
-        "song_${System.currentTimeMillis()}_${kotlin.random.Random.nextInt(1000)}"
 
     private fun DbSong.toModel(): Song = Song(
         id = id,
@@ -459,17 +532,23 @@ class SongRepository(private val database: AppDatabase) {
         time = time ?: "",
         youtubeUrl = youtube_url ?: "",
         sortOrder = sort_order,
-        body = body
+        body = body,
+        creationDate = creation_date,
+        lastEdit = last_edit
     )
 
     private fun DbArtist.toModel(): Artist = Artist(
         id = id,
-        name = name
+        name = name,
+        creationDate = creation_date,
+        lastEdit = last_edit
     )
 
     private fun DbTag.toModel(): Tag = Tag(
         id = id,
-        name = name
+        name = name,
+        creationDate = creation_date,
+        lastEdit = last_edit
     )
 
     private fun DbSetlist.toModel(): Setlist = Setlist(
@@ -478,6 +557,8 @@ class SongRepository(private val database: AppDatabase) {
         date = date ?: "",
         location = location ?: "",
         time = time ?: "",
-        songs = songsInSetlist(id)
+        songs = songsInSetlist(id),
+        creationDate = creation_date,
+        lastEdit = last_edit
     )
 }

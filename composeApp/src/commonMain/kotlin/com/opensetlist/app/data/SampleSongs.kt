@@ -11,7 +11,7 @@ import com.opensetlist.app.model.Song
 object SampleSongs {
     val songs = listOf(
         Song(
-            id = "1",
+            id = 1L,
             title = "Garota de Ipanema",
             artist = "Tom Jobim",
             key = "F",
@@ -46,7 +46,7 @@ O mundo inteirinho se [Dm7]enche de graça
             """.trimIndent()
         ),
         Song(
-            id = "2",
+            id = 2L,
             title = "Águas de Março",
             artist = "Tom Jobim",
             key = "Am",
@@ -79,7 +79,7 @@ Festa da cumeeira
             """.trimIndent()
         ),
         Song(
-            id = "3",
+            id = 3L,
             title = "O Leãozinho",
             artist = "Caetano Veloso",
             key = "C",
@@ -100,7 +100,7 @@ Que [Am7]nem posso explicar
             """.trimIndent()
         ),
         Song(
-            id = "4",
+            id = 4L,
             title = "Chega de Saudade",
             artist = "Tom Jobim",
             key = "Dm",
@@ -125,7 +125,7 @@ Vamos dei[F#dim]xar desse negócio de vo[Em7]cê viver sem [Dmaj7]mim[D6]
             """.trimIndent()
         ),
         Song(
-            id = "5",
+            id = 5L,
             title = "Roda Viva",
             artist = "Chico Buarque",
             key = "G",
@@ -150,7 +150,7 @@ Vamos dei[F#dim]xar desse negócio de vo[Em7]cê viver sem [Dmaj7]mim[D6]
             """.trimIndent()
         ),
         Song(
-            id = "6",
+            id = 6L,
             title = "Construção",
             artist = "Chico Buarque",
             key = "D",
@@ -182,7 +182,7 @@ Vamos dei[F#dim]xar desse negócio de vo[Em7]cê viver sem [Dmaj7]mim[D6]
     )
 
     val sampleSetlist = Setlist(
-        id = "sl1",
+        id = 1L,
         name = "MPB Classics",
         songs = songs.take(4)
     )
@@ -190,7 +190,7 @@ Vamos dei[F#dim]xar desse negócio de vo[Em7]cê viver sem [Dmaj7]mim[D6]
     val allSetlists = listOf(
         sampleSetlist,
         Setlist(
-            id = "sl2",
+            id = 2L,
             name = "Chico Buarque Night",
             songs = songs.filter { it.artist == "Chico Buarque" }
         )
