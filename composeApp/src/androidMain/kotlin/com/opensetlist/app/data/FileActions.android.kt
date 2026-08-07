@@ -43,6 +43,7 @@ actual fun rememberFileActions(
     var pendingProBatchProgress by remember {
         mutableStateOf<(fileName: String, event: ProBatchEvent) -> Unit>({ _, _ -> })
     }
+    var pendingProBatchCancelled by remember { mutableStateOf<() -> Boolean>({ false }) }
 
     val importLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -116,6 +117,12 @@ actual fun rememberFileActions(
                 DocumentsContract.getTreeDocumentId(treeUri)
             )
             for ((fileName, content) in pendingProBatch) {
+                if (pendingProBatchCancelled()) {
+                    withContext(Dispatchers.Main) {
+                        pendingProBatchProgress("", ProBatchEvent.CANCELLED)
+                    }
+                    return@launch
+                }
                 withContext(Dispatchers.Main) {
                     pendingProBatchProgress(fileName, ProBatchEvent.START)
                 }
@@ -226,9 +233,10 @@ actual fun rememberFileActions(
                     )
                 }
             },
-            saveProBatch = { files, onProgress ->
+            saveProBatch = { files, onProgress, isCancelled ->
                 pendingProBatch = files
                 pendingProBatchProgress = onProgress
+                pendingProBatchCancelled = isCancelled
                 proBatchLauncher.launch(null)
             }
         )

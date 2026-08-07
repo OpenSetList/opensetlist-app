@@ -16,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
@@ -184,6 +185,9 @@ fun App(
     var exportStartTime by remember { mutableStateOf<TimeMark?>(null) }
     var exportSavedCount by remember { mutableStateOf(0) }
     var exportFailedCount by remember { mutableStateOf(0) }
+    var exportTotalCount by remember { mutableStateOf(0) }
+    var exportCancelled by remember { mutableStateOf(false) }
+    var showCancelExportDialog by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -403,51 +407,55 @@ fun App(
         exportRunning = true
         exportSavedCount = 0
         exportFailedCount = 0
+        exportTotalCount = songs.size
+        exportCancelled = false
         exportStartTime = TimeSource.Monotonic.markNow()
         exportLog.add(ExportLogEntry(AppStrings.proExportStarting(songs.size)))
         exportLog.add(ExportLogEntry(AppStrings.proExportWaitingFolder))
         currentScreen = Screen.ExportProgress
         fileActions.saveProBatch(
-            songs.map { song -> "${song.title}.pro" to buildProFileContent(song) }
-        ) { fileName, event ->
-            when (event) {
-                ProBatchEvent.START -> {
-                    exportLog.add(
-                        ExportLogEntry(AppStrings.proExportSongStarted(fileName), ExportLogKind.START)
-                    )
-                }
-                ProBatchEvent.DONE -> {
-                    exportSavedCount++
-                    exportLog.add(
-                        ExportLogEntry(AppStrings.proExportSongDone(fileName), ExportLogKind.DONE)
-                    )
-                }
-                ProBatchEvent.FAILED -> {
-                    exportFailedCount++
-                    exportLog.add(
-                        ExportLogEntry(AppStrings.proExportSongFailed(fileName), ExportLogKind.FAILED)
-                    )
-                }
-                ProBatchEvent.COMPLETED -> {
-                    exportRunning = false
-                    val start = exportStartTime
-                    exportLog.add(
-                        ExportLogEntry(
-                            AppStrings.proExportCompleted(
-                                if (start != null) formatElapsedSeconds(start) else "",
-                                exportSavedCount,
-                                exportFailedCount
-                            ),
-                            ExportLogKind.SUCCESS
+            songs.map { song -> "${song.title}.pro" to buildProFileContent(song) },
+            { fileName, event ->
+                when (event) {
+                    ProBatchEvent.START -> {
+                        exportLog.add(
+                            ExportLogEntry(AppStrings.proExportSongStarted(fileName), ExportLogKind.START)
                         )
-                    )
+                    }
+                    ProBatchEvent.DONE -> {
+                        exportSavedCount++
+                        exportLog.add(
+                            ExportLogEntry(AppStrings.proExportSongDone(fileName), ExportLogKind.DONE)
+                        )
+                    }
+                    ProBatchEvent.FAILED -> {
+                        exportFailedCount++
+                        exportLog.add(
+                            ExportLogEntry(AppStrings.proExportSongFailed(fileName), ExportLogKind.FAILED)
+                        )
+                    }
+                    ProBatchEvent.COMPLETED -> {
+                        exportRunning = false
+                        val start = exportStartTime
+                        exportLog.add(
+                            ExportLogEntry(
+                                AppStrings.proExportCompleted(
+                                    if (start != null) formatElapsedSeconds(start) else "",
+                                    exportSavedCount,
+                                    exportFailedCount
+                                ),
+                                ExportLogKind.SUCCESS
+                            )
+                        )
+                    }
+                    ProBatchEvent.CANCELLED -> {
+                        exportRunning = false
+                        exportLog.add(ExportLogEntry(AppStrings.proExportCancelled))
+                    }
                 }
-                ProBatchEvent.CANCELLED -> {
-                    exportRunning = false
-                    exportLog.add(ExportLogEntry(AppStrings.proExportCancelled))
-                }
-            }
-        }
+            },
+            { exportCancelled }
+        )
     }
 
     fun shareSetlist(setlist: Setlist) {
@@ -593,6 +601,16 @@ fun App(
                                                 imageVector = Icons.Default.Delete,
                                                 contentDescription = AppStrings.deleteSetlist
                                             )
+                                        }
+                                    }
+                                    is Screen.ExportProgress -> {
+                                        if (exportRunning) {
+                                            IconButton(onClick = { showCancelExportDialog = true }) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Close,
+                                                    contentDescription = AppStrings.cancelExport
+                                                )
+                                            }
                                         }
                                     }
                                     else -> {}
@@ -855,6 +873,7 @@ fun App(
                             ExportProgressScreen(
                                 entries = exportLog,
                                 running = exportRunning,
+                                total = exportTotalCount,
                                 onClose = { currentScreen = Screen.Settings }
                             )
                         }
@@ -1193,6 +1212,27 @@ fun App(
                         showRestoreConfirm = false
                         pendingRestoreData = null
                     }) {
+                        Text(AppStrings.cancel)
+                    }
+                }
+            )
+        }
+
+        if (showCancelExportDialog) {
+            AlertDialog(
+                onDismissRequest = { showCancelExportDialog = false },
+                title = { Text(AppStrings.cancelExportDialogTitle) },
+                text = { Text(AppStrings.cancelExportDialogMessage) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        exportCancelled = true
+                        showCancelExportDialog = false
+                    }) {
+                        Text(AppStrings.cancelExport, color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showCancelExportDialog = false }) {
                         Text(AppStrings.cancel)
                     }
                 }

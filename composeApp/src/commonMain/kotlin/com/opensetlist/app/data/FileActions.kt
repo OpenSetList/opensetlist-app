@@ -27,7 +27,8 @@ class FileActions(
     val openUrl: (String) -> Unit,
     val saveProBatch: (
         files: List<Pair<String, String>>,
-        onProgress: (fileName: String, event: ProBatchEvent) -> Unit
+        onProgress: (fileName: String, event: ProBatchEvent) -> Unit,
+        isCancelled: () -> Boolean
     ) -> Unit
 )
 
