@@ -1,0 +1,26 @@
+ALTER TABLE song ADD COLUMN transpose INTEGER NOT NULL DEFAULT 0;
+
+CREATE TABLE setlist_new (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT NOT NULL,
+    date INTEGER,
+    location TEXT,
+    creation_date INTEGER NOT NULL,
+    last_edit INTEGER NOT NULL
+);
+
+INSERT INTO setlist_new(id, name, date, location, creation_date, last_edit)
+SELECT id,
+       name,
+       CASE
+           WHEN date IS NULL OR date = '' THEN NULL
+           ELSE (CAST(strftime('%s', substr(date, 7, 4) || '-' || substr(date, 4, 2) || '-' || substr(date, 1, 2) || ' ' || COALESCE(NULLIF(time, ''), '00:00') || ':00') AS INTEGER)
+                - (CAST(strftime('%s', 'now', 'localtime') AS INTEGER) - CAST(strftime('%s', 'now') AS INTEGER))) * 1000
+       END,
+       location,
+       creation_date,
+       last_edit
+FROM setlist;
+
+DROP TABLE setlist;
+ALTER TABLE setlist_new RENAME TO setlist;

@@ -32,16 +32,15 @@ class SongRepository(private val database: AppDatabase) {
             queries.insertSongWithId(
                 song.id, song.title, song.artist, song.key, song.tempo, song.capo,
                 song.duration.ifBlank { null }, song.time.ifBlank { null }, song.body,
-                song.youtubeUrl.ifBlank { null }, index.toLong(), now, now
+                song.youtubeUrl.ifBlank { null }, index.toLong(), now, now, song.transpose.toLong()
             )
         }
         SampleSongs.allSetlists.forEach { setlist ->
             queries.insertSetlistWithId(
                 setlist.id,
                 setlist.name,
-                setlist.date.ifBlank { null },
+                setlist.date.takeIf { it > 0 },
                 setlist.location.ifBlank { null },
-                setlist.time.ifBlank { null },
                 now,
                 now
             )
@@ -77,6 +76,7 @@ class SongRepository(private val database: AppDatabase) {
                 time = if (song.time.isBlank()) existing.time else song.time,
                 youtube_url = if (song.youtubeUrl.isBlank()) existing.youtube_url else song.youtubeUrl,
                 last_edit = now,
+                transpose = song.transpose.toLong(),
                 id = existing.id
             )
             return song.copy(
@@ -98,7 +98,8 @@ class SongRepository(private val database: AppDatabase) {
             youtube_url = song.youtubeUrl.ifBlank { null },
             sort_order = queries.selectMaxSortOrder().executeAsOne(),
             creation_date = creation,
-            last_edit = creation
+            last_edit = creation,
+            transpose = song.transpose.toLong()
         )
         val newId = queries.lastInsertRowId().executeAsOne()
         return song.copy(id = newId, creationDate = creation, lastEdit = creation)
@@ -129,7 +130,8 @@ class SongRepository(private val database: AppDatabase) {
             duration = parsed.duration,
             time = parsed.time,
             youtubeUrl = parsed.youtube,
-            body = body
+            body = body,
+            transpose = parsed.transpose
         )
         var imported: Song? = null
         database.transaction {
@@ -152,7 +154,7 @@ class SongRepository(private val database: AppDatabase) {
 
     fun createSetlist(name: String): Setlist {
         val now = System.currentTimeMillis()
-        queries.insertSetlist(name, null, null, null, now, now)
+        queries.insertSetlist(name, null, null, now, now)
         val newId = queries.lastInsertRowId().executeAsOne()
         return Setlist(id = newId, name = name, songs = emptyList(), creationDate = now, lastEdit = now)
     }
@@ -161,11 +163,10 @@ class SongRepository(private val database: AppDatabase) {
         queries.renameSetlist(name, System.currentTimeMillis(), id)
     }
 
-    fun updateSetlistInfo(id: Long, date: String, location: String, time: String) {
+    fun updateSetlistInfo(id: Long, date: Long, location: String) {
         queries.updateSetlistInfo(
-            date.ifBlank { null },
+            date.takeIf { it > 0 },
             location.ifBlank { null },
-            time.ifBlank { null },
             System.currentTimeMillis(),
             id
         )
@@ -253,7 +254,8 @@ class SongRepository(private val database: AppDatabase) {
                     youtube_url = song.youtubeUrl.ifBlank { null },
                     sort_order = index.toLong(),
                     creation_date = creation,
-                    last_edit = lastEdit
+                    last_edit = lastEdit,
+                    transpose = song.transpose.toLong()
                 )
                 songIdMap[song.id] = queries.lastInsertRowId().executeAsOne()
             }
@@ -269,9 +271,8 @@ class SongRepository(private val database: AppDatabase) {
                 val lastEdit = setlist.lastEdit.takeIf { it > 0 } ?: creation
                 queries.insertSetlist(
                     name = setlist.name,
-                    date = setlist.date.ifBlank { null },
+                    date = setlist.date.takeIf { it > 0 },
                     location = setlist.location.ifBlank { null },
-                    time = setlist.time.ifBlank { null },
                     creation_date = creation,
                     last_edit = lastEdit
                 )
@@ -303,9 +304,8 @@ class SongRepository(private val database: AppDatabase) {
         val setlistId = database.transactionWithResult {
             queries.insertSetlist(
                 data.setlist.name,
-                data.setlist.date.ifBlank { null },
+                data.setlist.date.takeIf { it > 0 },
                 data.setlist.location.ifBlank { null },
-                data.setlist.time.ifBlank { null },
                 now,
                 now
             )
@@ -322,7 +322,6 @@ class SongRepository(private val database: AppDatabase) {
             name = data.setlist.name,
             date = data.setlist.date,
             location = data.setlist.location,
-            time = data.setlist.time,
             songs = newSongs
         )
     }
@@ -349,9 +348,8 @@ class SongRepository(private val database: AppDatabase) {
                 }
                 if (existing != null) {
                     queries.updateSetlistInfo(
-                        helper.date.ifBlank { null },
+                        helper.date.takeIf { it > 0 },
                         helper.location.ifBlank { null },
-                        null,
                         System.currentTimeMillis(),
                         existing.id
                     )
@@ -363,9 +361,8 @@ class SongRepository(private val database: AppDatabase) {
                     val now = System.currentTimeMillis()
                     queries.insertSetlist(
                         helper.name,
-                        helper.date.ifBlank { null },
+                        helper.date.takeIf { it > 0 },
                         helper.location.ifBlank { null },
-                        null,
                         now,
                         now
                     )
@@ -412,6 +409,7 @@ class SongRepository(private val database: AppDatabase) {
             time = if (source.time.isBlank()) existing?.time else source.time,
             youtube_url = if (source.youtubeUrl.isBlank()) existing?.youtube_url else source.youtubeUrl,
             last_edit = maxOf(source.lastEdit, System.currentTimeMillis()),
+            transpose = if (source.transpose != 0) source.transpose.toLong() else existing?.transpose ?: 0L,
             id = id
         )
     }
@@ -534,7 +532,8 @@ class SongRepository(private val database: AppDatabase) {
         sortOrder = sort_order,
         body = body,
         creationDate = creation_date,
-        lastEdit = last_edit
+        lastEdit = last_edit,
+        transpose = transpose.toInt()
     )
 
     private fun DbArtist.toModel(): Artist = Artist(
@@ -554,9 +553,8 @@ class SongRepository(private val database: AppDatabase) {
     private fun DbSetlist.toModel(): Setlist = Setlist(
         id = id,
         name = name,
-        date = date ?: "",
+        date = date ?: 0L,
         location = location ?: "",
-        time = time ?: "",
         songs = songsInSetlist(id),
         creationDate = creation_date,
         lastEdit = last_edit

@@ -6,9 +6,6 @@ import com.opensetlist.app.model.HelperSetlist
 import com.opensetlist.app.model.SetlistHelperBackup
 import com.opensetlist.app.model.Song
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import javax.swing.JFileChooser
 
 /**
@@ -170,7 +167,6 @@ private fun parseSetlistHelperDb(file: File): SetlistHelperBackup? {
                         }
                     }
                 }
-                val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
                 conn.createStatement().use { st ->
                     st.executeQuery(
                         "SELECT _id, name, gig_location, gig_date FROM setlist " +
@@ -179,8 +175,7 @@ private fun parseSetlistHelperDb(file: File): SetlistHelperBackup? {
                         while (rs.next()) {
                             val setId = rs.getLong(1)
                             val dateMillis = rs.getLong(4)
-                            val date = if (rs.wasNull() || dateMillis <= 0) "" else
-                                dateFormat.format(Date(dateMillis))
+                            val date = if (rs.wasNull() || dateMillis <= 0) 0L else dateMillis
                             setlists.add(
                                 HelperSetlist(
                                     name = rs.getString(2)?.ifBlank { "Setlist importada" }

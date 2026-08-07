@@ -70,6 +70,26 @@ private fun columnExists(conn: Connection, table: String, column: String): Boole
     return false
 }
 
+private fun columnType(conn: Connection, table: String, column: String): String? {
+    conn.createStatement().use { st ->
+        st.executeQuery("PRAGMA table_info($table)").use { rs ->
+            while (rs.next()) {
+                if (rs.getString("name") == column) {
+                    return rs.getString("type")?.uppercase()
+                }
+            }
+        }
+    }
+    return null
+}
+
+private fun legacySetlistDate(date: String, time: String): Long {
+    val dateMillis = toDatePickerMillis(date) ?: return 0L
+    val clock = parseClockTime(time)
+    if (clock == null) return dateMillis
+    return combineDateAndTime(dateMillis, clock.first, clock.second)
+}
+
 private fun parseAppDatabase(file: File): BackupData? {
     return runCatching {
         var result: BackupData? = null
@@ -123,14 +143,13 @@ private fun parseAppDatabase(file: File): BackupData? {
             conn.createStatement().use { st ->
                 val hasSongTime = columnExists(conn, "song", "time")
                 val hasSongTimestamps = columnExists(conn, "song", "creation_date")
+                val hasSongTranspose = columnExists(conn, "song", "transpose")
                 st.executeQuery(
-                    if (hasSongTime) {
-                        "SELECT id, title, artist, key, tempo, capo, duration, time, body, youtube_url, " +
-                            if (hasSongTimestamps) "creation_date, last_edit" else ""
-                    } else {
-                        "SELECT id, title, artist, key, tempo, capo, duration, body, youtube_url, " +
-                            if (hasSongTimestamps) "creation_date, last_edit" else ""
-                    }
+                    "SELECT id, title, artist, key, tempo, capo, duration" +
+                        if (hasSongTime) ", time" else "" +
+                        ", body, youtube_url" +
+                        if (hasSongTimestamps) ", creation_date, last_edit" else "" +
+                        if (hasSongTranspose) ", transpose" else ""
                 ).use { rs ->
                     while (rs.next()) {
                         songs.add(
@@ -146,7 +165,8 @@ private fun parseAppDatabase(file: File): BackupData? {
                                 body = rs.getString("body") ?: "",
                                 youtubeUrl = rs.getString("youtube_url") ?: "",
                                 creationDate = rs.getLong("creation_date").takeIf { !rs.wasNull() } ?: 0L,
-                                lastEdit = rs.getLong("last_edit").takeIf { !rs.wasNull() } ?: 0L
+                                lastEdit = rs.getLong("last_edit").takeIf { !rs.wasNull() } ?: 0L,
+                                transpose = if (hasSongTranspose) rs.getLong("transpose").toInt() else 0
                             )
                         )
                     }
@@ -156,17 +176,28 @@ private fun parseAppDatabase(file: File): BackupData? {
             val links = mutableListOf<SetlistSongLink>()
             if (tableExists(conn, "setlist")) {
                 conn.createStatement().use { st ->
+                    val dateIsInteger = columnType(conn, "setlist", "date") == "INTEGER"
+                    val hasSetlistTime = columnExists(conn, "setlist", "time")
                     st.executeQuery(
-                        "SELECT id, name, date, location, time, creation_date, last_edit FROM setlist"
+                        "SELECT id, name, date, location" +
+                            if (hasSetlistTime) ", time" else "" +
+                            ", creation_date, last_edit FROM setlist"
                     ).use { rs ->
                         while (rs.next()) {
+                            val date = if (dateIsInteger) {
+                                rs.getLong("date").takeIf { !rs.wasNull() } ?: 0L
+                            } else {
+                                legacySetlistDate(
+                                    date = rs.getString("date") ?: "",
+                                    time = if (hasSetlistTime) rs.getString("time") ?: "" else ""
+                                )
+                            }
                             setlists.add(
                                 Setlist(
                                     id = rs.getLong(1),
                                     name = rs.getString(2),
-                                    date = rs.getString(3),
+                                    date = date,
                                     location = rs.getString(4),
-                                    time = rs.getString(5),
                                     creationDate = rs.getLong(6).takeIf { !rs.wasNull() } ?: 0L,
                                     lastEdit = rs.getLong(7).takeIf { !rs.wasNull() } ?: 0L
                                 )

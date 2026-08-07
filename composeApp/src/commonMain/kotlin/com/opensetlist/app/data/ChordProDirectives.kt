@@ -48,6 +48,7 @@ object ChordProDirectives {
         "tempo" to "tempo", "bpm" to "tempo",
         "duration" to "duration", "duracao" to "duration", "duração" to "duration",
         "capo" to "capo",
+        "transpose" to "transpose", "trans" to "transpose",
         "youtube" to "youtube", "youtube_url" to "youtube", "url" to "youtube",
         "tag" to "tag",
         "meta" to "meta",
@@ -153,6 +154,7 @@ object ChordProDirectives {
         add("tempo", Kind.METADATA, metadataKey = "tempo")
         add("duration", Kind.METADATA, metadataKey = "duration")
         add("capo", Kind.METADATA, metadataKey = "capo")
+        add("transpose", Kind.METADATA, metadataKey = "transpose")
         add("youtube", Kind.METADATA, metadataKey = "youtube")
         add("tag", Kind.METADATA, metadataKey = "tag")
         add("meta", Kind.METADATA, metadataKey = "meta")
@@ -187,7 +189,6 @@ object ChordProDirectives {
 
         add("define", Kind.IGNORE)
         add("chord", Kind.IGNORE)
-        add("transpose", Kind.IGNORE)
 
         add("chordfont", Kind.IGNORE)
         add("chordsize", Kind.IGNORE)

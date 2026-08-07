@@ -13,8 +13,6 @@ import com.opensetlist.app.model.HelperSetlist
 import com.opensetlist.app.model.SetlistHelperBackup
 import com.opensetlist.app.model.Song
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 /**
  * Importação de backup do SetList Helper no Android (banco SQLite).
@@ -189,7 +187,6 @@ private fun parseSetlistHelperDb(file: File): SetlistHelperBackup? {
                 }
             }
 
-            val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
             db.rawQuery(
                 "SELECT _id, name, gig_location, gig_date FROM setlist " +
                     "WHERE deleted = 0 OR deleted IS NULL", null
@@ -198,10 +195,7 @@ private fun parseSetlistHelperDb(file: File): SetlistHelperBackup? {
                     val setId = cursor.getLongByName("_id")
                     val name = cursor.getStringByName("name").ifBlank { "Setlist importada" }
                     val location = cursor.getStringOrNullByName("gig_location") ?: ""
-                    val date = cursor.getLongOrNullByName("gig_date")
-                        ?.takeIf { it > 0 }
-                        ?.let { runCatching { dateFormat.format(it) }.getOrNull() }
-                        ?: ""
+                    val date = cursor.getLongOrNullByName("gig_date")?.takeIf { it > 0 } ?: 0L
                     setlists.add(
                         HelperSetlist(
                             name = name,

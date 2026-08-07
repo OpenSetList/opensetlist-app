@@ -11,7 +11,8 @@ CREATE TABLE song (
     youtube_url TEXT,
     sort_order INTEGER NOT NULL DEFAULT 0,
     creation_date INTEGER NOT NULL,
-    last_edit INTEGER NOT NULL
+    last_edit INTEGER NOT NULL,
+    transpose INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE artist (
@@ -37,9 +38,8 @@ CREATE TABLE song_tag (
 CREATE TABLE setlist (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name TEXT NOT NULL,
-    date TEXT,
+    date INTEGER,
     location TEXT,
-    time TEXT,
     creation_date INTEGER NOT NULL,
     last_edit INTEGER NOT NULL
 );
@@ -67,18 +67,18 @@ songCountByArtist:
 SELECT song.artist AS name, COUNT(*) AS count FROM song GROUP BY song.artist;
 
 insertSong:
-INSERT INTO song(title, artist, key, tempo, capo, duration, time, body, youtube_url, sort_order, creation_date, last_edit)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO song(title, artist, key, tempo, capo, duration, time, body, youtube_url, sort_order, creation_date, last_edit, transpose)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 insertSongWithId:
-INSERT OR REPLACE INTO song(id, title, artist, key, tempo, capo, duration, time, body, youtube_url, sort_order, creation_date, last_edit)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO song(id, title, artist, key, tempo, capo, duration, time, body, youtube_url, sort_order, creation_date, last_edit, transpose)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 lastInsertRowId:
 SELECT last_insert_rowid();
 
 updateSongBody:
-UPDATE song SET body = ?, title = ?, artist = ?, key = ?, tempo = ?, capo = ?, duration = ?, time = ?, youtube_url = ?, last_edit = ? WHERE id = ?;
+UPDATE song SET body = ?, title = ?, artist = ?, key = ?, tempo = ?, capo = ?, duration = ?, time = ?, youtube_url = ?, last_edit = ?, transpose = ? WHERE id = ?;
 
 updateSongArtist:
 UPDATE song SET artist = ?, last_edit = ? WHERE artist = ?;
@@ -168,22 +168,22 @@ insertSongTag:
 INSERT OR REPLACE INTO song_tag(song_id, tag_id) VALUES (?, ?);
 
 selectAllSetlists:
-SELECT * FROM setlist ORDER BY date COLLATE NOCASE DESC;
+SELECT * FROM setlist ORDER BY date DESC;
 
 selectSetlistByName:
 SELECT * FROM setlist WHERE name = ? COLLATE NOCASE LIMIT 1;
 
 insertSetlist:
-INSERT INTO setlist(name, date, location, time, creation_date, last_edit) VALUES (?, ?, ?, ?, ?, ?);
+INSERT INTO setlist(name, date, location, creation_date, last_edit) VALUES (?, ?, ?, ?, ?);
 
 insertSetlistWithId:
-INSERT OR REPLACE INTO setlist(id, name, date, location, time, creation_date, last_edit) VALUES (?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO setlist(id, name, date, location, creation_date, last_edit) VALUES (?, ?, ?, ?, ?, ?);
 
 renameSetlist:
 UPDATE setlist SET name = ?, last_edit = ? WHERE id = ?;
 
 updateSetlistInfo:
-UPDATE setlist SET date = ?, location = ?, time = ?, last_edit = ? WHERE id = ?;
+UPDATE setlist SET date = ?, location = ?, last_edit = ? WHERE id = ?;
 
 deleteSetlist:
 DELETE FROM setlist WHERE id = ?;

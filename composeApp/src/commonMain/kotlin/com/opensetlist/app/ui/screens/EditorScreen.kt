@@ -1,5 +1,6 @@
 package com.opensetlist.app.ui.screens
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -48,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import com.opensetlist.app.AppStrings
 import com.opensetlist.app.data.ChordProParser
 import com.opensetlist.app.data.parseDurationSeconds
+import com.opensetlist.app.data.setChordProDirective
 import com.opensetlist.app.model.Song
 import com.opensetlist.app.model.Tag
 
@@ -81,6 +83,7 @@ fun EditorScreen(
     var keyMenuOpen by remember(song.id) { mutableStateOf(false) }
     var tempo by remember(song.id) { mutableStateOf(song.tempo) }
     var capo by remember(song.id) { mutableStateOf(song.capo) }
+    var transpose by remember(song.id) { mutableStateOf(song.transpose) }
     var youtubeUrl by remember(song.id) { mutableStateOf(song.youtubeUrl) }
     var selectedTagIds by remember(song.id) { mutableStateOf(initialTags.map { it.id }.toSet()) }
     var newTagText by remember { mutableStateOf("") }
@@ -124,7 +127,8 @@ fun EditorScreen(
             capo = capo.trim().ifBlank { parsed.capo.ifBlank { song.capo } },
             duration = computedDuration.ifBlank { parsed.duration.ifBlank { song.duration } },
             time = computedTime.ifBlank { parsed.time.ifBlank { song.time } },
-            youtubeUrl = youtubeUrl.trim()
+            youtubeUrl = youtubeUrl.trim(),
+            transpose = transpose.takeIf { it != 0 } ?: parsed.transpose.takeIf { it > 0 } ?: 0
         )
         onSave(updated, selectedTagIds.toList())
     }
@@ -214,7 +218,9 @@ fun EditorScreen(
                 }
             }
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ExposedDropdownMenuBox(
@@ -253,7 +259,7 @@ fun EditorScreen(
                         onValueChange = { newCapo ->
                             val filtered = newCapo.filter { c -> c.isDigit() }.take(2)
                             capo = filtered
-                            body = updateCapoDirective(body, filtered)
+                            body = setChordProDirective(body, "capo", filtered.ifBlank { null })
                         },
                         label = { Text(AppStrings.capoLabel) },
                         singleLine = true,
@@ -271,6 +277,25 @@ fun EditorScreen(
                         textStyle = TextStyle(textAlign = TextAlign.End),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.width(96.dp)
+                    )
+                }
+                Column {
+                    OutlinedTextField(
+                        value = transpose.toString(),
+                        onValueChange = { newTranspose ->
+                            val filtered = newTranspose.filter { c -> c.isDigit() }.take(2)
+                            transpose = filtered.toIntOrNull() ?: 0
+                            body = setChordProDirective(
+                                body,
+                                "transpose",
+                                transpose.takeIf { it != 0 }?.toString()
+                            )
+                        },
+                        label = { Text(AppStrings.transposeLabel) },
+                        singleLine = true,
+                        textStyle = TextStyle(textAlign = TextAlign.End),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.width(100.dp)
                     )
                 }
             }
@@ -448,28 +473,4 @@ private fun splitDurationField(duration: String): Pair<String, String> {
     val seconds = parseDurationSeconds(duration)
     if (seconds <= 0) return "" to ""
     return (seconds / 60).toString() to (seconds % 60).toString().padStart(2, '0')
-}
-
-private fun directiveNameOf(line: String): String? {
-    val trimmed = line.trim()
-    if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) return null
-    val inner = trimmed.removeSurrounding("{", "}")
-    var nameEnd = 0
-    while (nameEnd < inner.length && inner[nameEnd] != ':' && !inner[nameEnd].isWhitespace()) {
-        nameEnd++
-    }
-    if (nameEnd == 0) return null
-    return inner.substring(0, nameEnd).trim().lowercase()
-}
-
-private fun updateCapoDirective(body: String, capoValue: String): String {
-    if (body.isBlank() && capoValue.isBlank()) return body
-    val lines = body.lines()
-    val capoIndex = lines.indexOfFirst { directiveNameOf(it) == "capo" }
-    return when {
-        capoValue.isBlank() && capoIndex == -1 -> body
-        capoValue.isBlank() -> lines.filterIndexed { i, _ -> i != capoIndex }.joinToString("\n")
-        capoIndex == -1 -> "{capo: $capoValue}\n$body"
-        else -> lines.mapIndexed { i, line -> if (i == capoIndex) "{capo: $capoValue}" else line }.joinToString("\n")
-    }
 }

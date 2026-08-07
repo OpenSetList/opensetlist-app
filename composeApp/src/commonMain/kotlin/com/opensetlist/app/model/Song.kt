@@ -18,7 +18,8 @@ data class Song(
     val sortOrder: Long = 0,
     val body: String = "",
     val creationDate: Long = 0L,
-    val lastEdit: Long = 0L
+    val lastEdit: Long = 0L,
+    val transpose: Int = 0
 )
 
 /**
@@ -53,9 +54,8 @@ data class Tag(
 data class Setlist(
     val id: Long,
     val name: String,
-    val date: String = "",
+    val date: Long = 0L,
     val location: String = "",
-    val time: String = "",
     val songs: List<Song> = emptyList(),
     val creationDate: Long = 0L,
     val lastEdit: Long = 0L
@@ -114,7 +114,7 @@ data class SetlistHelperBackup(
  */
 data class HelperSetlist(
     val name: String,
-    val date: String,
+    val date: Long = 0L,
     val location: String,
     val songIds: List<Long>
 )

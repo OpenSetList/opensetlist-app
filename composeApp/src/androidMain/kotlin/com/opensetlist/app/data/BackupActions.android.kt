@@ -119,14 +119,13 @@ private fun parseAppDatabase(file: File): BackupData? {
         val songs = mutableListOf<Song>()
         val hasSongTime = columnExists(db, "song", "time")
         val hasSongTimestamps = columnExists(db, "song", "creation_date")
+        val hasSongTranspose = columnExists(db, "song", "transpose")
         db.rawQuery(
-            if (hasSongTime) {
-                "SELECT id, title, artist, key, tempo, capo, duration, time, body, youtube_url, " +
-                    if (hasSongTimestamps) "creation_date, last_edit" else ""
-            } else {
-                "SELECT id, title, artist, key, tempo, capo, duration, body, youtube_url, " +
-                    if (hasSongTimestamps) "creation_date, last_edit" else ""
-            },
+            "SELECT id, title, artist, key, tempo, capo, duration" +
+                if (hasSongTime) ", time" else "" +
+                ", body, youtube_url" +
+                if (hasSongTimestamps) ", creation_date, last_edit" else "" +
+                if (hasSongTranspose) ", transpose" else "",
             null
         ).use { cursor ->
             while (cursor.moveToNext()) {
@@ -143,7 +142,8 @@ private fun parseAppDatabase(file: File): BackupData? {
                         youtubeUrl = cursor.getStringOrNullByName("youtube_url") ?: "",
                         body = cursor.getStringOrNullByName("body") ?: "",
                         creationDate = cursor.getLongOrNullByName("creation_date") ?: 0L,
-                        lastEdit = cursor.getLongOrNullByName("last_edit") ?: 0L
+                        lastEdit = cursor.getLongOrNullByName("last_edit") ?: 0L,
+                        transpose = if (hasSongTranspose) cursor.getLongOrNullByName("transpose")?.toInt() ?: 0 else 0
                     )
                 )
             }
@@ -152,18 +152,29 @@ private fun parseAppDatabase(file: File): BackupData? {
         val setlists = mutableListOf<Setlist>()
         val links = mutableListOf<SetlistSongLink>()
         if (tableExists(db, "setlist")) {
+            val dateIsInteger = columnType(db, "setlist", "date") == "INTEGER"
+            val hasSetlistTime = columnExists(db, "setlist", "time")
             db.rawQuery(
-                "SELECT id, name, date, location, time, creation_date, last_edit FROM setlist",
+                "SELECT id, name, date, location" +
+                    if (hasSetlistTime) ", time" else "" +
+                    ", creation_date, last_edit FROM setlist",
                 null
             ).use { cursor ->
                 while (cursor.moveToNext()) {
+                    val date = if (dateIsInteger) {
+                        cursor.getLongOrNullByName("date") ?: 0L
+                    } else {
+                        legacySetlistDate(
+                            date = cursor.getStringOrNullByName("date") ?: "",
+                            time = if (hasSetlistTime) cursor.getStringOrNullByName("time") ?: "" else ""
+                        )
+                    }
                     setlists.add(
                         Setlist(
                             id = cursor.getLongByName("id"),
                             name = cursor.getStringOrNullByName("name") ?: "",
-                            date = cursor.getStringOrNullByName("date") ?: "",
+                            date = date,
                             location = cursor.getStringOrNullByName("location") ?: "",
-                            time = cursor.getStringOrNullByName("time") ?: "",
                             creationDate = cursor.getLongOrNullByName("creation_date") ?: 0L,
                             lastEdit = cursor.getLongOrNullByName("last_edit") ?: 0L
                         )
@@ -215,6 +226,24 @@ private fun columnExists(db: SQLiteDatabase, table: String, column: String): Boo
         }
     }
     return false
+}
+
+private fun columnType(db: SQLiteDatabase, table: String, column: String): String? {
+    db.rawQuery("PRAGMA table_info($table)", null).use { cursor ->
+        while (cursor.moveToNext()) {
+            if (cursor.getStringOrNullByName("name") == column) {
+                return cursor.getStringOrNullByName("type")?.uppercase()
+            }
+        }
+    }
+    return null
+}
+
+private fun legacySetlistDate(date: String, time: String): Long {
+    val dateMillis = toDatePickerMillis(date) ?: return 0L
+    val clock = parseClockTime(time)
+    if (clock == null) return dateMillis
+    return combineDateAndTime(dateMillis, clock.first, clock.second)
 }
 
 private fun Cursor.getLongByName(column: String): Long = getLong(getColumnIndexOrThrow(column))

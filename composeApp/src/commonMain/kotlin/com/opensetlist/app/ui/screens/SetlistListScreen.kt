@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.opensetlist.app.AppStrings
 import com.opensetlist.app.data.formatDuration
+import com.opensetlist.app.data.formatEpochDateTime
 import com.opensetlist.app.data.parseDurationSeconds
 import com.opensetlist.app.model.Setlist
 import com.opensetlist.app.ui.components.SortMenu
@@ -86,7 +87,7 @@ fun SetlistListScreen(
             )
             SetlistSort.DATE_ASC -> filteredSetlists.sortedBy { dateSortKey(it) }
             SetlistSort.DATE_DESC -> filteredSetlists.sortedWith(
-                compareBy<Setlist> { it.date.isBlank() }
+                compareBy<Setlist> { it.date <= 0L }
                     .thenByDescending { dateSortKey(it) }
             )
             SetlistSort.SONGS_ASC -> filteredSetlists.sortedBy { it.songs.size }
@@ -178,8 +179,8 @@ fun SetlistListScreen(
                                     if (setlist.location.isNotBlank()) {
                                         append(" • ${setlist.location}")
                                     }
-                                    if (setlist.date.isNotBlank()) {
-                                        append(" • ${setlist.date}")
+                                    if (setlist.date > 0) {
+                                        append(" • ${formatEpochDateTime(setlist.date)}")
                                     }
                                 },
                                 style = MaterialTheme.typography.bodySmall,
@@ -217,12 +218,5 @@ fun SetlistListScreen(
     }
 }
 
-private fun dateSortKey(setlist: Setlist): Long {
-    if (setlist.date.isBlank()) return Long.MAX_VALUE
-    val parts = setlist.date.split("/")
-    if (parts.size != 3) return Long.MAX_VALUE
-    val day = parts[0].toIntOrNull() ?: return Long.MAX_VALUE
-    val month = parts[1].toIntOrNull() ?: return Long.MAX_VALUE
-    val year = parts[2].toIntOrNull() ?: return Long.MAX_VALUE
-    return year * 10000L + month * 100L + day
-}
+private fun dateSortKey(setlist: Setlist): Long =
+    if (setlist.date > 0) setlist.date else Long.MAX_VALUE
