@@ -27,3 +27,7 @@ DerivedData/
 # OS
 .DS_Store
 Thumbs.db
+
+# Session notes (local only)
+SESSION.md
+current_session.txt
