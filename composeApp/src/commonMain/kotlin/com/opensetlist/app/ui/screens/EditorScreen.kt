@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -28,6 +27,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -88,6 +89,7 @@ fun EditorScreen(
     var selectedTagIds by remember(song.id) { mutableStateOf(initialTags.map { it.id }.toSet()) }
     var newTagText by remember { mutableStateOf("") }
     var artistMenuOpen by remember(song.id) { mutableStateOf(false) }
+    var selectedTab by remember(song.id) { mutableStateOf(0) }
 
     val initialTimeSplit = remember(song.id) { splitTimeSignature(song.time) }
     var timeNum by remember(song.id) { mutableStateOf(initialTimeSplit.first) }
@@ -172,16 +174,33 @@ fun EditorScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp)
         ) {
-            OutlinedTextField(
-                value = title,
-                onValueChange = { title = it },
-                label = { Text(AppStrings.titleLabel) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
+            TabRow(selectedTabIndex = selectedTab) {
+                Tab(
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                    text = { Text(AppStrings.metadataTab) }
+                )
+                Tab(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                    text = { Text(AppStrings.chordProTab) }
+                )
+            }
+            when (selectedTab) {
+                0 -> Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp)
+                ) {
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        label = { Text(AppStrings.titleLabel) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
             ExposedDropdownMenuBox(
                 expanded = artistMenuOpen && filteredArtistSuggestions.isNotEmpty(),
                 onExpandedChange = { artistMenuOpen = it }
@@ -437,28 +456,36 @@ fun EditorScreen(
                 }
             }
 
-            Text(
-                text = AppStrings.bodyLabel,
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
-            )
+                }
+                else -> Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = AppStrings.bodyLabel,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
 
-            OutlinedTextField(
-                value = body,
-                onValueChange = { body = it },
-                textStyle = TextStyle(
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 13.sp
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(420.dp),
-                colors = androidx.compose.material3.TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent
-                )
-            )
+                    OutlinedTextField(
+                        value = body,
+                        onValueChange = { body = it },
+                        textStyle = TextStyle(
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = 13.sp
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        colors = androidx.compose.material3.TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent
+                        )
+                    )
+                }
+            }
         }
     }
 }

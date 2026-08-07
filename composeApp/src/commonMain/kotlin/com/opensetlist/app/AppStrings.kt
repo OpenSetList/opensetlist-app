@@ -59,6 +59,8 @@ object AppStrings {
     val compassoLabel = "Compasso"
     val youtubeLinkLabel = "Link do YouTube"
     val bodyLabel = "Letra / Cifra (ChordPro)"
+    val metadataTab = "Metadados"
+    val chordProTab = "Texto ChordPro"
 
     val durationPlaceholder = "3:45"
     val compassoPlaceholder = "4/4"
