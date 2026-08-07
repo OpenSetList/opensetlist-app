@@ -36,6 +36,7 @@ import com.opensetlist.app.model.ExportLogKind
 fun ExportProgressScreen(
     entries: List<ExportLogEntry>,
     running: Boolean,
+    total: Int,
     onClose: () -> Unit
 ) {
     val listState = rememberLazyListState()
@@ -46,7 +47,6 @@ fun ExportProgressScreen(
         }
     }
 
-    val started = entries.count { it.kind == ExportLogKind.START }
     val finished = entries.count {
         it.kind == ExportLogKind.DONE || it.kind == ExportLogKind.FAILED
     }
@@ -74,9 +74,9 @@ fun ExportProgressScreen(
                 }
             )
             Spacer(modifier = Modifier.weight(1f))
-            if (started > 0) {
+            if (total > 0) {
                 Text(
-                    text = "$finished/$started",
+                    text = "$finished/$total",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -109,6 +109,7 @@ fun ExportProgressScreen(
 
         Button(
             onClick = onClose,
+            enabled = !running,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(AppStrings.proExportClose)
