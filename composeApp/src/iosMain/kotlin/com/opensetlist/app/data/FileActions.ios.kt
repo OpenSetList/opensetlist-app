@@ -141,19 +141,30 @@ actual fun rememberFileActions(
                     UIApplication.sharedApplication.openURL(it)
                 }
             },
-            saveProBatch = { files, onProgress ->
-                val urls = files.mapNotNull { (fileName, content) ->
+            saveProBatch = { files, onProgress, isCancelled ->
+                var cancelled = false
+                val urls = mutableListOf<NSURL>()
+                for ((fileName, content) in files) {
+                    if (isCancelled()) {
+                        cancelled = true
+                        break
+                    }
                     onProgress(fileName, ProBatchEvent.START)
                     val path = writeTempFile(fileName, content)
                     onProgress(fileName, if (path != null) ProBatchEvent.DONE else ProBatchEvent.FAILED)
-                    path?.let { NSURL.fileURLWithPath(it) }
+                    path?.let { urls.add(NSURL.fileURLWithPath(it)) }
                 }
-                val activityVC = UIActivityViewController(
-                    activityItems = urls,
-                    applicationActivities = null
+                if (!cancelled) {
+                    val activityVC = UIActivityViewController(
+                        activityItems = urls,
+                        applicationActivities = null
+                    )
+                    presentViewController(activityVC)
+                }
+                onProgress(
+                    "",
+                    if (cancelled) ProBatchEvent.CANCELLED else ProBatchEvent.COMPLETED
                 )
-                presentViewController(activityVC)
-                onProgress("", ProBatchEvent.COMPLETED)
             }
         )
     }
