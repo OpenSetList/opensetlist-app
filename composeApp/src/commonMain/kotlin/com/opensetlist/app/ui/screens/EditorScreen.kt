@@ -254,7 +254,7 @@ fun EditorScreen(
                         singleLine = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = keyMenuOpen) },
                         modifier = Modifier
-                            .width(100.dp)
+                            .width(110.dp)
                             .menuAnchor()
                     )
                     ExposedDropdownMenu(

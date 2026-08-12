@@ -27,7 +27,7 @@ object AppStrings {
     val settingsTitle = "Configurações"
     val aboutTitle = "Sobre"
     val aboutDescription = "OpenSetlist é um gerenciador de músicas e setlists para músicos. Organize seu repertório com cifras em ChordPro, monte roteiros de apresentação e compartilhe tudo em formato .osl."
-    val aboutDevelopedBy = "Desenvolvido com amor por Rafael Gomes"
+    val aboutDevelopedBy = "Desenvolvido com amor ❤\uFE0F por Rafael Gomes"
     val editSongTitle = "Editar Música"
 
     val searchSongsPlaceholder = "Buscar músicas e setlists..."

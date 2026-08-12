@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.opensetlist.app.AppStrings
@@ -37,6 +38,14 @@ fun SideDrawer(
     onSyncClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val versionName = try {
+        val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+        packageInfo.versionName ?: "1.0.0"
+    } catch (e: Exception) {
+        "1.0.0"
+    }
+
     Column(
         modifier = modifier
             .fillMaxHeight()
@@ -108,6 +117,17 @@ fun SideDrawer(
             label = AppStrings.aboutTitle,
             isSelected = currentSection == DrawerSection.ABOUT,
             onClick = { onSectionSelected(DrawerSection.ABOUT) }
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Texto indicando a versão do app
+        Text(
+            text = "v: $versionName",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
         )
     }
 }
