@@ -31,3 +31,6 @@ Thumbs.db
 # Session notes (local only)
 SESSION.md
 current_session.txt
+bkp_setlisthelper/
+tmp/
+bkp/
