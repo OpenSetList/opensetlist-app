@@ -72,7 +72,7 @@ compose.desktop {
 
 android {
     namespace = "com.opensetlist.app"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.opensetlist.app"

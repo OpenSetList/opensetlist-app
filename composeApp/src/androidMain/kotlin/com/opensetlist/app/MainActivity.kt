@@ -10,6 +10,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,6 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import com.opensetlist.app.data.DatabaseDriverFactory
@@ -52,12 +57,21 @@ class MainActivity : ComponentActivity() {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(0xFFF0F0F0)),
+                        .background(Color(0xFFFDFDFD)),
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(R.mipmap.ic_launcher_foreground),
-                        contentDescription = null
+                        painter = painterResource(R.drawable.splash_logo),
+                        contentDescription = AppStrings.appName,
+                        modifier = Modifier.size(240.dp)
+                    )
+                    Text(
+                        text = AppStrings.splashDevelopedBy,
+                        color = Color(0xFF1B5A89),
+                        fontSize = 14.sp,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 56.dp)
                     )
                 }
             } else {

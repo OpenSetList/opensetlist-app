@@ -7,6 +7,7 @@ package com.opensetlist.app
  */
 object AppStrings {
     val appName = "OpenSetlist"
+    val splashDevelopedBy = "Desenvolvido por Ruanitto"
 
     val cancel = "Cancelar"
     val save = "Salvar"
