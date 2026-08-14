@@ -1,0 +1,23 @@
+Organize seu repertório, monte setlists de shows e pratique com o OpenSetList — o aplicativo de setlists e cifras para músicos, 100% offline.
+
+Músicas e cifras
+- Editor completo de cifras no formato ChordPro: letra, acordes, tom, BPM, capo, compasso, duração e link para o vídeo no YouTube.
+- Transposição de tom com um toque: suba ou desça a cifra inteira sem reescrever nada.
+- Rolagem automática com controle de velocidade para praticar no seu ritmo.
+- Oculte os acordes para cantar junto, ajuste o tamanho da letra e use a busca no texto.
+- Suporte a pedal Bluetooth (próxima/anterior/play-pause) para não soltar o instrumento.
+
+Setlists para gigs
+- Monte a ordem das músicas por arrastar e deslize entre elas no visualizador.
+- Registre data, local e horário de cada apresentação; o app calcula a duração total do set.
+- Compartilhe/exporte a setlist nos formatos OpenSetList (.osl) ou JustChords (.chopro) e importe setlists de outros músicos.
+
+Organização e backup
+- Artistas e tags para categorizar seu repertório.
+- Backup completo do banco de dados (.db), exportação/importação em lote de músicas (JSON) e nuvem via seletor do sistema (Google Drive/Dropbox).
+- Importe dados do SetList Helper (.db) e do JustChords (.chopro).
+- Aberto a arquivos .osl/.chopro recebidos pelo Android.
+
+Multiplataforma e aberto
+- Android, iOS e desktop (Windows/macOS/Linux), com código aberto sob licença MIT.
+- Sem contas, sem anúncios, sem coleta de dados. Seus dados ficam no seu aparelho.

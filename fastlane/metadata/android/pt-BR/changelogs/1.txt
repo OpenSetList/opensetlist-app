@@ -1,0 +1,1 @@
+Versão inicial do OpenSetList: editor ChordPro, setlists, transposição de tom, pedal Bluetooth, backup, importação (SetList Helper / JustChords) e suporte a Android, iOS e desktop.
