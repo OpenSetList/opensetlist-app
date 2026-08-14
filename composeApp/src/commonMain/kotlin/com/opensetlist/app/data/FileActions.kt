@@ -17,8 +17,6 @@ enum class ProBatchEvent {
 
 /**
  * Ações de importação, exportação e compartilhamento de arquivos por plataforma.
- *
- * @author ruanitto
  */
 class FileActions(
     val importFile: () -> Unit,
@@ -34,8 +32,6 @@ class FileActions(
 
 /**
  * Cria ações de arquivo conforme a plataforma atual.
- *
- * @author ruanitto
  */
 @Composable
 expect fun rememberFileActions(

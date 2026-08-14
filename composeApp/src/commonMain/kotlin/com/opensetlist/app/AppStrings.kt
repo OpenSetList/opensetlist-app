@@ -162,6 +162,19 @@ object AppStrings {
     val importSetlistHelperSubtitle = "Restaura músicas e setlists de um backup .db"
     val importSharedSetlist = "Importar setlist compartilhada"
 
+    val justChordsTitle = "JustChords"
+    val importJustChords = "Importar setlist JustChords (.chopro)"
+    val importJustChordsSubtitle = "Importa setlist exportada do app JustChords"
+    val justChordsImportFailed = "Falha ao importar setlist JustChords"
+    val restoreBackupLogTitle = "Restauração de backup"
+    val importSongsLogTitle = "Importação de músicas"
+    val importSetLogTitle = "Importação de setlist"
+    val importSetlistHelperLogTitle = "Importação do SetList Helper"
+    val importJustChordsLogTitle = "Importação do JustChords"
+    val shareFormatTitle = "Compartilhar como"
+    val justChordsFormat = "JustChords (.chopro)"
+    val opensetlistFormat = "OpenSetList (.osl)"
+
     val saveBackupToFile = "Salvar backup em arquivo"
     val shareBackup = "Compartilhar backup"
     val importBackupFile = "Importar backup"
@@ -176,6 +189,12 @@ object AppStrings {
     val contentShared = "Conteúdo compartilhado"
     val noSongsToExport = "Nenhuma música para exportar"
     val exportProgressTitle = "Exportar músicas"
+    val importLogSuccess = "Importação concluída com sucesso"
+    fun logStarting(title: String) = "Iniciando $title..."
+    fun logSongImported(title: String) = "Importada: $title"
+    fun logSetlistImported(name: String) = "Setlist: $name"
+    fun logRestoreSummary(songCount: Int, setCount: Int) =
+        "Backup com $songCount música(s) e $setCount setlist(s)"
     fun proExportStarting(count: Int) = "Iniciando exportação de $count música(s) em .pro"
     val proExportWaitingFolder = "Aguardando escolha da pasta de destino..."
     fun proExportSongStarted(title: String) = "Iniciada: $title"
@@ -233,5 +252,7 @@ object AppStrings {
     fun setlistImported(name: String) = "Setlist \"$name\" importada"
     fun slhImported(songCount: Int, setCount: Int) =
         "Importadas $songCount músicas e $setCount setlists do SetList Helper"
+    fun justChordsImported(songCount: Int, setCount: Int) =
+        "Importadas $songCount músicas e $setCount setlist(s) do JustChords"
     fun metaKeyValue(label: String, value: String) = "$label: $value"
 }

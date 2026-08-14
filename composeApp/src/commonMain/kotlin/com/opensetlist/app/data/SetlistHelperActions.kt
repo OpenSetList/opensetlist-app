@@ -14,8 +14,6 @@ class SetlistHelperActions(
 
 /**
  * Cria as ações de backup do Setlist Helper conforme a plataforma atual.
- *
- * @author ruanitto
  */
 @Composable
 expect fun rememberSetlistHelperActions(

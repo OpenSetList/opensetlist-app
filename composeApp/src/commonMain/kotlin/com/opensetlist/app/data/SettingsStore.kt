@@ -20,8 +20,6 @@ class SettingsStore(
 
 /**
  * Cria o armazenamento de preferências conforme a plataforma atual.
- *
- * @author ruanitto
  */
 @Composable
 expect fun rememberSettingsStore(): SettingsStore

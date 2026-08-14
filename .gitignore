@@ -16,6 +16,7 @@ build/
 captures/
 .externalNativeBuild
 .cxx
+composeApp/release/
 
 # iOS
 iosApp/Pods

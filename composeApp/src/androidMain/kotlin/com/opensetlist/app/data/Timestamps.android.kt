@@ -14,8 +14,6 @@ actual fun currentTimestampIso(): String =
 
 /**
  * Data e hora atual segura para nomes de arquivo (ex.: "2026-07-31_14-30-00").
- *
- * @author ruanitto
  */
 actual fun currentTimestampCompact(): String =
     SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ROOT).format(Date())

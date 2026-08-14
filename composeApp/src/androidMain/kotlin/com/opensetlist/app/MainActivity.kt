@@ -1,7 +1,9 @@
 package com.opensetlist.app
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.OpenableColumns
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -24,13 +26,16 @@ import kotlinx.coroutines.delay
 
 /**
  * Activity principal do Android, que inicia o Compose e trata arquivos abertos
- * pelo sistema (ACTION_VIEW), como arquivos .osl compartilhados.
+ * pelo sistema (ACTION_VIEW), como arquivos .osl compartilhados e .chopro do
+ * JustChords (importados como setlist).
  *
  * @author ruanitto
  */
 class MainActivity : ComponentActivity() {
 
-    private val importRequest = mutableStateOf<String?>(null)
+    private data class OpenedFile(val name: String?, val content: String)
+
+    private val importRequest = mutableStateOf<OpenedFile?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -58,7 +63,8 @@ class MainActivity : ComponentActivity() {
             } else {
                 App(
                     driverFactory = DatabaseDriverFactory(applicationContext),
-                    initialImport = importRequest.value
+                    initialImport = importRequest.value?.content,
+                    initialImportFileName = importRequest.value?.name
                 )
             }
         }
@@ -70,11 +76,21 @@ class MainActivity : ComponentActivity() {
         importRequest.value = readOpenIntent(intent)
     }
 
-    private fun readOpenIntent(intent: Intent?): String? {
+    private fun readOpenIntent(intent: Intent?): OpenedFile? {
         if (intent?.action != Intent.ACTION_VIEW) return null
         val uri = intent.data ?: return null
-        return runCatching {
+        val content = runCatching {
             contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+        }.getOrNull() ?: return null
+        val name = queryDisplayName(uri) ?: uri.lastPathSegment?.let { Uri.decode(it) }
+        return OpenedFile(name = name, content = content)
+    }
+
+    private fun queryDisplayName(uri: Uri): String? {
+        return runCatching {
+            contentResolver
+                .query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+                ?.use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
         }.getOrNull()
     }
 }

@@ -22,8 +22,6 @@ fun parseDurationSeconds(text: String): Long {
 
 /**
  * Formata segundos em uma duração legível ("3min", "1h 15min").
- *
- * @author ruanitto
  */
 fun formatDuration(totalSeconds: Long): String {
     val secs = totalSeconds.coerceAtLeast(0)
@@ -41,8 +39,6 @@ fun formatDuration(totalSeconds: Long): String {
 
 /**
  * Formata segundos no formato de relógio usado no campo duração ("4:20", "1:02:30").
- *
- * @author ruanitto
  */
 fun formatSecondsClock(totalSeconds: Long): String {
     val secs = totalSeconds.coerceAtLeast(0)
@@ -59,8 +55,6 @@ fun formatSecondsClock(totalSeconds: Long): String {
 
 /**
  * Formata o tempo decorrido desde uma marca no formato "X,Y s".
- *
- * @author ruanitto
  */
 fun formatElapsedSeconds(start: TimeMark): String {
     val tenths = start.elapsedNow().inWholeMilliseconds / 100

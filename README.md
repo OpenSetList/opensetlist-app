@@ -37,7 +37,7 @@ O projeto é livre e aberto: contribuições são bem-vindas.
 - Criar, renomear, editar dados da gig (data, local, horário) e excluir;
 - Adicionar/remover músicas (com busca no modal) e **reordenar por arrastar**;
 - Duração total calculada a partir da duração das músicas;
-- Compartilhar/exportar setlist como arquivo JSON;
+- Compartilhar/exportar setlist no formato **OpenSetList** (`.osl`, JSON) ou **JustChords** (`.chopro`) — escolha o formato na lista de setlists ou no topo da setlist aberta;
 - Lista de setlists com busca, ordenação e ações por linha.
 
 ### Organização
@@ -47,14 +47,17 @@ O projeto é livre e aberto: contribuições são bem-vindas.
 ### Dados e backup
 - **Exportar/importar backup completo** do banco (`.db`);
 - **Exportar/importar músicas** em lote (JSON);
-- **Importar setlist compartilhada** (JSON);
+- **Importar setlist compartilhada** (`.osl`, JSON) — reimportar uma setlist com o mesmo nome **atualiza** a existente, sem duplicar setlists nem músicas;
+- **Importar setlist do JustChords** (`.chopro`) — lê o arquivo exportado pelo app JustChords, usando o nome do arquivo como nome do setlist e cada `{new_song}` como uma música na ordem; cria/atualiza o setlist e as músicas **sem duplicar** as existentes. Arquivos `.chopro` abertos com o app (abrir com… OpenSetlist) também são importados como setlist;
 - **Importar backup do SetList Helper** (`.db`) — músicas, setlists, tags/gêneros, youtube, compasso, bpm, duração e observações; atualiza os dados existentes sem duplicar;
 - **Importar/exportar `.pro`** (ChordPro);
 - **Nuvem** — exportar/importar backup via seletor do sistema (Google Drive/Dropbox, SAF no Android, picker no desktop).
 
+As importações (backup, músicas, setlists, SetList Helper e JustChords) mostram uma tela de **log** com o resultado por item e um resumo final.
+
 ### Configurações
 - **Modo escuro/claro** com persistência da escolha;
-- **Manter tela acesa** por contexto (visualização de música, playlist ou o tempo todo);
+- **Manter tela acesa** por contexto (visualização de música, playlist ou o tempo todo — marcar "o tempo todo" desmarca as outras duas);
 - Todas as ações de backup/importação/exportação centralizadas.
 
 ## Roadmap
@@ -66,6 +69,7 @@ O projeto é livre e aberto: contribuições são bem-vindas.
 - [x] CRUD de setlists com reordenação por arrastar e dados da gig
 - [x] Artistas e tags
 - [x] Backup completo (`.db`), exportação/importação de músicas e setlists (JSON)
+- [x] Importação de setlist do JustChords (`.chopro`) e compartilhamento de setlist nos formatos OpenSetList/JustChords, sem duplicar músicas nem setlists
 - [x] Importação de backup do SetList Helper (músicas, setlists, tags, gêneros, youtube, compasso, bpm, duração, observações) com atualização sem duplicar
 - [x] Modo escuro persistente
 - [x] Manter tela acesa por contexto (visualização de música, playlist ou o tempo todo)
@@ -117,7 +121,7 @@ composeApp/
 │   │       └── theme/             # Tema Material 3 (claro/escuro)
 │   ├── commonMain/sqldelight/com/opensetlist/app/data/db/
 │   │   ├── AppDatabase.sq         # Schema + queries
-│   │   └── migrations/            # Migrações 2.sqm / 3.sqm / 4.sqm
+│   │   └── migrations/            # Migrações 2.sqm … 7.sqm (schema atual: 8)
 │   ├── androidMain/               # actuals (SharedPreferences, SAF, Bluetooth, ...)
 │   ├── iosMain/                   # actuals (NSUserDefaults, SQLDelight native, ...)
 │   └── desktopMain/               # actuals (java.util.prefs, JDBC SQLite, JFileChooser, ...)

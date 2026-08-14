@@ -16,10 +16,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.opensetlist.app.AppStrings
+import com.opensetlist.app.data.appVersionName
 
 /** Seções de navegação exibidas na gaveta lateral. */
 enum class DrawerSection {
@@ -38,13 +38,7 @@ fun SideDrawer(
     onSyncClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    val versionName = try {
-        val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-        packageInfo.versionName ?: "1.0.0"
-    } catch (e: Exception) {
-        "1.0.0"
-    }
+    val versionName = appVersionName()
 
     Column(
         modifier = modifier

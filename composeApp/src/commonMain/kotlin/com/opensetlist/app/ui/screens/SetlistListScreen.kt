@@ -37,6 +37,7 @@ import com.opensetlist.app.data.formatDuration
 import com.opensetlist.app.data.formatEpochDateTime
 import com.opensetlist.app.data.parseDurationSeconds
 import com.opensetlist.app.model.Setlist
+import com.opensetlist.app.ui.components.SetlistShareMenu
 import com.opensetlist.app.ui.components.SortMenu
 
 /** Critérios de ordenação da lista de setlists. */
@@ -60,13 +61,15 @@ enum class SetlistSort(val label: String) {
 fun SetlistListScreen(
     setlists: List<Setlist>,
     onSetlistClick: (Setlist) -> Unit,
-    onShare: (Setlist) -> Unit,
+    onShareJustChords: (Setlist) -> Unit,
+    onShareOpenSetlist: (Setlist) -> Unit,
     onEdit: (Setlist) -> Unit,
     onDelete: (Setlist) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var sortOrder by remember { mutableStateOf(SetlistSort.DATE_DESC) }
     var searchQuery by remember { mutableStateOf("") }
+    var shareMenuFor by remember { mutableStateOf<Setlist?>(null) }
 
     val filteredSetlists = setlists.filter { setlist ->
         searchQuery.isBlank() ||
@@ -188,10 +191,24 @@ fun SetlistListScreen(
                             )
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            IconButton(onClick = { onShare(setlist) }) {
-                                Icon(
-                                    imageVector = Icons.Default.Share,
-                                    contentDescription = AppStrings.shareSetlist
+                            Box {
+                                IconButton(onClick = { shareMenuFor = setlist }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Share,
+                                        contentDescription = AppStrings.shareSetlist
+                                    )
+                                }
+                                SetlistShareMenu(
+                                    expanded = shareMenuFor?.id == setlist.id,
+                                    onDismissRequest = { shareMenuFor = null },
+                                    onShareOpenSetlist = {
+                                        shareMenuFor = null
+                                        onShareOpenSetlist(setlist)
+                                    },
+                                    onShareJustChords = {
+                                        shareMenuFor = null
+                                        onShareJustChords(setlist)
+                                    }
                                 )
                             }
                             IconButton(onClick = { onEdit(setlist) }) {

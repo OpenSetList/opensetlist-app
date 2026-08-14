@@ -9,6 +9,7 @@ import com.opensetlist.app.data.db.Tag as DbTag
 import com.opensetlist.app.model.Artist
 import com.opensetlist.app.model.BackupData
 import com.opensetlist.app.model.HelperSetlist
+import com.opensetlist.app.model.JustChordsSet
 import com.opensetlist.app.model.SetShareData
 import com.opensetlist.app.model.Setlist
 import com.opensetlist.app.model.SetlistHelperBackup
@@ -302,14 +303,27 @@ class SongRepository(private val database: AppDatabase) {
         val now = System.currentTimeMillis()
         val newSongs = mutableListOf<Song>()
         val setlistId = database.transactionWithResult {
-            queries.insertSetlist(
-                data.setlist.name,
-                data.setlist.date.takeIf { it > 0 },
-                data.setlist.location.ifBlank { null },
-                now,
-                now
-            )
-            val id = queries.lastInsertRowId().executeAsOne()
+            val existing = queries.selectSetlistByName(data.setlist.name).executeAsOneOrNull()
+            val id: Long
+            if (existing != null) {
+                queries.updateSetlistInfo(
+                    data.setlist.date.takeIf { it > 0 } ?: existing.date,
+                    data.setlist.location.ifBlank { null } ?: existing.location,
+                    now,
+                    existing.id
+                )
+                queries.deleteAllSetlistSongs(existing.id)
+                id = existing.id
+            } else {
+                queries.insertSetlist(
+                    data.setlist.name,
+                    data.setlist.date.takeIf { it > 0 },
+                    data.setlist.location.ifBlank { null },
+                    now,
+                    now
+                )
+                id = queries.lastInsertRowId().executeAsOne()
+            }
             data.songs.forEachIndexed { pos, source ->
                 val newSong = importSongWithDedup(source)
                 newSongs.add(newSong)
@@ -373,6 +387,39 @@ class SongRepository(private val database: AppDatabase) {
                 }
                 setCount++
             }
+        }
+        return songCount to setCount
+    }
+
+    /**
+     * Importa uma setlist no formato JustChords (.chopro): músicas entram com deduplicação
+     * (mesmo título+artista não duplica) e o setlist é criado ou atualizado pelo nome.
+     *
+     * @return par (músicas importadas, setlists importadas)
+     */
+    fun importJustChords(data: JustChordsSet): Pair<Int, Int> {
+        var songCount = 0
+        var setCount = 0
+        database.transaction {
+            val importedSongIds = data.songs.map { source ->
+                importSongWithDedup(source).id
+            }
+            songCount = importedSongIds.size
+            val existing = queries.selectSetlistByName(data.name).executeAsOneOrNull()
+            if (existing != null) {
+                queries.deleteAllSetlistSongs(existing.id)
+                importedSongIds.forEachIndexed { pos, songId ->
+                    queries.insertSetlistSong(existing.id, songId, pos.toLong())
+                }
+            } else {
+                val now = System.currentTimeMillis()
+                queries.insertSetlist(data.name, null, null, now, now)
+                val setId = queries.lastInsertRowId().executeAsOne()
+                importedSongIds.forEachIndexed { pos, songId ->
+                    queries.insertSetlistSong(setId, songId, pos.toLong())
+                }
+            }
+            setCount = 1
         }
         return songCount to setCount
     }
