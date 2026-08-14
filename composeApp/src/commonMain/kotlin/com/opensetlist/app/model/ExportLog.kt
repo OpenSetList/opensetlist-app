@@ -15,8 +15,6 @@ enum class ExportLogKind {
 
 /**
  * Uma linha do log de exportação em lote de músicas (.pro).
- *
- * @author ruanitto
  */
 data class ExportLogEntry(
     val text: String,

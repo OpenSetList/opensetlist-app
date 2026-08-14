@@ -192,8 +192,6 @@ private fun requiredPermissions(): Array<String> =
 
 /**
  * Conecta e observa eventos do pedal BLE MIDI no Android.
- *
- * @author ruanitto
  */
 @Composable
 actual fun rememberPedalEvents(onEvent: (PedalEvent) -> Unit): PedalState {

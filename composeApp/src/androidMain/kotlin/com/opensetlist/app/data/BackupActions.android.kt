@@ -122,10 +122,11 @@ private fun parseAppDatabase(file: File): BackupData? {
         val hasSongTranspose = columnExists(db, "song", "transpose")
         db.rawQuery(
             "SELECT id, title, artist, key, tempo, capo, duration" +
-                if (hasSongTime) ", time" else "" +
+                (if (hasSongTime) ", time" else "") +
                 ", body, youtube_url" +
-                if (hasSongTimestamps) ", creation_date, last_edit" else "" +
-                if (hasSongTranspose) ", transpose" else "",
+                (if (hasSongTimestamps) ", creation_date, last_edit" else "") +
+                (if (hasSongTranspose) ", transpose" else "") +
+                " FROM song",
             null
         ).use { cursor ->
             while (cursor.moveToNext()) {
@@ -156,7 +157,7 @@ private fun parseAppDatabase(file: File): BackupData? {
             val hasSetlistTime = columnExists(db, "setlist", "time")
             db.rawQuery(
                 "SELECT id, name, date, location" +
-                    if (hasSetlistTime) ", time" else "" +
+                    (if (hasSetlistTime) ", time" else "") +
                     ", creation_date, last_edit FROM setlist",
                 null
             ).use { cursor ->

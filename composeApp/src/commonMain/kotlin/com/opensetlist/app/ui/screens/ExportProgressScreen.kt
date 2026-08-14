@@ -27,8 +27,9 @@ import com.opensetlist.app.model.ExportLogEntry
 import com.opensetlist.app.model.ExportLogKind
 
 /**
- * Tela que mostra o progresso da exportação em lote de músicas (.pro),
- * com log por música e tempo total de execução.
+ * Tela de log de operações: exportação em lote de músicas (.pro) e também
+ * importações (backup, músicas, setlists, SetList Helper, JustChords),
+ * com uma linha por item e/ou resumo do resultado.
  *
  * @author ruanitto
  */
@@ -37,6 +38,7 @@ fun ExportProgressScreen(
     entries: List<ExportLogEntry>,
     running: Boolean,
     total: Int,
+    title: String? = null,
     onClose: () -> Unit
 ) {
     val listState = rememberLazyListState()
@@ -50,6 +52,8 @@ fun ExportProgressScreen(
     val finished = entries.count {
         it.kind == ExportLogKind.DONE || it.kind == ExportLogKind.FAILED
     }
+
+    val headerText = title ?: if (running) AppStrings.proExportRunning else AppStrings.proExportFinished
 
     Column(
         modifier = Modifier
@@ -65,7 +69,7 @@ fun ExportProgressScreen(
             }
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = if (running) AppStrings.proExportRunning else AppStrings.proExportFinished,
+                text = headerText,
                 style = MaterialTheme.typography.titleMedium,
                 color = if (running) {
                     MaterialTheme.colorScheme.primary

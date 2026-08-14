@@ -53,6 +53,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.opensetlist.app.data.DataTransfer
 import com.opensetlist.app.data.DatabaseDriverFactory
+import com.opensetlist.app.data.JustChords
 import com.opensetlist.app.data.ProBatchEvent
 import com.opensetlist.app.data.SongRepository
 import com.opensetlist.app.data.setChordProDirective
@@ -60,6 +61,7 @@ import com.opensetlist.app.data.db.AppDatabase
 import com.opensetlist.app.data.formatElapsedSeconds
 import com.opensetlist.app.data.rememberBackupActions
 import com.opensetlist.app.data.rememberFileActions
+import com.opensetlist.app.data.rememberJustChordsActions
 import com.opensetlist.app.data.rememberSetlistHelperActions
 import com.opensetlist.app.data.KeepScreenOn
 import com.opensetlist.app.data.rememberSettingsStore
@@ -73,6 +75,7 @@ import com.opensetlist.app.model.Song
 import com.opensetlist.app.model.Tag
 import com.opensetlist.app.ui.components.AppBackHandler
 import com.opensetlist.app.ui.components.DrawerSection
+import com.opensetlist.app.ui.components.SetlistShareMenu
 import com.opensetlist.app.ui.components.SideDrawer
 import com.opensetlist.app.ui.screens.ArtistsScreen
 import com.opensetlist.app.ui.screens.AboutScreen
@@ -118,18 +121,18 @@ sealed class Screen {
 
 /**
  * Componente raiz do app: banco, navegação, tema e estado global.
- *
- * @author ruanitto
  */
 
 /** MIME de arquivos compartilhados do app (setlists e músicas em formato .osl). */
 const val OSETLIST_MIME = "application/vnd.opensetlist.osl"
+const val CHOPRO_MIME = "application/x-chordpro"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App(
     driverFactory: DatabaseDriverFactory,
-    initialImport: String? = null
+    initialImport: String? = null,
+    initialImportFileName: String? = null
 ) {
     val database = remember { AppDatabase(driverFactory.createDriver()) }
     val repository = remember { SongRepository(database) }
@@ -180,6 +183,7 @@ fun App(
 
     var pendingExportContent by remember { mutableStateOf<String?>(null) }
     var pendingExportBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var showSetlistShareMenu by remember { mutableStateOf(false) }
 
     val exportLog = remember { mutableStateListOf<ExportLogEntry>() }
     var exportRunning by remember { mutableStateOf(false) }
@@ -189,6 +193,9 @@ fun App(
     var exportTotalCount by remember { mutableStateOf(0) }
     var exportCancelled by remember { mutableStateOf(false) }
     var showCancelExportDialog by remember { mutableStateOf(false) }
+
+    var logScreenTitle by remember { mutableStateOf<String?>(null) }
+    var logReturnTarget by remember { mutableStateOf<Screen?>(null) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -257,7 +264,10 @@ fun App(
                 reload()
                 currentScreen = Screen.TagList
             }
-            is Screen.ExportProgress -> currentScreen = Screen.Settings
+            is Screen.ExportProgress -> {
+                currentScreen = logReturnTarget ?: Screen.Settings
+                logReturnTarget = null
+            }
             else -> {
                 reload()
                 currentScreen = Screen.SongList
@@ -287,6 +297,17 @@ fun App(
         scope.launch { snackbarHostState.showSnackbar(message) }
     }
 
+    /** Exibe a tela de log (a mesma da exportação em lote) com os dados de uma importação. */
+    fun showImportLog(title: String, entries: List<ExportLogEntry>, total: Int = 0, target: Screen? = null) {
+        exportRunning = false
+        exportTotalCount = total
+        exportLog.clear()
+        exportLog.addAll(entries)
+        logScreenTitle = title
+        logReturnTarget = target
+        currentScreen = Screen.ExportProgress
+    }
+
     fun importSingleSong(content: String) {
         val imported = repository.importSong(content)
         reload()
@@ -311,7 +332,18 @@ fun App(
                     if (parsed.isNotEmpty()) {
                         val count = repository.importSongs(parsed)
                         reload()
-                        showMessage(AppStrings.songsImported(count))
+                        val entries = buildList {
+                            add(ExportLogEntry(AppStrings.logStarting(AppStrings.importSongsLogTitle)))
+                            parsed.forEach { song ->
+                                add(ExportLogEntry(AppStrings.logSongImported(song.title), ExportLogKind.DONE))
+                            }
+                            add(ExportLogEntry(AppStrings.songsImported(count), ExportLogKind.SUCCESS))
+                        }
+                        showImportLog(
+                            title = AppStrings.importSongsLogTitle,
+                            entries = entries,
+                            total = parsed.size
+                        )
                     } else {
                         showMessage(AppStrings.invalidSongsFile)
                     }
@@ -322,8 +354,19 @@ fun App(
                         val created = repository.importSet(parsed)
                         reload()
                         currentDrawerSection = DrawerSection.SETLISTS
-                        currentScreen = Screen.SetlistView(created)
-                        showMessage(AppStrings.setlistImported(created.name))
+                        val entries = buildList {
+                            add(ExportLogEntry(AppStrings.logStarting(AppStrings.importSetLogTitle)))
+                            parsed.songs.forEach { song ->
+                                add(ExportLogEntry(AppStrings.logSongImported(song.title), ExportLogKind.DONE))
+                            }
+                            add(ExportLogEntry(AppStrings.setlistImported(created.name), ExportLogKind.SUCCESS))
+                        }
+                        showImportLog(
+                            title = AppStrings.importSetLogTitle,
+                            entries = entries,
+                            total = parsed.songs.size,
+                            target = Screen.SetlistView(created, backTarget = Screen.SetlistList)
+                        )
                     } else {
                         showMessage(AppStrings.invalidSetlistFile)
                     }
@@ -335,9 +378,37 @@ fun App(
         }
     }
 
-    LaunchedEffect(initialImport) {
+    fun importJustChordsFile(fileName: String, content: String) {
+        val data = JustChords.parse(fileName, content)
+        if (data.songs.isEmpty()) {
+            showMessage(AppStrings.justChordsImportFailed)
+            return
+        }
+        val (songCount, setCount) = repository.importJustChords(data)
+        reload()
+        val entries = buildList {
+            add(ExportLogEntry(AppStrings.logStarting(AppStrings.importJustChordsLogTitle)))
+            data.songs.forEach { song ->
+                add(ExportLogEntry(AppStrings.logSongImported(song.title), ExportLogKind.DONE))
+            }
+            add(ExportLogEntry(AppStrings.justChordsImported(songCount, setCount), ExportLogKind.SUCCESS))
+        }
+        showImportLog(
+            title = AppStrings.importJustChordsLogTitle,
+            entries = entries,
+            total = data.songs.size
+        )
+    }
+
+    LaunchedEffect(initialImport, initialImportFileName) {
         val content = initialImport
-        if (content != null) handleImported(content)
+        val fileName = initialImportFileName
+        if (content != null) {
+            val isChopro = fileName != null &&
+                fileName.substringAfterLast('.', "").equals(JustChords.FILE_EXTENSION, ignoreCase = true)
+            if (isChopro) importJustChordsFile(fileName!!, content)
+            else handleImported(content)
+        }
     }
 
     val fileActions = rememberFileActions(
@@ -366,10 +437,27 @@ fun App(
             if (data != null) {
                 val (songCount, setCount) = repository.importSetlistHelper(data)
                 reload()
-                showMessage(AppStrings.slhImported(songCount, setCount))
+                val entries = buildList {
+                    add(ExportLogEntry(AppStrings.logStarting(AppStrings.importSetlistHelperLogTitle)))
+                    data.setlists.forEach { helper ->
+                        add(ExportLogEntry(AppStrings.logSetlistImported(helper.name), ExportLogKind.DONE))
+                    }
+                    add(ExportLogEntry(AppStrings.slhImported(songCount, setCount), ExportLogKind.SUCCESS))
+                }
+                showImportLog(
+                    title = AppStrings.importSetlistHelperLogTitle,
+                    entries = entries,
+                    total = data.setlists.size
+                )
             } else {
                 showMessage(AppStrings.slhImportFailed)
             }
+        }
+    )
+
+    val justChordsActions = rememberJustChordsActions(
+        onImported = { fileName, content ->
+            importJustChordsFile(fileName, content)
         }
     )
 
@@ -406,6 +494,7 @@ fun App(
         }
         exportLog.clear()
         exportRunning = true
+        logScreenTitle = null
         exportSavedCount = 0
         exportFailedCount = 0
         exportTotalCount = songs.size
@@ -462,6 +551,11 @@ fun App(
     fun shareSetlist(setlist: Setlist) {
         val json = DataTransfer.buildSetJson(setlist, repository.songsInSetlist(setlist.id))
         doExport("set_${setlist.name}.osl", OSETLIST_MIME, json, share = true)
+    }
+
+    fun shareSetlistJustChords(setlist: Setlist) {
+        val content = JustChords.build(repository.songsInSetlist(setlist.id))
+        doExport("${setlist.name}.${JustChords.FILE_EXTENSION}", CHOPRO_MIME, content, share = true)
     }
 
     AppTheme(darkTheme = darkMode) {
@@ -523,7 +617,8 @@ fun App(
                                         is Screen.ArtistSongs -> screen.artist.name
                                         is Screen.TagSongs -> screen.tag.name
                                         is Screen.Editor -> AppStrings.editSongTitle
-                                        is Screen.ExportProgress -> AppStrings.exportProgressTitle
+                                        is Screen.ExportProgress ->
+                                            logScreenTitle ?: AppStrings.exportProgressTitle
                                     }
                                 )
                             },
@@ -582,10 +677,24 @@ fun App(
                                         }
                                     }
                                     is Screen.SetlistView -> {
-                                        IconButton(onClick = { shareSetlist(screen.setlist) }) {
-                                            Icon(
-                                                imageVector = Icons.Default.Share,
-                                                contentDescription = AppStrings.shareSetlist
+                                        Box {
+                                            IconButton(onClick = { showSetlistShareMenu = true }) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Share,
+                                                    contentDescription = AppStrings.shareSetlist
+                                                )
+                                            }
+                                            SetlistShareMenu(
+                                                expanded = showSetlistShareMenu,
+                                                onDismissRequest = { showSetlistShareMenu = false },
+                                                onShareOpenSetlist = {
+                                                    showSetlistShareMenu = false
+                                                    shareSetlist(screen.setlist)
+                                                },
+                                                onShareJustChords = {
+                                                    showSetlistShareMenu = false
+                                                    shareSetlistJustChords(screen.setlist)
+                                                }
                                             )
                                         }
                                         IconButton(onClick = {
@@ -658,7 +767,8 @@ fun App(
                                     currentDrawerSection = DrawerSection.SETLISTS
                                     currentScreen = Screen.SetlistView(setlist, backTarget = Screen.SetlistList)
                                 },
-                                onShare = { setlist -> shareSetlist(setlist) },
+                                onShareJustChords = { setlist -> shareSetlistJustChords(setlist) },
+                                onShareOpenSetlist = { setlist -> shareSetlist(setlist) },
                                 onEdit = { setlist ->
                                     dialogText = setlist.name
                                     pendingRenameSetlist = setlist
@@ -735,6 +845,9 @@ fun App(
                                 onImportSetlistHelper = {
                                     setlistHelperActions.importBackup()
                                 },
+                                onImportJustChords = {
+                                    justChordsActions.importFile()
+                                },
                                 onCloudExport = { exportBackup(false) },
                                 onCloudImport = { fileActions.importFile() },
                                 darkMode = darkMode,
@@ -756,6 +869,12 @@ fun App(
                                 onKeepScreenOnAlwaysChange = { value ->
                                     keepScreenOnAlways = value
                                     settingsStore.setKeepScreenOnAlways(value)
+                                    if (value) {
+                                        keepScreenOnViewer = false
+                                        keepScreenOnPlaylist = false
+                                        settingsStore.setKeepScreenOnViewer(false)
+                                        settingsStore.setKeepScreenOnPlaylist(false)
+                                    }
                                 }
                             )
                         }
@@ -886,7 +1005,11 @@ fun App(
                                 entries = exportLog,
                                 running = exportRunning,
                                 total = exportTotalCount,
-                                onClose = { currentScreen = Screen.Settings }
+                                title = logScreenTitle,
+                                onClose = {
+                                    currentScreen = logReturnTarget ?: Screen.Settings
+                                    logReturnTarget = null
+                                }
                             )
                         }
                     }
@@ -1208,8 +1331,27 @@ fun App(
                         val data = pendingRestoreData
                         if (data != null && repository.restoreBackup(data)) {
                             reload()
-                            currentScreen = Screen.SongList
-                            showMessage(AppStrings.backupRestored)
+                            val entries = buildList {
+                                add(ExportLogEntry(AppStrings.logStarting(AppStrings.restoreBackupLogTitle)))
+                                data.songs.forEach { song ->
+                                    add(ExportLogEntry(AppStrings.logSongImported(song.title), ExportLogKind.DONE))
+                                }
+                                data.setlists.forEach { setlist ->
+                                    add(ExportLogEntry(AppStrings.logSetlistImported(setlist.name), ExportLogKind.DONE))
+                                }
+                                add(
+                                    ExportLogEntry(
+                                        AppStrings.logRestoreSummary(data.songs.size, data.setlists.size),
+                                        ExportLogKind.INFO
+                                    )
+                                )
+                                add(ExportLogEntry(AppStrings.backupRestored, ExportLogKind.SUCCESS))
+                            }
+                            showImportLog(
+                                title = AppStrings.restoreBackupLogTitle,
+                                entries = entries,
+                                total = data.songs.size + data.setlists.size
+                            )
                         } else {
                             showMessage(AppStrings.invalidOrEmptyBackup)
                         }

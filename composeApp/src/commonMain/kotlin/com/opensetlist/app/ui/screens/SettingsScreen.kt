@@ -56,6 +56,7 @@ fun SettingsScreen(
     onImportSongs: () -> Unit,
     onImportSet: () -> Unit,
     onImportSetlistHelper: () -> Unit,
+    onImportJustChords: () -> Unit,
     onCloudExport: (CloudTarget) -> Unit,
     onCloudImport: (CloudTarget) -> Unit,
     darkMode: Boolean,
@@ -246,6 +247,24 @@ fun SettingsScreen(
                         Icon(
                             imageVector = Icons.Default.FileOpen,
                             contentDescription = AppStrings.importSetlistHelperFile
+                        )
+                    }
+                }
+            )
+        }
+
+        SettingsSection(
+            title = AppStrings.justChordsTitle,
+            icon = Icons.Default.LibraryMusic
+        ) {
+            SettingsRow(
+                label = AppStrings.importJustChords,
+                subtitle = AppStrings.importJustChordsSubtitle,
+                actions = {
+                    IconButton(onClick = onImportJustChords) {
+                        Icon(
+                            imageVector = Icons.Default.FileOpen,
+                            contentDescription = AppStrings.importJustChords
                         )
                     }
                 }

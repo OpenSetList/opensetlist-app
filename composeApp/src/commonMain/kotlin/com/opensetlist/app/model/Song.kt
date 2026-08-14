@@ -24,8 +24,6 @@ data class Song(
 
 /**
  * Artista cadastrado no repertório.
- *
- * @author ruanitto
  */
 data class Artist(
     val id: Long,
@@ -36,8 +34,6 @@ data class Artist(
 
 /**
  * Tag utilizada para categorizar músicas.
- *
- * @author ruanitto
  */
 data class Tag(
     val id: Long,
@@ -48,8 +44,6 @@ data class Tag(
 
 /**
  * Uma setlist de apresentação, com dados da gig e as músicas que a compõem.
- *
- * @author ruanitto
  */
 data class Setlist(
     val id: Long,
@@ -63,8 +57,6 @@ data class Setlist(
 
 /**
  * Associação entre uma setlist e uma música, com a posição de exibição.
- *
- * @author ruanitto
  */
 data class SetlistSongLink(
     val setlistId: Long,
@@ -74,8 +66,6 @@ data class SetlistSongLink(
 
 /**
  * Estado completo do banco, usado para exportar/importar backups.
- *
- * @author ruanitto
  */
 data class BackupData(
     val songs: List<Song>,
@@ -88,8 +78,6 @@ data class BackupData(
 
 /**
  * Dados de uma setlist compartilhada: a setlist em si e as músicas a importar.
- *
- * @author ruanitto
  */
 data class SetShareData(
     val setlist: Setlist,
@@ -98,8 +86,6 @@ data class SetShareData(
 
 /**
  * Backup no formato do SetList Helper (músicas + setlists).
- *
- * @author ruanitto
  */
 data class SetlistHelperBackup(
     val songs: List<Song>,
@@ -109,12 +95,19 @@ data class SetlistHelperBackup(
 
 /**
  * Setlist vinda de um backup do SetList Helper.
- *
- * @author ruanitto
  */
 data class HelperSetlist(
     val name: String,
     val date: Long = 0L,
     val location: String,
     val songIds: List<Long>
+)
+
+/**
+ * Setlist no formato JustChords (.chopro): o nome do arquivo vira o nome do setlist
+ * e cada diretiva `{new_song}` inicia uma nova música na sequência.
+ */
+data class JustChordsSet(
+    val name: String,
+    val songs: List<Song>
 )

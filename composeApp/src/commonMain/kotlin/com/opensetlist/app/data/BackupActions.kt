@@ -15,8 +15,6 @@ class BackupActions(
 
 /**
  * Cria as ações de backup conforme a plataforma atual.
- *
- * @author ruanitto
  */
 @Composable
 expect fun rememberBackupActions(

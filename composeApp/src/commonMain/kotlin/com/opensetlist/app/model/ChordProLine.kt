@@ -12,8 +12,6 @@ data class ChordProSegment(
 
 /**
  * Estilo de comentário de uma linha ChordPro.
- *
- * @author ruanitto
  */
 enum class CommentStyle {
     PLAIN,
@@ -24,8 +22,6 @@ enum class CommentStyle {
 
 /**
  * Uma linha renderizável do ChordPro, com seus segmentos e marcadores.
- *
- * @author ruanitto
  */
 data class ChordProLine(
     val segments: List<ChordProSegment>,
@@ -38,8 +34,6 @@ data class ChordProLine(
 
 /**
  * Música parseada no formato ChordPro, com metadados e linhas renderizáveis.
- *
- * @author ruanitto
  */
 data class ParsedSong(
     val title: String = "",
