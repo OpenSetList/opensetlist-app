@@ -23,26 +23,23 @@ object SampleSongs {
 
 [F7M]Olha que coisa mais [G7]linda
 Mais [Gm7]cheia de graça
-[C7]É ela que [F7M]vem
-Que [Dm7]passa com um doce [G7]balanço
-A [Gm7]caminho do [C7]mar
+[C7]É ela menina que [F7M]vem e que [Am7]passa
+Num doce [Dm7]balanço, a caminho do [G7]mar
 [F7M]Moça do corpo dou[G7]rado
 Do [Gm7]sol de Ipanema
-[C7]O seu balançado [F7M]parece um poema
-[Dm7]É a coisa mais linda [G7]que eu já vi pas[Gm7]sar
-[C7]Ah, porque estou tão [F7M]sozinho
-[Dm7]Ah, porque tudo é tão [G7]triste
-[Gm7]Ah, a beleza que [C7]existe
-A beleza que não é só [F7M]minha
-Que também passa [G7]sozinha
-[Gm7]Ah, se ela sou[C7]besse
-Que quando ela [F7M]passa
-O mundo inteirinho se [Dm7]enche de graça
-[G7]E fica mais lindo
-[Gm7]Por causa do [C7]amor
-[F7M]Por causa do [G7]amor
-[Gm7]Por causa do [C7]amor
-[F6]Por causa do amor
+[C7]O seu balançado é [F7M]mais que um poema
+É a coisa mais [G7]linda que eu [Gm7]já vi [C7]passar
+[F#7M]Ah, por que estou tão [B7]sozinho?
+[F#m7]Ah, por que tudo é tão [D7]triste?
+[Gm7]Ah, a beleza que [Eb7]existe
+[Am7]A beleza que não é só [D7]minha
+[Gm7]Que também passa [C7]sozinha
+[F7M]Ah, se ela soubesse [G7]que quando ela passa
+O mundo sorrindo se [Gm7]enche de graça
+[C7]E fica mais lindo por [F7M]causa do amor
+[G7]Por causa do amor
+[Gm7]Por causa do amor
+[C7]Por causa do [F7M]amor
             """.trimIndent()
         ),
         Song(
@@ -89,14 +86,22 @@ Festa da cumeeira
 {artist: Caetano Veloso}
 {key: C}
 
-[C7M]Gosto de te ver no [G7]mar
-[Am7]No vai e vem das [Dm7]ondas
-[G7]Gosto de te ver e [C7M]ter
-Que [Am7]nem posso explicar
-[Dm7]Só sei que é [G7]como a [C7M]brisa
-[Am7]Só sei que é [Dm7]como a [G7]maré
-[Am7]Que lava a [Dm7]areia
-[G7]Num vai e [C7M]vem sem parar
+[C]Gosto de te ver leãozinho
+[G7]Caminhando sob o [Am]sol
+[Em]Gosto muito de [F]você leãozinho
+[Bb]Para desentriste[C]cer leãozinho
+[G7]O meu coração tão [Am]só
+[Em]Basta encontrar [F]você no caminho
+[Bb]Um filhote de [C]leão, raio da manhã
+[F]Arrastando o meu olhar [G7]como um imã
+[Am]O meu coração é o [F]sol, pai de toda [C]cor
+[G7]Quando ele lhe doura a pele ao léu
+[C]Gosto de te ver ao sol leãozinho
+[G7]De te ver entrar no [Am]mar
+[Em]Tua pele, tua [F]luz, tua [Bb]juba
+[C]Gosto de ficar ao sol leãozinho
+[G7]De molhar minha [Am]juba
+[Em]De estar perto de [F]você e [Bb]entrar numa
             """.trimIndent()
         ),
         Song(
@@ -110,18 +115,26 @@ Que [Am7]nem posso explicar
 {artist: Tom Jobim}
 {key: Dm}
 
-[Gm9][Dm7][Dm7/C][Bdim][Bbm6][Dm7][A7+5]
-[Dm7]Vai mi[Dm7/C]nha tri[Bdim]steza e diz a [Bbm6]ela [A7/+5]que sem [Dm7]ela não pode ser
-Diz-lhe [Bm7/-5]nu-[F6]ma [Am7]prece que ela re[Bb6]gresse, porque eu não [A7]posso mais so[A7/+5]frer
-[Dm7]Chega de[Dm7/C] sau[Bdim]dade, a reali[Bbm6]dade é [A7/+5]que sem [Am6]ela não há [Adim]paz
-Não há be[Gm7]leza, é [A7]só tris[Dm7]teza e a mel[Dm7/C]ancolia que não [Bdim]sai de mim, [Bbm6]Não sai de mim, não [Dm7]sai[Em11] [Em7] [A7/6] [A7]
-[Dmaj7/F#]Mas[F#dim] se ela vol[E7/9]tar, se ela voltar, que coisa [Em7]linda,[A7/-9] que coisa [E13/-9]lou-[D7/F#]ca
-Pois há menos pei[E13/-9]xinhos a na[Em7]dar no mar, Do que os bei[E7/9]jinhos que eu darei na sua [Gm6]bo-[A7/-9]ca
-[Dmaj7/F#]Dentro   [D6/F#]dos meus braços os abraços [F#7]hão de [Bm7]ser mi[Bbm7]lhões de a[Am7]braços
-[Adim]Aper- [Gmaj7]tado assim, co[Gm6]lado assim, ca[F#m7]lado assim, A[F#dim]braços [B7]e beijinhos e ca[Em7]rinhos sem ter [F#7]fim
-Que é prá aca[B7]bar com esse negócio de vi[Em7]ver longe de [Dmaj7]mim[D6]
-Não quero [F#dim]mais esse negócio de vo[Em7]cê viver a[Dmaj7]ssim[D6]
-Vamos dei[F#dim]xar desse negócio de vo[Em7]cê viver sem [Dmaj7]mim[D6]
+[Gm7]Vai minha tris[A7]teza e diz a [Dm]ela
+Que sem [Cm6]ela não [Bm7b5]pode [Bb6]ser
+Diz-lhe [A7]numa prece que [Dm7]ela re[Eb7]gresse
+Porque eu [Dm7]não posso [E7]mais so[Am7]frer
+[Bb6]Chega de saudade, a [A7]realidade é que sem [Dm]ela não há [Cm6]paz
+Não há [Bm7b5]beleza, é só [Bb6]tristeza
+E a me[A7]lancolia que não [Dm7]sai de mim
+[Em7]Não sai de mim, [A7]não sai
+[D7M]Mas se [B7]ela voltar, [E7]que coisa linda
+[A7]Que coisa [D]louca
+Pois há me[Dm7]nos peixinhos a [E7]nadar no [Am7]mar
+Do que os [Gm6]beijinhos que eu [A7]darei na sua [Dm7]boca
+Dentro dos [B7]meus braços, os [E7]abraços
+Hão de [A7]ser milhões de [D]abraços
+Aper[F#7]tado assim, co[Bm7]lado assim
+Ca[Em7]lado assim
+[Bb7]Abraços e beijinhos e [A7]carinhos sem ter fim
+Que é pra aca[B7]bar com esse negócio de [Em7]você viver sem [A7]mim
+Não quero [B7]mais esse negócio de [Em7]você viver sem [A7]mim
+Vamos dei[B7]xar desse negócio de [Em7]você viver sem [Dm7]mim
             """.trimIndent()
         ),
         Song(
