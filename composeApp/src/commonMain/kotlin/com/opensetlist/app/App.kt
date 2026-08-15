@@ -133,7 +133,8 @@ const val CHOPRO_MIME = "application/x-chordpro"
 fun App(
     driverFactory: DatabaseDriverFactory,
     initialImportFileName: String? = null,
-    initialImportBytes: ByteArray? = null
+    initialImportBytes: ByteArray? = null,
+    onInitialImportConsumed: () -> Unit = {}
 ) {
     val database = remember { AppDatabase(driverFactory.createDriver()) }
     val repository = remember { SongRepository(database) }
@@ -416,6 +417,7 @@ fun App(
             } else {
                 handleImported(bytes.decodeToString())
             }
+            onInitialImportConsumed()
         }
     }
 
@@ -423,9 +425,15 @@ fun App(
         getExportContent = { pendingExportContent },
         onImported = { content -> handleImported(content) },
         onExported = { ok ->
+            pendingExportBytes = null
+            pendingExportContent = null
             showMessage(if (ok) AppStrings.fileSaved else AppStrings.fileSaveFailed)
         },
-        onShared = { showMessage(AppStrings.contentShared) },
+        onShared = {
+            pendingExportBytes = null
+            pendingExportContent = null
+            showMessage(AppStrings.contentShared)
+        },
         getExportBytes = { pendingExportBytes }
     )
 
