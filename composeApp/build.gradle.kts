@@ -70,7 +70,7 @@ compose.desktop {
     application {
         mainClass = "com.opensetlist.app.MainKt"
         nativeDistributions {
-            packageName = "opensetlist-app"
+            packageName = "opensetlist"
             packageVersion = appVersionName
         }
     }
@@ -121,4 +121,8 @@ android {
             signingConfig = signingConfigs.findByName("release")
         }
     }
+}
+
+base {
+    archivesName.set("opensetlist")
 }
