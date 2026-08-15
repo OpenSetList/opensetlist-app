@@ -108,6 +108,7 @@ actual fun rememberFileActions(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { treeUri: Uri? ->
         if (treeUri == null) {
+            pendingProBatch = emptyList()
             pendingProBatchProgress("", ProBatchEvent.CANCELLED)
             return@rememberLauncherForActivityResult
         }
@@ -121,6 +122,7 @@ actual fun rememberFileActions(
                     withContext(Dispatchers.Main) {
                         pendingProBatchProgress("", ProBatchEvent.CANCELLED)
                     }
+                    pendingProBatch = emptyList()
                     return@launch
                 }
                 withContext(Dispatchers.Main) {
@@ -155,6 +157,7 @@ actual fun rememberFileActions(
             withContext(Dispatchers.Main) {
                 pendingProBatchProgress("", ProBatchEvent.COMPLETED)
             }
+            pendingProBatch = emptyList()
         }
     }
 

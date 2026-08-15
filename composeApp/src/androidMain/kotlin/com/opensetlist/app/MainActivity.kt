@@ -78,7 +78,8 @@ class MainActivity : ComponentActivity() {
                 App(
                     driverFactory = DatabaseDriverFactory(applicationContext),
                     initialImportFileName = importRequest.value?.name,
-                    initialImportBytes = importRequest.value?.bytes
+                    initialImportBytes = importRequest.value?.bytes,
+                    onInitialImportConsumed = { importRequest.value = null }
                 )
             }
         }
