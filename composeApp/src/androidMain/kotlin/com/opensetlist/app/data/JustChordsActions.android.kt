@@ -10,14 +10,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 
 /**
- * Importação de setlist JustChords (.chopro) no Android via SAF,
+ * Importação de setlist JustChords (.chopro/.jcarchive) no Android via SAF,
  * lendo o nome do arquivo para usar como nome do setlist.
  *
  * @author ruanitto
  */
 @Composable
 actual fun rememberJustChordsActions(
-    onImported: (fileName: String, content: String) -> Unit
+    onImported: (fileName: String, bytes: ByteArray) -> Unit
 ): JustChordsActions {
     val context = LocalContext.current
 
@@ -26,9 +26,8 @@ actual fun rememberJustChordsActions(
     ) { uri: Uri? ->
         if (uri != null) {
             val name = queryDisplayName(context, uri) ?: "setlist.${JustChords.FILE_EXTENSION}"
-            val content = context.contentResolver.openInputStream(uri)
-                ?.bufferedReader()?.use { it.readText() }
-            if (content != null) onImported(name, content)
+            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            if (bytes != null) onImported(name, bytes)
         }
     }
 
@@ -39,6 +38,8 @@ actual fun rememberJustChordsActions(
                     arrayOf(
                         "text/plain",
                         "application/x-chordpro",
+                        "application/zip",
+                        "application/x-zip-compressed",
                         "application/octet-stream"
                     )
                 )

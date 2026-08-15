@@ -217,8 +217,10 @@ object DataTransfer {
     }
 }
 
-private class JsonParser(private val input: String) {
+internal class JsonParser(private val input: String) {
     private var pos = 0
+
+    private val FAILED = Any()
 
     fun parseObject(): Map<String, Any?>? {
         skipWhitespace()
@@ -231,7 +233,8 @@ private class JsonParser(private val input: String) {
             val key = parseString() ?: return null
             skipWhitespace()
             if (!consume(':')) return null
-            val value = parseValue() ?: return null
+            val value = parseValue()
+            if (value === FAILED) return null
             result[key] = value
             skipWhitespace()
             if (consume('}')) return result
@@ -242,13 +245,13 @@ private class JsonParser(private val input: String) {
     private fun parseValue(): Any? {
         skipWhitespace()
         return when {
-            peek() == '{' -> parseObject()
-            peek() == '[' -> parseArray()
-            peek() == '"' -> parseString()
+            peek() == '{' -> parseObject() ?: FAILED
+            peek() == '[' -> parseArray() ?: FAILED
+            peek() == '"' -> parseString() ?: FAILED
             input.startsWith("true", pos) -> { pos += 4; true }
             input.startsWith("false", pos) -> { pos += 5; false }
             input.startsWith("null", pos) -> { pos += 4; null }
-            else -> parseNumber()
+            else -> parseNumber() ?: FAILED
         }
     }
 
@@ -259,7 +262,8 @@ private class JsonParser(private val input: String) {
         skipWhitespace()
         if (consume(']')) return result
         while (true) {
-            val value = parseValue() ?: return null
+            val value = parseValue()
+            if (value === FAILED) return null
             result.add(value)
             skipWhitespace()
             if (consume(']')) return result

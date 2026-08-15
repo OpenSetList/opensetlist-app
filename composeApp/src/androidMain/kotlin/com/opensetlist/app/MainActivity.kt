@@ -31,14 +31,14 @@ import kotlinx.coroutines.delay
 
 /**
  * Activity principal do Android, que inicia o Compose e trata arquivos abertos
- * pelo sistema (ACTION_VIEW), como arquivos .osl compartilhados e .chopro do
- * JustChords (importados como setlist).
+ * pelo sistema (ACTION_VIEW), como arquivos .osl compartilhados, .chopro e
+ * .jcarchive do JustChords (importados como setlist).
  *
  * @author ruanitto
  */
 class MainActivity : ComponentActivity() {
 
-    private data class OpenedFile(val name: String?, val content: String)
+    private data class OpenedFile(val name: String?, val bytes: ByteArray)
 
     private val importRequest = mutableStateOf<OpenedFile?>(null)
 
@@ -77,8 +77,8 @@ class MainActivity : ComponentActivity() {
             } else {
                 App(
                     driverFactory = DatabaseDriverFactory(applicationContext),
-                    initialImport = importRequest.value?.content,
-                    initialImportFileName = importRequest.value?.name
+                    initialImportFileName = importRequest.value?.name,
+                    initialImportBytes = importRequest.value?.bytes
                 )
             }
         }
@@ -93,11 +93,11 @@ class MainActivity : ComponentActivity() {
     private fun readOpenIntent(intent: Intent?): OpenedFile? {
         if (intent?.action != Intent.ACTION_VIEW) return null
         val uri = intent.data ?: return null
-        val content = runCatching {
-            contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+        val bytes = runCatching {
+            contentResolver.openInputStream(uri)?.use { it.readBytes() }
         }.getOrNull() ?: return null
         val name = queryDisplayName(uri) ?: uri.lastPathSegment?.let { Uri.decode(it) }
-        return OpenedFile(name = name, content = content)
+        return OpenedFile(name = name, bytes = bytes)
     }
 
     private fun queryDisplayName(uri: Uri): String? {

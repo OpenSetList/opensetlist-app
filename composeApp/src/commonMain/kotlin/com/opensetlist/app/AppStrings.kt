@@ -164,7 +164,7 @@ object AppStrings {
     val importSharedSetlist = "Importar setlist compartilhada"
 
     val justChordsTitle = "JustChords"
-    val importJustChords = "Importar setlist JustChords (.chopro)"
+    val importJustChords = "Importar setlist JustChords (.chopro/.jcarchive)"
     val importJustChordsSubtitle = "Importa setlist exportada do app JustChords"
     val justChordsImportFailed = "Falha ao importar setlist JustChords"
     val restoreBackupLogTitle = "Restauração de backup"
@@ -174,6 +174,7 @@ object AppStrings {
     val importJustChordsLogTitle = "Importação do JustChords"
     val shareFormatTitle = "Compartilhar como"
     val justChordsFormat = "JustChords (.chopro)"
+    val justChordsArchiveFormat = "JustChords (.jcarchive)"
     val opensetlistFormat = "OpenSetList (.osl)"
 
     val saveBackupToFile = "Salvar backup em arquivo"

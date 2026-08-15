@@ -103,7 +103,7 @@ object JustChords {
     }
 
     /** Remove a diretiva `{scrollspeed:N}` que o JustChords grava no fim de cada música. */
-    private fun cleanBody(body: String): String =
+    internal fun cleanBody(body: String): String =
         body.lines()
             .filterNot { line ->
                 val trimmed = line.trim()
