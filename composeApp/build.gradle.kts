@@ -8,6 +8,8 @@ plugins {
     alias(libs.plugins.sqldelight)
 }
 
+val appVersionName = "1.1.0"
+
 sqldelight {
     databases {
         create("AppDatabase") {
@@ -67,6 +69,10 @@ kotlin {
 compose.desktop {
     application {
         mainClass = "com.opensetlist.app.MainKt"
+        nativeDistributions {
+            packageName = "opensetlist-app"
+            packageVersion = appVersionName
+        }
     }
 }
 
@@ -79,7 +85,7 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = 2
-        versionName = "1.1.0"
+        versionName = appVersionName
     }
 
     compileOptions {
