@@ -62,6 +62,7 @@ fun SetlistListScreen(
     setlists: List<Setlist>,
     onSetlistClick: (Setlist) -> Unit,
     onShareJustChords: (Setlist) -> Unit,
+    onShareJustChordsArchive: (Setlist) -> Unit,
     onShareOpenSetlist: (Setlist) -> Unit,
     onEdit: (Setlist) -> Unit,
     onDelete: (Setlist) -> Unit,
@@ -208,6 +209,10 @@ fun SetlistListScreen(
                                     onShareJustChords = {
                                         shareMenuFor = null
                                         onShareJustChords(setlist)
+                                    },
+                                    onShareJustChordsArchive = {
+                                        shareMenuFor = null
+                                        onShareJustChordsArchive(setlist)
                                     }
                                 )
                             }

@@ -16,7 +16,8 @@ fun SetlistShareMenu(
     expanded: Boolean,
     onDismissRequest: () -> Unit,
     onShareOpenSetlist: () -> Unit,
-    onShareJustChords: () -> Unit
+    onShareJustChords: () -> Unit,
+    onShareJustChordsArchive: () -> Unit
 ) {
     DropdownMenu(expanded = expanded, onDismissRequest = onDismissRequest) {
         DropdownMenuItem(
@@ -31,6 +32,13 @@ fun SetlistShareMenu(
             onClick = {
                 onDismissRequest()
                 onShareJustChords()
+            }
+        )
+        DropdownMenuItem(
+            text = { Text(AppStrings.justChordsArchiveFormat) },
+            onClick = {
+                onDismissRequest()
+                onShareJustChordsArchive()
             }
         )
     }

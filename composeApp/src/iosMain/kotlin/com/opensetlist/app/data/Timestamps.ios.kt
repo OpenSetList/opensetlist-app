@@ -23,3 +23,9 @@ actual fun currentTimestampIso(): String = formatTimestamp("yyyy-MM-dd'T'HH:mm:s
  * Data e hora atual segura para nomes de arquivo (ex.: "2026-07-31_14-30-00").
  */
 actual fun currentTimestampCompact(): String = formatTimestamp("yyyy-MM-dd_HH-mm-ss")
+
+/**
+ * Milissegundos desde a época Unix.
+ */
+actual fun currentEpochMillis(): Long =
+    (NSDate().timeIntervalSince1970 * 1000).toLong()

@@ -53,6 +53,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.opensetlist.app.data.DataTransfer
 import com.opensetlist.app.data.DatabaseDriverFactory
+import com.opensetlist.app.data.JcArchive
 import com.opensetlist.app.data.JustChords
 import com.opensetlist.app.data.ProBatchEvent
 import com.opensetlist.app.data.SongRepository
@@ -131,8 +132,8 @@ const val CHOPRO_MIME = "application/x-chordpro"
 @Composable
 fun App(
     driverFactory: DatabaseDriverFactory,
-    initialImport: String? = null,
-    initialImportFileName: String? = null
+    initialImportFileName: String? = null,
+    initialImportBytes: ByteArray? = null
 ) {
     val database = remember { AppDatabase(driverFactory.createDriver()) }
     val repository = remember { SongRepository(database) }
@@ -378,8 +379,13 @@ fun App(
         }
     }
 
-    fun importJustChordsFile(fileName: String, content: String) {
-        val data = JustChords.parse(fileName, content)
+    fun importJustChordsFile(fileName: String, bytes: ByteArray) {
+        val extension = fileName.substringAfterLast('.', "").lowercase()
+        val data = if (extension == JcArchive.FILE_EXTENSION) {
+            JcArchive.parse(fileName, bytes)
+        } else {
+            JustChords.parse(fileName, bytes.decodeToString())
+        }
         if (data.songs.isEmpty()) {
             showMessage(AppStrings.justChordsImportFailed)
             return
@@ -400,14 +406,16 @@ fun App(
         )
     }
 
-    LaunchedEffect(initialImport, initialImportFileName) {
-        val content = initialImport
+    LaunchedEffect(initialImportFileName, initialImportBytes) {
+        val bytes = initialImportBytes
         val fileName = initialImportFileName
-        if (content != null) {
-            val isChopro = fileName != null &&
-                fileName.substringAfterLast('.', "").equals(JustChords.FILE_EXTENSION, ignoreCase = true)
-            if (isChopro) importJustChordsFile(fileName!!, content)
-            else handleImported(content)
+        if (bytes != null) {
+            val extension = fileName?.substringAfterLast('.', "")?.lowercase()
+            if (extension == JustChords.FILE_EXTENSION || extension == JcArchive.FILE_EXTENSION) {
+                importJustChordsFile(fileName.orEmpty(), bytes)
+            } else {
+                handleImported(bytes.decodeToString())
+            }
         }
     }
 
@@ -456,8 +464,8 @@ fun App(
     )
 
     val justChordsActions = rememberJustChordsActions(
-        onImported = { fileName, content ->
-            importJustChordsFile(fileName, content)
+        onImported = { fileName, bytes ->
+            importJustChordsFile(fileName, bytes)
         }
     )
 
@@ -556,6 +564,13 @@ fun App(
     fun shareSetlistJustChords(setlist: Setlist) {
         val content = JustChords.build(repository.songsInSetlist(setlist.id))
         doExport("${setlist.name}.${JustChords.FILE_EXTENSION}", CHOPRO_MIME, content, share = true)
+    }
+
+    fun shareSetlistJustChordsArchive(setlist: Setlist) {
+        val bytes = JcArchive.build(repository.songsInSetlist(setlist.id))
+        pendingExportBytes = bytes
+        pendingExportContent = null
+        fileActions.shareFile("${setlist.name}.${JcArchive.FILE_EXTENSION}", JcArchive.MIME_TYPE)
     }
 
     AppTheme(darkTheme = darkMode) {
@@ -694,6 +709,10 @@ fun App(
                                                 onShareJustChords = {
                                                     showSetlistShareMenu = false
                                                     shareSetlistJustChords(screen.setlist)
+                                                },
+                                                onShareJustChordsArchive = {
+                                                    showSetlistShareMenu = false
+                                                    shareSetlistJustChordsArchive(screen.setlist)
                                                 }
                                             )
                                         }
@@ -768,6 +787,7 @@ fun App(
                                     currentScreen = Screen.SetlistView(setlist, backTarget = Screen.SetlistList)
                                 },
                                 onShareJustChords = { setlist -> shareSetlistJustChords(setlist) },
+                                onShareJustChordsArchive = { setlist -> shareSetlistJustChordsArchive(setlist) },
                                 onShareOpenSetlist = { setlist -> shareSetlist(setlist) },
                                 onEdit = { setlist ->
                                     dialogText = setlist.name

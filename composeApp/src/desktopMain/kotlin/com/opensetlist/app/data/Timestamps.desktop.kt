@@ -17,3 +17,8 @@ actual fun currentTimestampIso(): String =
  */
 actual fun currentTimestampCompact(): String =
     SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ROOT).format(Date())
+
+/**
+ * Milissegundos desde a época Unix.
+ */
+actual fun currentEpochMillis(): Long = System.currentTimeMillis()
