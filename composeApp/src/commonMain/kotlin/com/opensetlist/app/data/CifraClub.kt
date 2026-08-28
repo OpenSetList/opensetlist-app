@@ -74,6 +74,7 @@ object CifraClub {
     private val client: HttpClient by lazy { buildHttpClient() }
 
     private const val INVALID_SONG_PATH = "(cifras|letras|estilos|tools|dicionario|login|artistas|menos|noticias|videoaulas|produtos|treino|conta)"
+    private val WEB_IGNORED_SUFFIX = setOf("letra", "imprimir", "acordes", "instrumental", "versao", "traducao")
 
     /** Normaliza um texto (minúsculas, sem acentos) para comparação de títulos. */
     fun normalize(text: String): String =
@@ -114,8 +115,9 @@ object CifraClub {
         "https://www.google.com/search?q=${urlEncode(query)}"
 
     /**
-     * Busca online: tenta URL colada, depois slug artista+música e, por fim,
-     * a lista de músicas do artista (filtrando pelo título quando informado).
+     * Busca online: tenta URL colada, depois slug artista+música, depois a lista
+     * de músicas do artista e, por fim, uma busca web (DuckDuckGo) apontando
+     * para o Cifra Club — útil quando só o nome da música é informado.
      */
     suspend fun search(
         query: String,
@@ -158,7 +160,133 @@ object CifraClub {
             else songs.filter { titleMatches(it.title, title) }
             if (filtered.isNotEmpty()) return CifraSearchOutcome.Songs(filtered)
         }
-        return CifraSearchOutcome.NoResult
+
+        val webHits = resolveViaWeb(input)
+        return if (webHits.isNotEmpty()) CifraSearchOutcome.Songs(webHits)
+        else CifraSearchOutcome.NoResult
+    }
+
+    /** Busca links de cifras do Cifra Club para o termo informado (Brave e, como
+     *  segundo plano, DuckDuckGo — quando o termo é só título, sem artista). */
+    internal suspend fun resolveViaWeb(query: String): List<CifraSong> {
+        val term = query.trim()
+        if (term.isBlank()) return emptyList()
+        val brave = httpGet("https://search.brave.com/search?q=${urlEncode("\"$term\" cifra club")}")
+            ?.let(::parseBraveHits)
+            .orEmpty()
+        if (brave.isNotEmpty()) return brave
+        val ddg = httpGet("https://html.duckduckgo.com/html/?q=${urlEncode("site:cifraclub.com.br \"$term\"")}")
+            ?.let(::parseWebHits)
+            .orEmpty()
+        return ddg
+    }
+
+    internal fun parseBraveHits(html: String): List<CifraSong> {
+        val pair = Regex("\\{[^}]*title:\"([^\"]+)\"[^}]*url:\"(https://www\\.cifraclub\\.com\\.br/[^\"]+)\"[^}]*\\}")
+        val seen = mutableSetOf<String>()
+        val result = mutableListOf<CifraSong>()
+        for (match in pair.findAll(html)) {
+            val titleText = match.groupValues[1]
+                .replace("\\u0026", "&")
+                .replaceEntities()
+                .trim()
+            val normalized = normalizeSongUrl(match.groupValues[2]) ?: continue
+            if (!seen.add(normalized)) continue
+            result.add(parseWebTitle(titleText, normalized))
+        }
+        return result
+    }
+
+    internal fun parseWebHits(html: String): List<CifraSong> {
+        val anchorPattern = Regex(
+            "<a[^>]*class=\"result__a\"[^>]*href=\"([^\"]+)\"[^>]*>([\\s\\S]*?)</a>",
+            RegexOption.DOT_MATCHES_ALL
+        )
+        val seen = mutableSetOf<String>()
+        val result = mutableListOf<CifraSong>()
+        for (match in anchorPattern.findAll(html)) {
+            val rawUrl = match.groupValues[1]
+            val target = urlDecode(rawUrl.substringAfter("uddg=").substringBefore('&'))
+            val normalized = normalizeSongUrl(target) ?: continue
+            if (!seen.add(normalized)) continue
+            val titleText = match.groupValues[2]
+                .replace(Regex("<[^>]*>"), "")
+                .replaceEntities()
+                .replace(" - ", " - ")
+                .trim()
+            result.add(parseWebTitle(titleText, normalized))
+        }
+        return result
+    }
+
+    private fun normalizeSongUrl(raw: String): String? {
+        if (!raw.contains("cifraclub.com.br")) return null
+        var path = raw
+            .substringAfter("cifraclub.com.br", missingDelimiterValue = raw)
+            .substringBefore("?")
+            .let { if (it.startsWith('/')) it else "/$it" }
+        if (path.length <= 1) return null
+        val segments = path.split('/').filter { it.isNotBlank() }
+        if (segments.size < 2) return null
+        val song = segments.last().trim()
+        if (song in WEB_IGNORED_SUFFIX || segments.first().matches(Regex("^$INVALID_SONG_PATH$"))) return null
+        return "cifraclub.com.br/${segments[0]}/${song}/"
+    }
+
+    private fun parseWebTitle(text: String, normalizedUrl: String): CifraSong {
+        val clean = text
+            .replace(Regex("\\s*\\(letra da m\\u00fasica\\)\\s*$", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("\\s*\\|\\s*CIFRAS\\s*$", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("\\s*-\\s*Cifra Club\\s*$", RegexOption.IGNORE_CASE), "")
+            .trim()
+        val parts = clean.split(Regex("\\s*-\\s+")).map { it.trim() }.filter { it.isNotBlank() }
+        val title: String
+        val artist: String
+        if (parts.size >= 2) {
+            artist = parts.last()
+            title = parts.dropLast(1).joinToString(" - ")
+        } else {
+            title = clean
+            val segments = normalizedUrl.split('/').filter { it.isNotBlank() }
+            artist = segments.getOrNull(1).orEmpty()
+        }
+        return CifraSong(
+            title = title,
+            artist = artist,
+            url = "https://www.${normalizedUrl}",
+            key = "",
+            hits = ""
+        )
+    }
+
+    /** Decodifica percent-encoding (sem java.net.URLDecoder). */
+    internal fun urlDecode(text: String): String {
+        val sb = StringBuilder()
+        var i = 0
+        while (i < text.length) {
+            val c = text[i]
+            when {
+                c == '+' -> {
+                    sb.append(' ')
+                    i++
+                }
+                c == '%' && i + 3 <= text.length -> {
+                    val value = text.substring(i + 1, i + 3).toIntOrNull(16)
+                    if (value != null) {
+                        sb.append(value.toChar())
+                        i += 3
+                    } else {
+                        sb.append(c)
+                        i++
+                    }
+                }
+                else -> {
+                    sb.append(c)
+                    i++
+                }
+            }
+        }
+        return sb.toString()
     }
 
     internal fun titleMatches(songTitle: String, search: String): Boolean {

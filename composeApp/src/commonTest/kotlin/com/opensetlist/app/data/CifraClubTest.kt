@@ -133,6 +133,59 @@ class CifraClubTest {
     }
 
     @Test
+    fun urlDecode_decodesPercentEncodingAndPlus() {
+        assertEquals(
+            "https://www.cifraclub.com.br/raul-seixas/a-maca/",
+            CifraClub.urlDecode("https%3A%2F%2Fwww.cifraclub.com.br%2Fraul%2Dseixas%2Fa%2Dmaca%2F")
+        )
+        assertEquals("casa com +", CifraClub.urlDecode("casa+com+%2B"))
+    }
+
+    @Test
+    fun parseWebHits_extractsSongCandidates() {
+        val html = """
+            <a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.cifraclub.com.br%2Fraul%2Dseixas%2Fa%2Dmaca%2F&amp;rut=x">
+                A Maçã - Raul Seixas - Cifra Club
+            </a>
+            <a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.cifraclub.com.br%2Fraul%2Dseixas%2Fa%2Dmaca%2Fletra%2F&amp;rut=y">
+                A Maçã - Raul Seixas (letra da música) - Cifra Club
+            </a>
+            <a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.cifraclub.com.br%2Fdjavan%2Fmaca%2F&amp;rut=z">
+                Maçã - Djavan - Cifra Club
+            </a>
+            <a rel="nofollow" class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.cifraclub.com.br%2F&amp;rut=w">
+                Cifra Club - Seu site de cifras
+            </a>
+        """.trimIndent()
+        val hits = CifraClub.parseWebHits(html)
+
+        assertEquals(2, hits.size)
+        assertEquals("A Maçã", hits[0].title)
+        assertEquals("Raul Seixas", hits[0].artist)
+        assertEquals("cifraclub.com.br/raul-seixas/a-maca/", hits[0].url.removePrefix("https://www."))
+        assertEquals("Maçã", hits[1].title)
+        assertEquals("Djavan", hits[1].artist)
+    }
+
+    @Test
+    fun parseBraveHits_extractsSongCandidatesFromJson() {
+        val html = """
+            <script>window.srv={web:{type:"search",results:[
+                {title:"A Maçã - Raul Seixas - Cifra Club",url:"https://www.cifraclub.com.br/raul-seixas/a-maca/",age:"",description:"..."},
+                {title:"A Maçã - Raul Seixas | CIFRAS",url:"https://www.cifraclub.com.br/raul-seixas/a-maca/letra/",description:"..."},
+                {title:"O Cheiro da Maçã - Leandro & Leonardo - Cifra Club",url:"https://www.cifraclub.com.br/leandro-e-leonardo/o-cheiro-da-maca/",age:"",description:"..."}
+            ]}}</script>
+        """.trimIndent()
+        val hits = CifraClub.parseBraveHits(html)
+
+        assertEquals(2, hits.size)
+        assertEquals("A Maçã", hits[0].title)
+        assertEquals("Raul Seixas", hits[0].artist)
+        assertEquals("O Cheiro da Maçã", hits[1].title)
+        assertEquals("Leandro & Leonardo", hits[1].artist)
+    }
+
+    @Test
     fun toImportBody_buildsDirectives() {
         val sheet = CifraSheet(
             title = "Que País É Este",
