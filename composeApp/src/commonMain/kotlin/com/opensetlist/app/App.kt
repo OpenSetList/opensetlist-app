@@ -24,6 +24,8 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -67,6 +69,8 @@ import com.opensetlist.app.data.rememberSetlistHelperActions
 import com.opensetlist.app.data.KeepScreenOn
 import com.opensetlist.app.data.rememberSettingsStore
 import com.opensetlist.app.data.currentTimestampCompact
+import com.opensetlist.app.data.toImportBody
+import com.opensetlist.app.ui.screens.OnlineSearchScreen
 import com.opensetlist.app.model.Artist
 import com.opensetlist.app.model.BackupData
 import com.opensetlist.app.model.ExportLogEntry
@@ -117,6 +121,7 @@ sealed class Screen {
     data class ArtistSongs(val artist: Artist) : Screen()
     data class TagSongs(val tag: Tag) : Screen()
     data class Editor(val song: Song, val returnTo: Screen.ChordView? = null) : Screen()
+    data object OnlineSearch : Screen()
     data object ExportProgress : Screen()
 }
 
@@ -159,6 +164,7 @@ fun App(
     var currentDrawerSection by remember { mutableStateOf(DrawerSection.ALL_SONGS) }
 
     var showNewSetlistDialog by remember { mutableStateOf(false) }
+    var showSongImportMenu by remember { mutableStateOf(false) }
     var showCloudSyncDialog by remember { mutableStateOf(false) }
     var showRenameSetlistDialog by remember { mutableStateOf(false) }
     var showDeleteSetlistDialog by remember { mutableStateOf(false) }
@@ -640,6 +646,7 @@ fun App(
                                         is Screen.ArtistSongs -> screen.artist.name
                                         is Screen.TagSongs -> screen.tag.name
                                         is Screen.Editor -> AppStrings.editSongTitle
+                                        is Screen.OnlineSearch -> AppStrings.onlineSearchTitle
                                         is Screen.ExportProgress ->
                                             logScreenTitle ?: AppStrings.exportProgressTitle
                                     }
@@ -665,11 +672,32 @@ fun App(
                             actions = {
                                 when (val screen = currentScreen) {
                                     is Screen.SongList -> {
-                                        IconButton(onClick = { fileActions.importFile() }) {
-                                            Icon(
-                                                imageVector = Icons.Default.Add,
-                                                contentDescription = AppStrings.importPro
-                                            )
+                                        Box {
+                                            IconButton(onClick = { showSongImportMenu = true }) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Add,
+                                                    contentDescription = AppStrings.importPro
+                                                )
+                                            }
+                                            DropdownMenu(
+                                                expanded = showSongImportMenu,
+                                                onDismissRequest = { showSongImportMenu = false }
+                                            ) {
+                                                DropdownMenuItem(
+                                                    text = { Text(AppStrings.importSong) },
+                                                    onClick = {
+                                                        showSongImportMenu = false
+                                                        fileActions.importFile()
+                                                    }
+                                                )
+                                                DropdownMenuItem(
+                                                    text = { Text(AppStrings.fromInternet) },
+                                                    onClick = {
+                                                        showSongImportMenu = false
+                                                        currentScreen = Screen.OnlineSearch
+                                                    }
+                                                )
+                                            }
                                         }
                                     }
                                     is Screen.SetlistList -> {
@@ -1026,6 +1054,28 @@ fun App(
                                     pendingDeleteSong = song
                                     showDeleteSongDialog = true
                                 }
+                            )
+                        }
+                        is Screen.OnlineSearch -> {
+                            OnlineSearchScreen(
+                                onImportSheet = { sheet ->
+                                    val imported = repository.importSong(sheet.toImportBody())
+                                    reload()
+                                    currentScreen = Screen.ChordView(imported)
+                                },
+                                onOpenInEditor = { sheet ->
+                                    currentScreen = Screen.Editor(
+                                        Song(
+                                            id = 0L,
+                                            title = sheet.title,
+                                            artist = sheet.artist,
+                                            key = sheet.key,
+                                            capo = sheet.capo,
+                                            body = sheet.toImportBody()
+                                        )
+                                    )
+                                },
+                                onOpenUrl = { url -> fileActions.openUrl(url) }
                             )
                         }
                         is Screen.ExportProgress -> {

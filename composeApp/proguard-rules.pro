@@ -29,3 +29,10 @@
 -dontwarn java.lang.instrument.ClassFileTransformer
 -dontwarn java.lang.instrument.Instrumentation
 -dontwarn org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
+
+# Ktor (HTTP): slf4j binding e classes JVM ausentes no Android.
+-dontwarn org.slf4j.**
+-dontwarn io.ktor.client.engine.okhttp.**
+-dontwarn io.ktor.utils.io.**
+-dontwarn okhttp3.internal.platform.**
+-dontwarn kotlinx.io.**
