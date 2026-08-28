@@ -7,6 +7,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -357,6 +359,7 @@ private fun TrackedLine(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ChordLine(
     segments: List<ChordProSegment>,
@@ -371,11 +374,13 @@ private fun ChordLine(
     val isHighlighted = !highlightQuery.isNullOrBlank() &&
         textContent.contains(highlightQuery, ignoreCase = true)
 
-    val highlightStyle = TextStyle(
-        background = MaterialTheme.colorScheme.secondaryContainer
-    )
+    val highlightStyle = if (isHighlighted) {
+        TextStyle(background = MaterialTheme.colorScheme.secondaryContainer)
+    } else {
+        TextStyle.Default
+    }
 
-    if (hideChords) {
+    if (hideChords || segments.none { it.chord != null }) {
         if (textContent.isBlank()) return
         Text(
             text = textContent,
@@ -383,32 +388,9 @@ private fun ChordLine(
             fontSize = fontSize.sp,
             color = MaterialTheme.colorScheme.onSurface,
             lineHeight = (fontSize * 1.6f).sp,
-            style = if (isHighlighted) highlightStyle else TextStyle.Default
+            style = highlightStyle
         )
         return
-    }
-
-    val hasAnyChord = segments.any { it.chord != null }
-
-    if (!hasAnyChord) {
-        if (textContent.isBlank()) return
-        Text(
-            text = textContent,
-            fontFamily = FontFamily.Monospace,
-            fontSize = fontSize.sp,
-            color = MaterialTheme.colorScheme.onSurface,
-            lineHeight = (fontSize * 1.6f).sp,
-            style = if (isHighlighted) highlightStyle else TextStyle.Default
-        )
-        return
-    }
-
-    // Coluna (0-based, no texto contínuo) de cada acorde do trecho.
-    val chordColumns = mutableListOf<Pair<Int, String>>()
-    var column = 0
-    for (seg in segments) {
-        if (seg.chord != null) chordColumns.add(column to seg.chord!!)
-        column += seg.text.length
     }
 
     // Linha com apenas acordes e sem letra: mantém a renderização legada.
@@ -425,42 +407,110 @@ private fun ChordLine(
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
             lineHeight = (fontSize * 1.4f).sp,
-            style = if (isHighlighted) highlightStyle else TextStyle.Default
+            style = highlightStyle
         )
         return
     }
 
-    ChordOverlayText(
-        text = textContent,
-        chordColumns = chordColumns,
-        fontSize = fontSize,
-        isHighlighted = isHighlighted
-    )
+    // Cada palavra é um bloco atômico de fluxo: acorde + letra viajam juntos
+    // na quebra de linha. Dentro da palavra, os acordes são posicionados na
+    // coluna exata da sílaba, sem criar espaços artificiais na letra.
+    val words = buildLyricWords(segments, textContent)
+
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        words.forEach { word ->
+            LyricWord(
+                word = word,
+                fontSize = fontSize,
+                isHighlighted = isHighlighted
+            )
+        }
+    }
 }
 
 /**
- * Renderiza a letra em um único [Text] (quebra naturalmente por largura) e
- * desenha os acordes por cima, alinhados à coluna de cada sílaba da mesma
- * linha visual — assim uma quebra de linha da letra não desloca mais os
- * acordes das linhas seguintes.
+ * Uma palavra da letra com os acordes posicionados por índice relativo ao
+ * início da palavra (coluna da sílaba em que o acorde foi colocado).
+ */
+private data class LyricWord(
+    val text: String,
+    val chords: List<Pair<Int, String>>
+)
+
+/**
+ * Divide a linha em palavras (blocos atômicos) e associa a cada uma os
+ * acordes cuja coluna cai dentro dela, na posição relativa da sílaba.
+ */
+private fun buildLyricWords(segments: List<ChordProSegment>, textContent: String): List<LyricWord> {
+    val chordCols = mutableListOf<Pair<Int, String>>()
+    var column = 0
+    for (seg in segments) {
+        if (seg.chord != null) chordCols.add(column to seg.chord!!)
+        column += seg.text.length
+    }
+
+    val text = textContent
+    val ranges = mutableListOf<Pair<Int, Int>>()
+    var wordStart = -1
+    var j = 0
+    while (j <= text.length) {
+        val isSpace = j < text.length && text[j].isWhitespace()
+        if (!isSpace && wordStart < 0) wordStart = j
+        if ((isSpace || j == text.length) && wordStart >= 0) {
+            ranges.add(wordStart to j)
+            wordStart = -1
+        }
+        j++
+    }
+
+    val words = mutableListOf<LyricWord>()
+    var used = 0
+    for ((start, end) in ranges) {
+        if (start == end) continue
+        val chordsHere = mutableListOf<Pair<Int, String>>()
+        while (used < chordCols.size && chordCols[used].first < end) {
+            val (c, ch) = chordCols[used]
+            if (c >= start) chordsHere.add((c - start) to ch)
+            used++
+        }
+        words.add(LyricWord(text.substring(start, end), chordsHere))
+    }
+
+    // Acordes após a última palavra (ex.: [G] no fim da linha) penduram nela.
+    val leftover = chordCols.drop(used).map { it.second }
+    if (leftover.isNotEmpty() && words.isNotEmpty()) {
+        val last = words.last()
+        words[words.lastIndex] = LyricWord(
+            text = last.text,
+            chords = last.chords + leftover.map { last.text.length to it }
+        )
+    }
+
+    return words
+}
+
+/**
+ * Renderiza uma palavra como bloco indivisível: uma faixa de acordes fixa por
+ * cima (para alinhar a linha de base de todas as palavras) e o acorde desenhado
+ * na coluna exata da sílaba dentro da própria palavra.
  */
 @Composable
-private fun ChordOverlayText(
-    text: String,
-    chordColumns: List<Pair<Int, String>>,
+private fun LyricWord(
+    word: LyricWord,
     fontSize: Float,
     isHighlighted: Boolean
 ) {
     val density = LocalDensity.current
-    val chordLineHeight = with(density) { (fontSize * 1.4f).sp.toPx() }
+    val chordBandDp = with(density) { (fontSize * 1.4f).sp.toPx().toDp() }
     val textMeasurer = rememberTextMeasurer()
-    val highlightStyle = TextStyle(
-        background = MaterialTheme.colorScheme.secondaryContainer
-    )
-
     val chordStyle = TextStyle(
         fontFamily = FontFamily.Monospace,
         fontSize = (fontSize - 1f).sp,
+        lineHeight = (fontSize * 1.15f).sp,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.primary,
         background = if (isHighlighted) {
@@ -472,53 +522,56 @@ private fun ChordOverlayText(
 
     var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
 
-    Box(modifier = Modifier.fillMaxWidth()) {
+    Box(modifier = Modifier.padding(horizontal = 2.dp)) {
         Column {
-            Spacer(modifier = Modifier.height(with(density) { chordLineHeight.toDp() }))
+            Spacer(modifier = Modifier.height(chordBandDp))
             Text(
-                text = text,
+                text = word.text,
                 fontFamily = FontFamily.Monospace,
                 fontSize = fontSize.sp,
                 color = MaterialTheme.colorScheme.onSurface,
                 lineHeight = (fontSize * 2.4f).sp,
-                style = if (isHighlighted) highlightStyle else TextStyle.Default,
+                style = if (isHighlighted) {
+                    TextStyle(background = MaterialTheme.colorScheme.secondaryContainer)
+                } else {
+                    TextStyle.Default
+                },
                 onTextLayout = { layoutResult = it }
             )
         }
-        ChordOverlay(
-            modifier = Modifier.matchParentSize(),
-            layoutResult = layoutResult,
-            textLength = text.length,
-            chordColumns = chordColumns,
-            textMeasurer = textMeasurer,
-            chordStyle = chordStyle
-        )
+        if (word.chords.isNotEmpty()) {
+            WordChordOverlay(
+                modifier = Modifier.matchParentSize(),
+                layoutResult = layoutResult,
+                textLength = word.text.length,
+                chords = word.chords,
+                textMeasurer = textMeasurer,
+                chordStyle = chordStyle
+            )
+        }
     }
 }
 
+/**
+ * Desenha os acordes da palavra acima da sílaba de cada acorde, na coluna exata.
+ */
 @Composable
-private fun ChordOverlay(
+private fun WordChordOverlay(
     modifier: Modifier,
     layoutResult: TextLayoutResult?,
     textLength: Int,
-    chordColumns: List<Pair<Int, String>>,
+    chords: List<Pair<Int, String>>,
     textMeasurer: TextMeasurer,
     chordStyle: TextStyle
 ) {
     Canvas(modifier = modifier) {
-        if (layoutResult == null || chordColumns.isEmpty()) return@Canvas
+        if (layoutResult == null || chords.isEmpty() || textLength <= 0) return@Canvas
         val chordHeight = textMeasurer.measure("A", chordStyle).size.height.toFloat().coerceAtLeast(1f)
         val chordGap = 2.dp.toPx()
-        var currentLine = -1
         var lastChordRight = Float.NEGATIVE_INFINITY
-        for ((column, chord) in chordColumns) {
+        for ((column, chord) in chords) {
             val offset = column.coerceIn(0, (textLength - 1).coerceAtLeast(0))
             val rect = layoutResult.getBoundingBox(offset)
-            val lineIndex = layoutResult.getLineForOffset(offset)
-            if (lineIndex != currentLine) {
-                currentLine = lineIndex
-                lastChordRight = Float.NEGATIVE_INFINITY
-            }
             val chordWidth = textMeasurer.measure(chord, chordStyle).size.width.toFloat()
             val topLeft = Offset(
                 x = maxOf(rect.left, lastChordRight + chordGap),
