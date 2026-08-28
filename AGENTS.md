@@ -51,6 +51,14 @@ App de setlists/cifras multiplataforma (Kotlin Multiplatform + Compose Multiplat
 - Validação runtime: emulador/dispositivo Android via adb (instalar `:composeApp:installDebug`); desktop via `java -jar composeApp/build/compose/jars/composeApp-linux-x64-*.jar` (cria/usa `~/.opensetlist/setlist.db`)
 - Sempre rodar o build após editar código (string errada/quebra de import quebra o build)
 
+## Testes
+
+- Testes unitários em `composeApp/src/commonTest/` (Kotlin Multiplatform, `kotlin.test`)
+- Cobertura: `TransposerTest`, `DurationUtilsTest`, `ChordProParserTest`, `ChordProDirectivesTest`, `JsonParserTest`, `DataTransferTest` (parsing)
+- Rodar: `./gradlew :composeApp:desktopTest` (JVM, rápido), `:composeApp:testDebugUnitTest` (Android), `:composeApp:iosSimulatorArm64Test` (iOS)
+- `DataTransfer` usa `expect/actual` de Timestamps → build*/round-trip não testados em commonTest (apenas parsing/detecção)
+
+
 ## Release Android (R8 / ofuscação)
 
 - `buildTypes.release`: `isMinifyEnabled = true` + `isShrinkResources = true` + `proguard-rules.pro` (`composeApp/proguard-rules.pro`)
