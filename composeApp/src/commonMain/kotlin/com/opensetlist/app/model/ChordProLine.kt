@@ -29,7 +29,9 @@ data class ChordProLine(
     val sectionName: String = "",
     val isComment: Boolean = false,
     val commentStyle: CommentStyle = CommentStyle.PLAIN,
-    val isChorus: Boolean = false
+    val isChorus: Boolean = false,
+    val isTab: Boolean = false,
+    val isHighlight: Boolean = false
 )
 
 /**

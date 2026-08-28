@@ -2,6 +2,7 @@ package com.opensetlist.app.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -157,6 +158,12 @@ fun ChordProView(
             ) {
                 val content: @Composable () -> Unit = {
                     when {
+                        line.isTab -> {
+                            TabLine(
+                                segments = line.segments,
+                                fontSize = fontSize
+                            )
+                        }
                         line.isComment -> {
                             CommentLine(
                                 text = line.segments.joinToString("") { it.text },
@@ -194,8 +201,14 @@ fun ChordProView(
                 }
                 if (line.isChorus) {
                     ChorusBox {
-                        content()
+                        if (line.isHighlight) {
+                            HighlightBox { content() }
+                        } else {
+                            content()
+                        }
                     }
+                } else if (line.isHighlight) {
+                    HighlightBox { content() }
                 } else {
                     content()
                 }
@@ -230,6 +243,38 @@ private fun ChorusBox(
                 )
             }
             .padding(start = 14.dp)
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun TabLine(
+    segments: List<ChordProSegment>,
+    fontSize: Float
+) {
+    val textContent = buildString {
+        for (seg in segments) append(seg.text)
+    }
+    Text(
+        text = if (textContent.isBlank()) " " else textContent,
+        fontFamily = FontFamily.Monospace,
+        fontSize = fontSize.sp,
+        lineHeight = (fontSize * 1.5f).sp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+@Composable
+private fun HighlightBox(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.35f))
+            .padding(horizontal = 8.dp, vertical = 2.dp)
     ) {
         content()
     }

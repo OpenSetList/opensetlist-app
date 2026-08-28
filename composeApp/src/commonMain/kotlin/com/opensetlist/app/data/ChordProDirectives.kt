@@ -61,6 +61,8 @@ object ChordProDirectives {
         "highlight" to "highlight",
         "comment_italic" to "comment_italic", "ci" to "comment_italic",
         "comment_box" to "comment_box", "cb" to "comment_box",
+        "soh" to "start_of_highlight", "start_of_highlight" to "start_of_highlight",
+        "eoh" to "end_of_highlight", "end_of_highlight" to "end_of_highlight",
 
         // Environment sections
         "start_of_chorus" to "start_of_chorus", "soc" to "start_of_chorus",
@@ -177,6 +179,8 @@ object ChordProDirectives {
         add("end_of_tab", Kind.SECTION_END)
         add("start_of_grid", Kind.SECTION_START, sectionLabel = "Grid")
         add("end_of_grid", Kind.SECTION_END)
+        add("start_of_highlight", Kind.SECTION_START, sectionLabel = "Highlight")
+        add("end_of_highlight", Kind.SECTION_END)
 
         add("start_of_abc", Kind.SECTION_START, sectionLabel = "ABC")
         add("end_of_abc", Kind.SECTION_END)

@@ -17,6 +17,14 @@ object ChordProParser {
         val customMeta = mutableMapOf<String, String>()
         val lines = mutableListOf<ChordProLine>()
         var inChorus = false
+        var inTab = false
+        var inHighlight = false
+
+        fun ChordProLine.withState() = copy(
+            isChorus = inChorus,
+            isTab = inTab,
+            isHighlight = inHighlight
+        )
 
         for (rawLine in body.lines()) {
             val directive = tryParseDirective(rawLine)
@@ -38,11 +46,16 @@ object ChordProParser {
                                     isComment = true,
                                     commentStyle = resolved.commentStyle ?: com.opensetlist.app.model.CommentStyle.PLAIN,
                                     isChorus = inChorus
+                                ).copy(
+                                    isTab = inTab,
+                                    isHighlight = inHighlight
                                 )
                             )
                         }
                         ChordProDirectives.Kind.SECTION_START -> {
                             inChorus = resolved.name == "start_of_chorus"
+                            inTab = resolved.name == "start_of_tab"
+                            inHighlight = resolved.name == "start_of_highlight"
                             val label = ChordProDirectives.sectionLabel(resolved, arg)
                             lines.add(
                                 ChordProLine(
@@ -50,11 +63,28 @@ object ChordProParser {
                                     isSection = true,
                                     sectionName = label,
                                     isChorus = inChorus
+                                ).copy(
+                                    isTab = inTab,
+                                    isHighlight = inHighlight
                                 )
                             )
                         }
                         ChordProDirectives.Kind.SECTION_END -> {
-                            inChorus = false
+                            val wasTab = inTab
+                            val wasHighlight = inHighlight
+                            inChorus = if (resolved.name == "end_of_chorus") false else inChorus
+                            inTab = if (resolved.name == "end_of_tab") false else inTab
+                            inHighlight = if (resolved.name == "end_of_highlight") false else inHighlight
+                            if (wasTab || wasHighlight) {
+                                lines.add(
+                                    ChordProLine(
+                                        segments = listOf(ChordProSegment(text = "")),
+                                        isChorus = inChorus,
+                                        isTab = wasTab,
+                                        isHighlight = wasHighlight
+                                    )
+                                )
+                            }
                         }
                         ChordProDirectives.Kind.CHORUS -> {
                             val label = ChordProDirectives.sectionLabel(resolved, arg)
@@ -64,6 +94,9 @@ object ChordProParser {
                                     isSection = true,
                                     sectionName = label,
                                     isChorus = true
+                                ).copy(
+                                    isTab = inTab,
+                                    isHighlight = inHighlight
                                 )
                             )
                         }
@@ -74,6 +107,9 @@ object ChordProParser {
                         ChordProLine(
                             segments = listOf(ChordProSegment(text = arg)),
                             isChorus = inChorus
+                        ).copy(
+                            isTab = inTab,
+                            isHighlight = inHighlight
                         )
                     )
                 } else if (arg == null) {
@@ -84,6 +120,9 @@ object ChordProParser {
                             isSection = true,
                             sectionName = label,
                             isChorus = inChorus
+                        ).copy(
+                            isTab = inTab,
+                            isHighlight = inHighlight
                         )
                     )
                 }
@@ -93,9 +132,12 @@ object ChordProParser {
                         ChordProLine(
                             segments = listOf(ChordProSegment(text = "")),
                             isChorus = inChorus
+                        ).copy(
+                            isTab = inTab,
+                            isHighlight = inHighlight
                         )
                     } else {
-                        parseContentLine(rawLine, meta, tags, customMeta).copy(isChorus = inChorus)
+                        parseContentLine(rawLine, meta, tags, customMeta).withState()
                     }
                 )
             }
