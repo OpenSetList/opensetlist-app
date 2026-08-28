@@ -1,18 +1,17 @@
 package com.opensetlist.app.ui.components
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -20,10 +19,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
@@ -33,14 +28,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.opensetlist.app.AppStrings
@@ -359,7 +353,6 @@ private fun TrackedLine(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ChordLine(
     segments: List<ChordProSegment>,
@@ -412,22 +405,34 @@ private fun ChordLine(
         return
     }
 
-    // Cada palavra é um bloco atômico de fluxo: acorde + letra viajam juntos
-    // na quebra de linha. Dentro da palavra, os acordes são posicionados na
-    // coluna exata da sílaba, sem criar espaços artificiais na letra.
+    // Pré-quebra a linha em pedaços que cabem na largura disponível, alinhados
+    // a limites de palavra (assim o acorde nunca se separa da sílaba). Cada
+    // pedaço é renderizado como faixa de acordes + linha de letra, de forma
+    // determinística (monoespaçada), sem overlay de canvas.
     val words = buildLyricWords(segments, textContent)
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val lyricStyle = TextStyle(
+        fontFamily = FontFamily.Monospace,
+        fontSize = fontSize.sp,
+        lineHeight = (fontSize * 2.4f).sp
+    )
+    val lyricAdvancePx = with(density) {
+        measurer.measure("M", lyricStyle).size.width.toFloat()
+    }
 
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        words.forEach { word ->
-            LyricWord(
-                word = word,
-                fontSize = fontSize,
-                isHighlighted = isHighlighted
-            )
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val maxWidthPx = with(density) { maxWidth.toPx() }
+        val chunks = breakChunks(words, measurer, lyricStyle, maxWidthPx).map { buildChunk(it) }
+        Column {
+            chunks.forEach { chunk ->
+                ChunkLine(
+                    chunk = chunk,
+                    fontSize = fontSize,
+                    lyricAdvancePx = lyricAdvancePx,
+                    isHighlighted = isHighlighted
+                )
+            }
         }
     }
 }
@@ -494,19 +499,78 @@ private fun buildLyricWords(segments: List<ChordProSegment>, textContent: String
 }
 
 /**
- * Renderiza uma palavra como bloco indivisível: uma faixa de acordes fixa por
- * cima (para alinhar a linha de base de todas as palavras) e o acorde desenhado
- * na coluna exata da sílaba dentro da própria palavra.
+ * Um pedaço da linha já quebrado: texto da letra + acordes com coluna absoluta
+ * (x = coluna * avanço mono) relativa ao início do pedaço.
+ */
+private data class Chunk(
+    val text: String,
+    val chords: List<Pair<Int, String>>
+)
+
+/**
+ * Quebra a lista de palavras em pedaços que cabem na largura, medindo o texto
+ * acumulado e quebrando quando ele vira para uma segunda linha visual.
+ */
+private fun breakChunks(
+    words: List<LyricWord>,
+    measurer: TextMeasurer,
+    style: TextStyle,
+    maxWidthPx: Float
+): List<List<LyricWord>> {
+    val chunks = mutableListOf<List<LyricWord>>()
+    var current = mutableListOf<LyricWord>()
+    for (word in words) {
+        val test = current + word
+        val text = test.joinToString(" ") { it.text }
+        val laid = measurer.measure(
+            text,
+            style,
+            constraints = Constraints(maxWidth = maxWidthPx.toInt() + 1)
+        )
+        if (current.isNotEmpty() && laid.lineCount > 1) {
+            chunks.add(current)
+            current = mutableListOf(word)
+        } else {
+            current = test.toMutableList()
+        }
+    }
+    if (current.isNotEmpty()) chunks.add(current)
+    return chunks
+}
+
+/**
+ * Monta o texto do pedaço e as colunas absolutas dos acordes (relativas ao
+ * início do pedaço, em caracteres mono).
+ */
+private fun buildChunk(words: List<LyricWord>): Chunk {
+    val text = StringBuilder()
+    val chords = mutableListOf<Pair<Int, String>>()
+    var cursor = 0
+    words.forEachIndexed { i, w ->
+        if (i > 0) {
+            text.append(' ')
+            cursor++
+        }
+        w.chords.forEach { (rel, ch) -> chords.add((cursor + rel) to ch) }
+        text.append(w.text)
+        cursor += w.text.length
+    }
+    return Chunk(text.toString(), chords)
+}
+
+/**
+ * Renderiza um pedaço: uma faixa de acordes fixa por cima e a letra embaixo.
+ * Os acordes são posicionados na coluna exata da sílaba (x = coluna × avanço).
  */
 @Composable
-private fun LyricWord(
-    word: LyricWord,
+private fun ChunkLine(
+    chunk: Chunk,
     fontSize: Float,
+    lyricAdvancePx: Float,
     isHighlighted: Boolean
 ) {
     val density = LocalDensity.current
-    val chordBandDp = with(density) { (fontSize * 1.4f).sp.toPx().toDp() }
-    val textMeasurer = rememberTextMeasurer()
+    val bandDp = with(density) { (fontSize * 1.6f).sp.toPx().toDp() }
     val chordStyle = TextStyle(
         fontFamily = FontFamily.Monospace,
         fontSize = (fontSize - 1f).sp,
@@ -519,72 +583,33 @@ private fun LyricWord(
             Color.Unspecified
         }
     )
-
-    var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-
-    Box(modifier = Modifier.padding(horizontal = 2.dp)) {
-        Column {
-            Spacer(modifier = Modifier.height(chordBandDp))
-            Text(
-                text = word.text,
-                fontFamily = FontFamily.Monospace,
-                fontSize = fontSize.sp,
-                color = MaterialTheme.colorScheme.onSurface,
-                lineHeight = (fontSize * 2.4f).sp,
-                style = if (isHighlighted) {
-                    TextStyle(background = MaterialTheme.colorScheme.secondaryContainer)
-                } else {
-                    TextStyle.Default
-                },
-                onTextLayout = { layoutResult = it }
-            )
-        }
-        if (word.chords.isNotEmpty()) {
-            WordChordOverlay(
-                modifier = Modifier.matchParentSize(),
-                layoutResult = layoutResult,
-                textLength = word.text.length,
-                chords = word.chords,
-                textMeasurer = textMeasurer,
-                chordStyle = chordStyle
-            )
-        }
+    val lyricTextStyle = if (isHighlighted) {
+        TextStyle(background = MaterialTheme.colorScheme.secondaryContainer)
+    } else {
+        TextStyle.Default
     }
-}
 
-/**
- * Desenha os acordes da palavra acima da sílaba de cada acorde, na coluna exata.
- */
-@Composable
-private fun WordChordOverlay(
-    modifier: Modifier,
-    layoutResult: TextLayoutResult?,
-    textLength: Int,
-    chords: List<Pair<Int, String>>,
-    textMeasurer: TextMeasurer,
-    chordStyle: TextStyle
-) {
-    Canvas(modifier = modifier) {
-        if (layoutResult == null || chords.isEmpty() || textLength <= 0) return@Canvas
-        val chordHeight = textMeasurer.measure("A", chordStyle).size.height.toFloat().coerceAtLeast(1f)
-        val chordGap = 2.dp.toPx()
-        var lastChordRight = Float.NEGATIVE_INFINITY
-        for ((column, chord) in chords) {
-            val offset = column.coerceIn(0, (textLength - 1).coerceAtLeast(0))
-            val rect = layoutResult.getBoundingBox(offset)
-            val chordWidth = textMeasurer.measure(chord, chordStyle).size.width.toFloat()
-            val topLeft = Offset(
-                x = maxOf(rect.left, lastChordRight + chordGap),
-                y = (rect.top - chordHeight - chordGap).coerceAtLeast(0f)
-            )
-            lastChordRight = topLeft.x + chordWidth
-            if (topLeft.x >= size.width || topLeft.y >= size.height) continue
-            drawText(
-                textMeasurer = textMeasurer,
-                text = chord,
-                topLeft = topLeft,
-                style = chordStyle
-            )
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(bandDp)
+        ) {
+            chunk.chords.forEach { (colAbs, chord) ->
+                Text(
+                    text = chord,
+                    style = chordStyle,
+                    modifier = Modifier.offset(x = with(density) { (colAbs * lyricAdvancePx).toDp() })
+                )
+            }
         }
+        Text(
+            text = chunk.text,
+            fontFamily = FontFamily.Monospace,
+            fontSize = fontSize.sp,
+            color = MaterialTheme.colorScheme.onSurface,
+            lineHeight = (fontSize * 2.4f).sp,
+            style = lyricTextStyle
+        )
     }
 }
