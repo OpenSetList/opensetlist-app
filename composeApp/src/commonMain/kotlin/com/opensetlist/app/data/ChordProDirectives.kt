@@ -49,7 +49,7 @@ object ChordProDirectives {
         "duration" to "duration", "duracao" to "duration", "duração" to "duration",
         "capo" to "capo",
         "transpose" to "transpose", "trans" to "transpose",
-        "youtube" to "youtube", "youtube_url" to "youtube", "url" to "youtube",
+        "x_youtube" to "x_youtube", "youtube" to "x_youtube", "youtube_url" to "x_youtube", "url" to "x_youtube",
         "tag" to "tag",
         "meta" to "meta",
 
@@ -157,7 +157,7 @@ object ChordProDirectives {
         add("duration", Kind.METADATA, metadataKey = "duration")
         add("capo", Kind.METADATA, metadataKey = "capo")
         add("transpose", Kind.METADATA, metadataKey = "transpose")
-        add("youtube", Kind.METADATA, metadataKey = "youtube")
+        add("x_youtube", Kind.METADATA, metadataKey = "x_youtube")
         add("tag", Kind.METADATA, metadataKey = "tag")
         add("meta", Kind.METADATA, metadataKey = "meta")
 

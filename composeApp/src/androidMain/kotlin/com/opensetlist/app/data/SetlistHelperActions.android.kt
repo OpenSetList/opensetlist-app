@@ -135,10 +135,12 @@ private fun parseSetlistHelperDb(file: File): SetlistHelperBackup? {
                     cursor.getStringOrNullByName("other") ?: "",
                     lyrics
                 )
-                val genreName = cursor.getLongOrNullByName("genre_id")?.let { genres[it] }
-                if (genreName != null) {
-                    songTagNames.getOrPut(id) { mutableListOf() }.add(genreName)
-                }
+                // COMMENT: Not set gender as tag, because it is not a user-defined tag, but a property of the song in Setlist Helper. It can be used to filter songs, but it is not a tag that the user can manage.
+                // TODO: Create a x_gender directive, table, and edit option with autocomplete suggestion. 
+                // val genreName = cursor.getLongOrNullByName("genre_id")?.let { genres[it] }
+                // if (genreName != null) {
+                //     songTagNames.getOrPut(id) { mutableListOf() }.add(genreName)
+                // }
                 val now = System.currentTimeMillis()
                 val creation = normalizeEpoch(
                     cursor.getLongOrNullByName("creation_date"),

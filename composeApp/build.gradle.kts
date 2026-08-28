@@ -8,7 +8,7 @@ plugins {
     alias(libs.plugins.sqldelight)
 }
 
-val appVersionName = "1.1.0"
+val appVersionName = "1.1.1"
 
 sqldelight {
     databases {
@@ -88,7 +88,7 @@ android {
         applicationId = "com.opensetlist.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 2
+        versionCode = 3
         versionName = appVersionName
     }
 
