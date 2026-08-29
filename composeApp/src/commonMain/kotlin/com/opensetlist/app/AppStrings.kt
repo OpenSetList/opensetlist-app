@@ -275,4 +275,7 @@ object AppStrings {
     fun justChordsImported(songCount: Int, setCount: Int) =
         "Importadas $songCount músicas e $setCount setlist(s) do JustChords"
     fun metaKeyValue(label: String, value: String) = "$label: $value"
+
+    val sharedLinkImported = "Música importada do link compartilhado"
+    val sharedLinkImportFailed = "Não foi possível importar as cifras deste link"
 }

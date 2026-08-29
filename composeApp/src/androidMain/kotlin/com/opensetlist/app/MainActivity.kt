@@ -32,7 +32,8 @@ import kotlinx.coroutines.delay
 /**
  * Activity principal do Android, que inicia o Compose e trata arquivos abertos
  * pelo sistema (ACTION_VIEW), como arquivos .osl compartilhados, .chopro e
- * .jcarchive do JustChords (importados como setlist).
+ * .jcarchive do JustChords (importados como setlist), além de links de cifras
+ * enviados por outros apps (ACTION_SEND), que são importados automaticamente.
  *
  * @author ruanitto
  */
@@ -41,11 +42,13 @@ class MainActivity : ComponentActivity() {
     private data class OpenedFile(val name: String?, val bytes: ByteArray)
 
     private val importRequest = mutableStateOf<OpenedFile?>(null)
+    private val sharedLinkRequest = mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         importRequest.value = readOpenIntent(intent)
+        sharedLinkRequest.value = readShareLink(intent)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             var showSplash by remember { mutableStateOf(true) }
@@ -79,7 +82,9 @@ class MainActivity : ComponentActivity() {
                     driverFactory = DatabaseDriverFactory(applicationContext),
                     initialImportFileName = importRequest.value?.name,
                     initialImportBytes = importRequest.value?.bytes,
-                    onInitialImportConsumed = { importRequest.value = null }
+                    onInitialImportConsumed = { importRequest.value = null },
+                    initialSharedLink = sharedLinkRequest.value,
+                    onInitialSharedConsumed = { sharedLinkRequest.value = null }
                 )
             }
         }
@@ -89,6 +94,15 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         importRequest.value = readOpenIntent(intent)
+        sharedLinkRequest.value = readShareLink(intent)
+    }
+
+    private fun readShareLink(intent: Intent?): String? {
+        if (intent?.action != Intent.ACTION_SEND) return null
+        val text = intent.getStringExtra(Intent.EXTRA_TEXT).orEmpty()
+            .split(Regex("\\s+"))
+        return text.firstOrNull { it.startsWith("http://") || it.startsWith("https://") }
+            ?.trimEnd('.', ',', ';', ':', ')', '(', '"', '\'', '!', '?')
     }
 
     private fun readOpenIntent(intent: Intent?): OpenedFile? {

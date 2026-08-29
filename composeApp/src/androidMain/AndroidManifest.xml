@@ -76,6 +76,11 @@
                 <data android:scheme="content" android:host="*" android:pathPattern=".*\\.jcarchive" />
                 <data android:scheme="file" android:pathPattern=".*\\.jcarchive" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
         </activity>
 
         <provider

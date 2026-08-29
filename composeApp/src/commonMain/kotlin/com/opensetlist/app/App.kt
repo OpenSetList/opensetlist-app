@@ -53,12 +53,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.opensetlist.app.data.CifraClub
+import com.opensetlist.app.data.CifraSearchOutcome
 import com.opensetlist.app.data.DataTransfer
 import com.opensetlist.app.data.DatabaseDriverFactory
 import com.opensetlist.app.data.JcArchive
 import com.opensetlist.app.data.JustChords
 import com.opensetlist.app.data.ProBatchEvent
 import com.opensetlist.app.data.SongRepository
+import com.opensetlist.app.data.UltimateGuitar
 import com.opensetlist.app.data.setChordProDirective
 import com.opensetlist.app.data.db.AppDatabase
 import com.opensetlist.app.data.formatElapsedSeconds
@@ -139,7 +142,9 @@ fun App(
     driverFactory: DatabaseDriverFactory,
     initialImportFileName: String? = null,
     initialImportBytes: ByteArray? = null,
-    onInitialImportConsumed: () -> Unit = {}
+    onInitialImportConsumed: () -> Unit = {},
+    initialSharedLink: String? = null,
+    onInitialSharedConsumed: () -> Unit = {}
 ) {
     val database = remember { AppDatabase(driverFactory.createDriver()) }
     val repository = remember { SongRepository(database) }
@@ -424,6 +429,29 @@ fun App(
                 handleImported(bytes.decodeToString())
             }
             onInitialImportConsumed()
+        }
+    }
+
+    var pendingSharedLink by remember { mutableStateOf(initialSharedLink) }
+
+    LaunchedEffect(pendingSharedLink) {
+        val link = pendingSharedLink
+        if (link.isNullOrBlank()) return@LaunchedEffect
+        val sheet = if (link.contains("ultimate-guitar.com")) {
+            (UltimateGuitar.search(link, "", "") as? CifraSearchOutcome.Sheet)?.sheet
+        } else {
+            (CifraClub.search(link, "", "") as? CifraSearchOutcome.Sheet)?.sheet
+        }
+        pendingSharedLink = null
+        onInitialSharedConsumed()
+        if (sheet != null) {
+            val imported = repository.importSong(sheet.toImportBody())
+            reload()
+            currentScreen = Screen.ChordView(imported)
+            showMessage(AppStrings.sharedLinkImported)
+        } else {
+            currentScreen = Screen.OnlineSearch
+            showMessage(AppStrings.sharedLinkImportFailed)
         }
     }
 

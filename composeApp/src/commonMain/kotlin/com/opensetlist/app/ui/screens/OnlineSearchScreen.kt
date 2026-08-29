@@ -80,7 +80,9 @@ fun OnlineSearchScreen(
         if (term.isBlank()) return
         when (source) {
             OnlineSearchSource.GOOGLE -> {
-                onOpenUrl(CifraClub.googleSearchUrl(term))
+                val googleQuery = if (term.contains("chords", ignoreCase = true)) term
+                else "$term chords"
+                onOpenUrl(CifraClub.googleSearchUrl(googleQuery))
             }
             else -> {
                 loading = true
