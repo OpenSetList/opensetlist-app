@@ -42,6 +42,7 @@ import com.opensetlist.app.data.CifraClub
 import com.opensetlist.app.data.CifraSearchOutcome
 import com.opensetlist.app.data.CifraSheet
 import com.opensetlist.app.data.CifraSong
+import com.opensetlist.app.data.UltimateGuitar
 import com.opensetlist.app.data.toImportBody
 import com.opensetlist.app.ui.components.ChordProView
 import kotlinx.coroutines.launch
@@ -49,11 +50,12 @@ import kotlinx.coroutines.launch
 /** Fonte da busca online. */
 enum class OnlineSearchSource(val label: String) {
     CIFRA_CLUB(AppStrings.cifraClubSource),
+    ULTIMATE_GUITAR(AppStrings.ultimateGuitarSource),
     GOOGLE(AppStrings.googleSource)
 }
 
 /**
- * Tela de busca de cifras na internet (Cifra Club por scraping ou Google).
+ * Tela de busca de cifras na internet (Cifra Club, Ultimate Guitar ou Google).
  */
 @Composable
 fun OnlineSearchScreen(
@@ -80,13 +82,17 @@ fun OnlineSearchScreen(
             OnlineSearchSource.GOOGLE -> {
                 onOpenUrl(CifraClub.googleSearchUrl(term))
             }
-            OnlineSearchSource.CIFRA_CLUB -> {
+            else -> {
                 loading = true
                 sheet = null
                 songs = null
                 message = null
                 scope.launch {
-                    val outcome = CifraClub.search(term, fallbackArtist, fallbackTitle)
+                    val outcome = if (source == OnlineSearchSource.ULTIMATE_GUITAR) {
+                        UltimateGuitar.search(term, fallbackArtist, fallbackTitle)
+                    } else {
+                        CifraClub.search(term, fallbackArtist, fallbackTitle)
+                    }
                     loading = false
                     when (outcome) {
                         is CifraSearchOutcome.Sheet -> sheet = outcome.sheet
@@ -103,7 +109,11 @@ fun OnlineSearchScreen(
         loadingSheet = song.url
         message = null
         scope.launch {
-            val result = CifraClub.fetchSongByUrl(song.url)
+            val result = if (source == OnlineSearchSource.ULTIMATE_GUITAR) {
+                UltimateGuitar.fetchSongByUrl(song.url)
+            } else {
+                CifraClub.fetchSongByUrl(song.url)
+            }
             loadingSheet = null
             if (result != null) sheet = result
             else message = AppStrings.onlineSearchFailed

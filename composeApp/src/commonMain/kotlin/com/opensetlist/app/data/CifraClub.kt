@@ -570,43 +570,6 @@ object CifraClub {
         return i
     }
 
-    private fun String.replaceEntities(): String {
-        val sb = StringBuilder()
-        var i = 0
-        while (i < length) {
-            val c = this[i]
-            if (c == '&') {
-                val semi = indexOf(';', i)
-                if (semi != -1 && semi - i <= 12) {
-                    val entity = substring(i + 1, semi)
-                    val decoded: Char? = when {
-                        entity.startsWith("#x") || entity.startsWith("#X") ->
-                            entity.substring(2).toIntOrNull(16)?.toChar()
-                        entity.startsWith("#") ->
-                            entity.substring(1).toIntOrNull()?.toChar()
-                        else -> when (entity) {
-                            "nbsp" -> ' '
-                            "lt" -> '<'
-                            "gt" -> '>'
-                            "amp" -> '&'
-                            "quot" -> '"'
-                            "apos" -> '\''
-                            else -> null
-                        }
-                    }
-                    if (decoded != null) {
-                        sb.append(decoded)
-                        i = semi + 1
-                        continue
-                    }
-                }
-            }
-            sb.append(c)
-            i++
-        }
-        return sb.toString()
-    }
-
     /** Extrai as músicas (tiles) da página de um artista. */
     internal fun parseArtistSongs(html: String, artistLabel: String = ""): List<CifraSong> {
         val anchorPattern = Regex(
@@ -654,4 +617,66 @@ object CifraClub {
         )?.takeIf { it.isNotBlank() }?.let { return it.trim() }
         return null
     }
+}
+
+/**
+ * Entidades HTML nomeadas comuns (Latim-1 e símbolos) usadas em páginas web.
+ */
+private val HTML_ENTITIES: Map<String, Char> = buildMap {
+    put("nbsp", ' '); put("lt", '<'); put("gt", '>'); put("amp", '&')
+    put("quot", '"'); put("apos", '\'')
+    put("ccedil", 'ç'); put("Ccedil", 'Ç')
+    put("atilde", 'ã'); put("Atilde", 'Ã'); put("otilde", 'õ'); put("Otilde", 'Õ')
+    put("ntilde", 'ñ'); put("Ntilde", 'Ñ')
+    put("aacute", 'á'); put("Aacute", 'Á'); put("eacute", 'é'); put("Eacute", 'É')
+    put("iacute", 'í'); put("Iacute", 'Í'); put("oacute", 'ó'); put("Oacute", 'Ó')
+    put("uacute", 'ú'); put("Uacute", 'Ú'); put("yacute", 'ý'); put("Yacute", 'Ý')
+    put("agrave", 'à'); put("Agrave", 'À'); put("egrave", 'è'); put("Egrave", 'È')
+    put("igrave", 'ì'); put("Igrave", 'Ì'); put("ograve", 'ò'); put("Ograve", 'Ò')
+    put("ugrave", 'ù'); put("Ugrave", 'Ù')
+    put("acirc", 'â'); put("Acirc", 'Â'); put("ecirc", 'ê'); put("Ecirc", 'Ê')
+    put("icirc", 'î'); put("Icirc", 'Î'); put("ocirc", 'ô'); put("Ocirc", 'Ô')
+    put("ucirc", 'û'); put("Ucirc", 'Û')
+    put("auml", 'ä'); put("Auml", 'Ä'); put("euml", 'ë'); put("Euml", 'Ë')
+    put("iuml", 'ï'); put("Iuml", 'Ï'); put("ouml", 'ö'); put("Ouml", 'Ö')
+    put("uuml", 'ü'); put("Uuml", 'Ü'); put("yuml", 'ÿ')
+    put("szlig", 'ß'); put("aelig", 'æ'); put("Aelig", 'Æ')
+    put("middot", '·'); put("bull", '•'); put("hellip", '…')
+    put("laquo", '«'); put("raquo", '»'); put("lsaquo", '‹'); put("rsaquo", '›')
+    put("ldquo", '“'); put("rdquo", '”'); put("lsquo", '‘'); put("rsquo", '’')
+    put("ndash", '–'); put("mdash", '—')
+    put("plusmn", '±'); put("deg", '°'); put("ordf", 'ª'); put("ordm", 'º')
+    put("times", '×'); put("divide", '÷'); put("frac12", '½'); put("frac14", '¼'); put("frac34", '¾')
+    put("sect", '§'); put("para", '¶'); put("micro", 'µ'); put("copy", '©')
+    put("reg", '®'); put("trade", '™'); put("euro", '€')
+}
+
+/** Decodifica entidades HTML (`&quot;`, `&ccedil;`, `&#xx;`, ...) de textos web. */
+internal fun String.replaceEntities(): String {
+    val sb = StringBuilder()
+    var i = 0
+    while (i < length) {
+        val c = this[i]
+        if (c == '&') {
+            val semi = indexOf(';', i)
+            if (semi != -1 && semi - i <= 12) {
+                val entity = substring(i + 1, semi)
+                val decoded: Char? = when {
+                    entity.startsWith("#x") || entity.startsWith("#X") ->
+                        entity.substring(2).toIntOrNull(16)?.toChar()
+                    entity.startsWith("#") ->
+                        entity.substring(1).toIntOrNull()?.toChar()
+                    else -> HTML_ENTITIES[entity]
+                }
+                if (decoded != null) {
+                    sb.append(decoded)
+                    i = semi + 1
+                    continue
+                }
+            }
+        }
+        sb.append(c)
+        i++
+    }
+    return sb.toString()
 }

@@ -169,6 +169,7 @@ object AppStrings {
     val onlineSearchPlaceholder = "Ex.: Artista - Música · ou cole uma URL"
     val onlineSearchAction = "Buscar"
     val cifraClubSource = "Cifra Club"
+    val ultimateGuitarSource = "Ultimate Guitar"
     val googleSource = "Buscar no Google"
     val searchRunning = "Buscando..."
     val onlineSearchFailed = "Falha ao buscar. Verifique sua conexão e tente de novo."
