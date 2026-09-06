@@ -24,10 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -35,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.opensetlist.app.AppStrings
 import com.opensetlist.app.model.Setlist
 import com.opensetlist.app.model.Song
+import com.opensetlist.app.ui.components.SearchableListState
 import com.opensetlist.app.ui.components.SortMenu
 
 /** Critérios de ordenação da lista de músicas. */
@@ -60,15 +58,15 @@ fun SongListScreen(
     onSetlistClick: (Setlist) -> Unit,
     onNewSong: () -> Unit,
     onDeleteSong: (Song) -> Unit,
+    state: SearchableListState,
     modifier: Modifier = Modifier
 ) {
-    var searchQuery by remember { mutableStateOf("") }
-    var sortOrder by remember { mutableStateOf(SongListSort.TITLE_ASC) }
+    val sortOrder = SongListSort.entries[state.sortIndex]
 
     val filteredSongs = songs.filter { song ->
-        searchQuery.isBlank() ||
-        song.title.contains(searchQuery, ignoreCase = true) ||
-        song.artist.contains(searchQuery, ignoreCase = true)
+        state.searchQuery.isBlank() ||
+        song.title.contains(state.searchQuery, ignoreCase = true) ||
+        song.artist.contains(state.searchQuery, ignoreCase = true)
     }
 
     val sortedSongs = remember(filteredSongs, sortOrder) {
@@ -87,8 +85,8 @@ fun SongListScreen(
         }
     }
 
-    val filteredSetlists = if (searchQuery.isBlank()) emptyList() else setlists.filter { setlist ->
-        setlist.name.contains(searchQuery, ignoreCase = true)
+    val filteredSetlists = if (state.searchQuery.isBlank()) emptyList() else setlists.filter { setlist ->
+        setlist.name.contains(state.searchQuery, ignoreCase = true)
     }
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -114,13 +112,13 @@ fun SongListScreen(
             SortMenu(
                 currentLabel = sortOrder.label,
                 options = SongListSort.entries.map { it.label },
-                onSelect = { sortOrder = SongListSort.entries[it] }
+                onSelect = { state.sortIndex = it }
             )
         }
 
         OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
+            value = state.searchQuery,
+            onValueChange = { state.searchQuery = it },
             placeholder = { Text(AppStrings.searchSongsPlaceholder) },
             singleLine = true,
             modifier = Modifier
@@ -130,7 +128,7 @@ fun SongListScreen(
 
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(modifier = Modifier.fillMaxSize(), state = state.listState) {
                     if (filteredSetlists.isNotEmpty()) {
                         item(key = "setlists_header") {
                             Text(

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
@@ -83,6 +84,7 @@ fun SetlistScreen(
     onReorder: (List<Song>) -> Unit,
     onAddSong: (Song) -> Unit,
     onRemoveSong: (Song) -> Unit,
+    listState: LazyListState,
     modifier: Modifier = Modifier
 ) {
     var songs by remember(setlist.id) { mutableStateOf(setlist.songs) }
@@ -174,7 +176,7 @@ fun SetlistScreen(
                 }
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
                 items(songs, key = { it.id }) { song ->
                     val index = songs.indexOfFirst { it.id == song.id }
                     Row(

@@ -17,15 +17,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.opensetlist.app.model.Song
+import com.opensetlist.app.ui.components.SearchableListState
 import com.opensetlist.app.ui.components.SortMenu
 
 /**
@@ -38,9 +36,10 @@ fun FilteredSongListScreen(
     songs: List<Song>,
     onSongClick: (Song) -> Unit,
     emptyText: String,
+    state: SearchableListState,
     modifier: Modifier = Modifier
 ) {
-    var sortOrder by remember { mutableStateOf(SongListSort.TITLE_ASC) }
+    val sortOrder = SongListSort.entries[state.sortIndex]
 
     val sortedSongs = remember(songs, sortOrder) {
         when (sortOrder) {
@@ -68,7 +67,7 @@ fun FilteredSongListScreen(
             SortMenu(
                 currentLabel = sortOrder.label,
                 options = SongListSort.entries.map { it.label },
-                onSelect = { sortOrder = SongListSort.entries[it] }
+                onSelect = { state.sortIndex = it }
             )
         }
 
@@ -84,7 +83,7 @@ fun FilteredSongListScreen(
                 )
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(modifier = Modifier.fillMaxSize(), state = state.listState) {
                 items(sortedSongs, key = { it.id }) { song ->
                     Row(
                         modifier = Modifier

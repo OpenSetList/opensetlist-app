@@ -37,6 +37,7 @@ import com.opensetlist.app.data.formatDuration
 import com.opensetlist.app.data.formatEpochDateTime
 import com.opensetlist.app.data.parseDurationSeconds
 import com.opensetlist.app.model.Setlist
+import com.opensetlist.app.ui.components.SearchableListState
 import com.opensetlist.app.ui.components.SetlistShareMenu
 import com.opensetlist.app.ui.components.SortMenu
 
@@ -66,16 +67,16 @@ fun SetlistListScreen(
     onShareOpenSetlist: (Setlist) -> Unit,
     onEdit: (Setlist) -> Unit,
     onDelete: (Setlist) -> Unit,
+    state: SearchableListState,
     modifier: Modifier = Modifier
 ) {
-    var sortOrder by remember { mutableStateOf(SetlistSort.DATE_DESC) }
-    var searchQuery by remember { mutableStateOf("") }
     var shareMenuFor by remember { mutableStateOf<Setlist?>(null) }
+    val sortOrder = SetlistSort.entries[state.sortIndex]
 
     val filteredSetlists = setlists.filter { setlist ->
-        searchQuery.isBlank() ||
-        setlist.name.contains(searchQuery, ignoreCase = true) ||
-        setlist.location.contains(searchQuery, ignoreCase = true)
+        state.searchQuery.isBlank() ||
+        setlist.name.contains(state.searchQuery, ignoreCase = true) ||
+        setlist.location.contains(state.searchQuery, ignoreCase = true)
     }
 
     val sortedSetlists = remember(filteredSetlists, sortOrder) {
@@ -122,13 +123,13 @@ fun SetlistListScreen(
             SortMenu(
                 currentLabel = sortOrder.label,
                 options = SetlistSort.entries.map { it.label },
-                onSelect = { sortOrder = SetlistSort.entries[it] }
+                onSelect = { state.sortIndex = it }
             )
         }
 
         OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
+            value = state.searchQuery,
+            onValueChange = { state.searchQuery = it },
             placeholder = { Text(AppStrings.searchSetlistsPlaceholder) },
             singleLine = true,
             modifier = Modifier
@@ -142,14 +143,14 @@ fun SetlistListScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = if (searchQuery.isBlank()) AppStrings.noSetlistsYet
+                    text = if (state.searchQuery.isBlank()) AppStrings.noSetlistsYet
                     else AppStrings.noSetlistsFound,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(modifier = Modifier.fillMaxSize(), state = state.listState) {
                 items(sortedSetlists, key = { it.id }) { setlist ->
                     Row(
                         modifier = Modifier
