@@ -118,7 +118,7 @@ fun ChordViewerScreen(
 
     val fileActions = rememberFileActions(
         getExportContent = { displayBody },
-        onImported = {},
+        onImportedBytes = { _, _ -> },
         onExported = {},
         onShared = {},
         getExportBytes = { null }

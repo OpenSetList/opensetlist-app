@@ -16,7 +16,7 @@ import javax.swing.JFileChooser
 @Composable
 actual fun rememberFileActions(
     getExportContent: () -> String?,
-    onImported: (String) -> Unit,
+    onImportedBytes: (String?, ByteArray) -> Unit,
     onExported: (Boolean) -> Unit,
     onShared: (Boolean) -> Unit,
     getExportBytes: () -> ByteArray?
@@ -32,8 +32,9 @@ actual fun rememberFileActions(
                     fileSelectionMode = JFileChooser.FILES_ONLY
                 }
                 if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                    val content = runCatching { chooser.selectedFile.readText() }.getOrNull()
-                    if (content != null) onImported(content)
+                    val file = chooser.selectedFile
+                    val bytes = runCatching { file.readBytes() }.getOrNull()
+                    if (bytes != null) onImportedBytes(file.name, bytes)
                 }
             },
             saveFile = { fileName, _ ->

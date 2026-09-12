@@ -36,7 +36,7 @@ class FileActions(
 @Composable
 expect fun rememberFileActions(
     getExportContent: () -> String?,
-    onImported: (String) -> Unit,
+    onImportedBytes: (String? /*fileName*/, ByteArray) -> Unit,
     onExported: (Boolean) -> Unit,
     onShared: (Boolean) -> Unit,
     getExportBytes: () -> ByteArray?

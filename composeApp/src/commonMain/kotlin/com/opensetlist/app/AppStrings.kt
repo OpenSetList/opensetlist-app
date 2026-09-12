@@ -235,6 +235,7 @@ object AppStrings {
     val invalidBackupFile = "Arquivo de backup inválido"
     val invalidSongsFile = "Arquivo de músicas inválido"
     val invalidSetlistFile = "Arquivo de setlist inválido"
+    val invalidImportFile = "Não foi possível importar este arquivo"
     val invalidDbFile = "Arquivo .db inválido ou não é um backup deste app"
     val dbReadFailed = "Falha ao ler o banco de dados"
     val backupRestored = "Backup restaurado com sucesso"

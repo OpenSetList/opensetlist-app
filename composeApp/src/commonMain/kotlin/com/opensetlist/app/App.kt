@@ -60,9 +60,11 @@ import com.opensetlist.app.data.DataTransfer
 import com.opensetlist.app.data.DatabaseDriverFactory
 import com.opensetlist.app.data.JcArchive
 import com.opensetlist.app.data.JustChords
+import com.opensetlist.app.data.OslArchive
 import com.opensetlist.app.data.ProBatchEvent
 import com.opensetlist.app.data.SongRepository
 import com.opensetlist.app.data.UltimateGuitar
+import com.opensetlist.app.data.ZipData
 import com.opensetlist.app.data.setChordProDirective
 import com.opensetlist.app.data.setTagsDirective
 import com.opensetlist.app.data.db.AppDatabase
@@ -434,16 +436,29 @@ fun App(
         )
     }
 
+    fun handleImportedFile(fileName: String?, bytes: ByteArray) {
+        val extension = fileName?.substringAfterLast('.', "")?.lowercase()
+        if (extension == JustChords.FILE_EXTENSION || extension == JcArchive.FILE_EXTENSION) {
+            importJustChordsFile(fileName.orEmpty(), bytes)
+            return
+        }
+        if (ZipData.isZipArchive(bytes)) {
+            val dataJson = OslArchive.readDataJson(bytes)
+            if (dataJson != null) {
+                handleImported(dataJson)
+            } else {
+                showMessage(AppStrings.invalidImportFile)
+            }
+            return
+        }
+        handleImported(bytes.decodeToString())
+    }
+
     LaunchedEffect(initialImportFileName, initialImportBytes) {
         val bytes = initialImportBytes
         val fileName = initialImportFileName
         if (bytes != null) {
-            val extension = fileName?.substringAfterLast('.', "")?.lowercase()
-            if (extension == JustChords.FILE_EXTENSION || extension == JcArchive.FILE_EXTENSION) {
-                importJustChordsFile(fileName.orEmpty(), bytes)
-            } else {
-                handleImported(bytes.decodeToString())
-            }
+            handleImportedFile(fileName, bytes)
             onInitialImportConsumed()
         }
     }
@@ -473,7 +488,7 @@ fun App(
 
     val fileActions = rememberFileActions(
         getExportContent = { pendingExportContent },
-        onImported = { content -> handleImported(content) },
+        onImportedBytes = { fileName, bytes -> handleImportedFile(fileName, bytes) },
         onExported = { ok ->
             pendingExportBytes = null
             pendingExportContent = null
@@ -534,6 +549,13 @@ fun App(
         else fileActions.saveFile(fileName, mimeType)
     }
 
+    fun doExportOsl(fileName: String, dataJson: String, share: Boolean) {
+        pendingExportBytes = OslArchive.build(dataJson)
+        pendingExportContent = null
+        if (share) fileActions.shareFile(fileName, OSETLIST_MIME)
+        else fileActions.saveFile(fileName, OSETLIST_MIME)
+    }
+
     fun exportBackup(share: Boolean) {
         val bytes = backupActions.exportBytes()
         if (bytes != null) {
@@ -550,7 +572,7 @@ fun App(
     fun exportAllSongs(share: Boolean) {
         if (share) {
             val json = DataTransfer.buildSongsBundleJson(repository.allSongs())
-            doExport("setlist_musicas.osl", OSETLIST_MIME, json, share = true)
+            doExportOsl("setlist_musicas.osl", json, share = true)
             return
         }
         val songs = repository.allSongs()
@@ -621,7 +643,7 @@ fun App(
             return
         }
         val json = DataTransfer.buildSongsBundleJson(songs)
-        doExport("setlist_musicas.osl", OSETLIST_MIME, json, share)
+        doExportOsl("setlist_musicas.osl", json, share)
     }
 
     fun exportTagSongs(tag: Tag, share: Boolean) {
@@ -631,12 +653,12 @@ fun App(
             return
         }
         val json = DataTransfer.buildSongsBundleJson(songs)
-        doExport("setlist_musicas.osl", OSETLIST_MIME, json, share)
+        doExportOsl("setlist_musicas.osl", json, share)
     }
 
     fun shareSetlist(setlist: Setlist) {
         val json = DataTransfer.buildSetJson(setlist, repository.songsInSetlist(setlist.id))
-        doExport("set_${setlist.name}.osl", OSETLIST_MIME, json, share = true)
+        doExportOsl("set_${setlist.name}.osl", json, share = true)
     }
 
     fun shareSetlistJustChords(setlist: Setlist) {

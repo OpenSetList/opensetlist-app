@@ -22,14 +22,12 @@ object JcArchive {
     const val FILE_EXTENSION = "jcarchive"
     const val MIME_TYPE = "application/zip"
 
-    internal const val ENTRY_NAME = "data.json"
-
     /**
      * Interpreta o conteúdo de um arquivo .jcarchive, usando o nome do arquivo
      * (sem extensão) como nome do setlist.
      */
     fun parse(fileName: String, bytes: ByteArray): JustChordsSet {
-        val root = readJcArchiveDataJson(bytes)?.let { JsonParser(it).parseObject() }
+        val root = readZipDataJson(bytes)?.let { JsonParser(it).parseObject() }
         val songs = mutableListOf<Song>()
         (root?.get("songs") as? List<*>)?.forEach { raw ->
             val map = raw as? Map<*, *> ?: return@forEach
@@ -68,7 +66,7 @@ object JcArchive {
      * a playlist referenciando as músicas (import como setlist).
      */
     fun build(songs: List<Song>, setlistName: String? = null): ByteArray =
-        buildDataJsonZip(buildSongsJson(songs, setlistName))
+        ZipData.buildDataJsonZip(buildSongsJson(songs, setlistName))
 
     /**
      * Serializa as músicas no JSON que o JustChords espera dentro do arquivo,
@@ -125,71 +123,6 @@ object JcArchive {
             .append('}').toString()
     }
 
-    /**
-     * Gera um ZIP (método STORE, sem compressão) contendo `data.json` na raiz.
-     */
-    fun buildDataJsonZip(dataJson: String): ByteArray {
-        val name = ENTRY_NAME.encodeToByteArray()
-        val content = dataJson.encodeToByteArray()
-        val crc = crc32(content)
-        val size = content.size
-        val out = ByteArraySink()
-        out.writeInt(0x04034b50)
-        out.writeShort(20)
-        out.writeShort(0x0800)
-        out.writeShort(0)
-        out.writeShort(0)
-        out.writeShort(0)
-        out.writeInt(crc)
-        out.writeInt(size)
-        out.writeInt(size)
-        out.writeShort(name.size)
-        out.writeShort(0)
-        out.write(name)
-        out.write(content)
-        val centralStart = out.size
-        out.writeInt(0x02014b50)
-        out.writeShort(20)
-        out.writeShort(20)
-        out.writeShort(0x0800)
-        out.writeShort(0)
-        out.writeShort(0)
-        out.writeShort(0)
-        out.writeShort(0)
-        out.writeInt(crc)
-        out.writeInt(size)
-        out.writeInt(size)
-        out.writeShort(name.size)
-        out.writeShort(0)
-        out.writeShort(0)
-        out.writeShort(0)
-        out.writeShort(0)
-        out.writeInt(0)
-        out.writeInt(0)
-        out.write(name)
-        val centralEnd = out.size
-        out.writeInt(0x06054b50)
-        out.writeShort(0)
-        out.writeShort(0)
-        out.writeShort(1)
-        out.writeShort(1)
-        out.writeInt(centralEnd - centralStart)
-        out.writeInt(centralStart)
-        out.writeShort(0)
-        return out.toByteArray()
-    }
-
-    private fun crc32(bytes: ByteArray): Int {
-        var crc = 0xFFFFFFFF.toInt()
-        for (byte in bytes) {
-            crc = crc xor (byte.toInt() and 0xFF)
-            repeat(8) {
-                crc = if (crc and 1 != 0) (crc ushr 1) xor 0xEDB88320.toInt() else crc ushr 1
-            }
-        }
-        return crc.inv()
-    }
-
     private fun randomUuid(): String {
         val hex = Random.nextBytes(16).joinToString("") {
             (it.toInt() and 0xFF).toString(16).padStart(2, '0')
@@ -215,49 +148,4 @@ object JcArchive {
         }
         return sb.append('"').toString()
     }
-
-    /** Buffer de bytes com escrita little-endian, para montar o ZIP. */
-    private class ByteArraySink(initialCapacity: Int = 256) {
-        private var bytes = ByteArray(initialCapacity)
-        var size = 0
-            private set
-
-        val capacity: Int get() = bytes.size
-
-        fun write(value: Int) {
-            ensure(1)
-            bytes[size++] = (value and 0xFF).toByte()
-        }
-
-        fun writeShort(value: Int) {
-            write(value)
-            write(value ushr 8)
-        }
-
-        fun writeInt(value: Int) {
-            write(value)
-            write(value ushr 8)
-            write(value ushr 16)
-            write(value ushr 24)
-        }
-
-        fun write(src: ByteArray) {
-            ensure(src.size)
-            src.copyInto(bytes, destinationOffset = size)
-            size += src.size
-        }
-
-        fun toByteArray(): ByteArray = bytes.copyOf(size)
-
-        private fun ensure(extra: Int) {
-            if (size + extra > bytes.size) {
-                bytes = bytes.copyOf(maxOf(bytes.size * 2, size + extra))
-            }
-        }
-    }
 }
-
-/**
- * Lê o `data.json` de dentro de um arquivo .jcarchive por plataforma.
- */
-expect fun readJcArchiveDataJson(bytes: ByteArray): String?
