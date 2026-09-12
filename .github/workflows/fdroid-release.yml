@@ -1,0 +1,71 @@
+name: F-Droid reference binary
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag da release (ex.: v1.3.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-sign:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ inputs.tag }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Instalar componentes do SDK
+        run: |
+          SDKMANAGER="$(command -v sdkmanager || echo "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager")"
+          yes | "$SDKMANAGER" --licenses > /dev/null
+          "$SDKMANAGER" "platforms;android-36" "build-tools;34.0.0"
+
+      - name: Build e testes de release
+        run: |
+          chmod +x gradlew
+          ./gradlew :composeApp:desktopTest :composeApp:assembleRelease \
+            --no-daemon --no-build-cache
+
+      - name: Assinar APK v2/v3 com a keystore F-Droid
+        run: |
+          printf '%s' "${{ secrets.F_DROID_KEYSTORE_B64 }}" | base64 -d > /tmp/fdroid.keystore
+          cp "$(ls composeApp/build/outputs/apk/release/*-unsigned.apk | head -n 1)" opensetlist-release.apk
+          APKSIGNER="$ANDROID_HOME/build-tools/34.0.0/apksigner"
+          echo "${{ secrets.F_DROID_KEYSTORE_PASS }}" | "$APKSIGNER" sign \
+            --ks /tmp/fdroid.keystore \
+            --ks-key-alias opensetlist \
+            --ks-pass stdin \
+            --v1-signing-enabled false \
+            opensetlist-release.apk
+
+      - name: Verificar assinatura e alinhamento
+        run: |
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --print-certs opensetlist-release.apk
+          "$ANDROID_HOME/build-tools/34.0.0/zipalign" -c -v 4 opensetlist-release.apk
+
+      - name: Enviar para a release da tag
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" opensetlist-release.apk --clobber
+          else
+            gh release create "$TAG" opensetlist-release.apk --draft
+          fi
