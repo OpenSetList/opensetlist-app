@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
+import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -29,7 +30,7 @@ import kotlinx.coroutines.withContext
 @Composable
 actual fun rememberFileActions(
     getExportContent: () -> String?,
-    onImported: (String) -> Unit,
+    onImportedBytes: (String?, ByteArray) -> Unit,
     onExported: (Boolean) -> Unit,
     onShared: (Boolean) -> Unit,
     getExportBytes: () -> ByteArray?
@@ -49,9 +50,9 @@ actual fun rememberFileActions(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         if (uri != null) {
-            val content = context.contentResolver.openInputStream(uri)
-                ?.bufferedReader()?.use { it.readText() }
-            if (content != null) onImported(content)
+            val name = queryDisplayName(context, uri)
+            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            if (bytes != null) onImportedBytes(name, bytes)
         }
     }
 
@@ -219,9 +220,9 @@ actual fun rememberFileActions(
                 )
             },
             saveFile = { fileName, mimeType ->
-                if (mimeType == "application/json" || mimeType == "application/vnd.opensetlist.osl") {
+                if (mimeType == "application/json") {
                     saveJsonLauncher.launch(fileName)
-                } else if (mimeType == "application/octet-stream") {
+                } else if (mimeType == "application/octet-stream" || mimeType == "application/vnd.opensetlist.osl") {
                     saveBinaryLauncher.launch(fileName)
                 } else {
                     saveTextLauncher.launch(fileName)
@@ -266,6 +267,12 @@ private fun writeSharedFile(context: Context, fileName: String, content: String)
 
 private fun sanitizeFileName(name: String): String =
     name.replace(Regex("[^\\p{L}\\p{N}._\\- ]"), "_")
+
+private fun queryDisplayName(context: Context, uri: Uri): String? {
+    return context.contentResolver
+        .query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+        ?.use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
+}
 
 private fun findDocumentUri(resolver: ContentResolver, treeUri: Uri, displayName: String): Uri? {
     val treeDocId = DocumentsContract.getTreeDocumentId(treeUri)

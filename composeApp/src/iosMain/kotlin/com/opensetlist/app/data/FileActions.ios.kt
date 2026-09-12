@@ -9,6 +9,7 @@ import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.usePinned
 import platform.Foundation.NSData
 import platform.Foundation.NSError
@@ -25,7 +26,7 @@ import platform.UIKit.UIViewController
 import platform.darwin.NSObject
 
 private class FilePickerDelegate(
-    private val onPicked: (String) -> Unit
+    private val onPicked: (String?, ByteArray) -> Unit
 ) : NSObject(), UIDocumentPickerDelegateProtocol {
 
     override fun documentPicker(
@@ -34,8 +35,8 @@ private class FilePickerDelegate(
     ) {
         val url = didPickDocumentsAtURLs.firstOrNull() as? NSURL ?: return
         val path = url.path ?: return
-        val content = readFile(path)
-        if (content != null) onPicked(content)
+        val bytes = readFileBytes(path)
+        if (bytes != null) onPicked(url.lastPathComponent, bytes)
     }
 
     override fun documentPickerWasCancelled(controller: UIDocumentPickerViewController) {}
@@ -48,6 +49,13 @@ private object PickerDelegateHolder {
 private fun readFile(path: String): String? = memScoped {
     val error = alloc<ObjCObjectVar<NSError?>>()
     NSString.stringWithContentsOfFile(path, NSUTF8StringEncoding, error.ptr)
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun readFileBytes(path: String): ByteArray? = memScoped {
+    val error = alloc<ObjCObjectVar<NSError?>>()
+    val data = NSData.dataWithContentsOfFile(path, error.ptr) ?: return@memScoped null
+    data.bytes?.readBytes(data.length.toInt())
 }
 
 private fun writeTempFile(fileName: String, content: String): String? = memScoped {
@@ -83,7 +91,7 @@ private fun writeTempFileBytes(fileName: String, bytes: ByteArray): String? {
 @Composable
 actual fun rememberFileActions(
     getExportContent: () -> String?,
-    onImported: (String) -> Unit,
+    onImportedBytes: (String?, ByteArray) -> Unit,
     onExported: (Boolean) -> Unit,
     onShared: (Boolean) -> Unit,
     getExportBytes: () -> ByteArray?
@@ -121,7 +129,7 @@ actual fun rememberFileActions(
     return remember {
         FileActions(
             importFile = {
-                val delegate = FilePickerDelegate { content -> onImported(content) }
+                val delegate = FilePickerDelegate { name, bytes -> onImportedBytes(name, bytes) }
                 PickerDelegateHolder.importDelegate = delegate
                 val picker = UIDocumentPickerViewController(
                     documentTypes = listOf("public.text", "public.data", "public.json"),
