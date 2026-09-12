@@ -645,7 +645,7 @@ fun App(
     }
 
     fun shareSetlistJustChordsArchive(setlist: Setlist) {
-        val bytes = JcArchive.build(repository.songsInSetlist(setlist.id))
+        val bytes = JcArchive.build(repository.songsInSetlist(setlist.id), setlist.name)
         pendingExportBytes = bytes
         pendingExportContent = null
         fileActions.shareFile("${setlist.name}.${JcArchive.FILE_EXTENSION}", JcArchive.MIME_TYPE)

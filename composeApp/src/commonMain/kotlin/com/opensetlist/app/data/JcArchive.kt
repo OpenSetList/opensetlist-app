@@ -9,9 +9,11 @@ import kotlin.random.Random
  * Leitura e escrita do formato de arquivo do app JustChords (.jcarchive).
  *
  * Formato: um arquivo ZIP (método STORE, sem compressão) com um único `data.json`
- * na raiz, cujo conteúdo é `{"songs":[...]}`. Cada música tem `title`, `artist`,
- * `duration` (ex.: "4:00"), `timeSignature` (ex.: "4/4"), `keyChord: {key, minor}`,
- * `rawData` (corpo em ChordPro) etc.
+ * na raiz. A raiz tem `songs`, `identity`, `playlists`, `tags` e `dataVersion`
+ * (todas obrigatórias para o JustChords importar). Cada música tem `title`,
+ * `artist`, `rawData` (corpo em ChordPro), `id` (UUID), `keyChord: {key, minor}`,
+ * `date` (epoch seconds) e, opcionalmente, `timeSignature`/`duration`.
+ * `playlists` descreve o setlist e referencia as músicas pelos seus `id`.
  *
  * @author ruanitto
  */
@@ -62,16 +64,19 @@ object JcArchive {
 
     /**
      * Monta o conteúdo .jcarchive (ZIP com `data.json`) de uma setlist,
-     * na ordem das músicas.
+     * na ordem das músicas. Quando `setlistName` é informado, a saída inclui
+     * a playlist referenciando as músicas (import como setlist).
      */
-    fun build(songs: List<Song>): ByteArray =
-        buildDataJsonZip(buildSongsJson(songs))
+    fun build(songs: List<Song>, setlistName: String? = null): ByteArray =
+        buildDataJsonZip(buildSongsJson(songs, setlistName))
 
     /**
-     * Serializa as músicas no JSON que o JustChords espera dentro do arquivo.
+     * Serializa as músicas no JSON que o JustChords espera dentro do arquivo,
+     * incluindo `identity`, `playlists`, `tags` e `dataVersion` (obrigatórios).
      */
-    fun buildSongsJson(songs: List<Song>): String {
-        val date = currentEpochMillis() / 1000.0
+    fun buildSongsJson(songs: List<Song>, setlistName: String? = null): String {
+        val date = currentEpochMillis() / 1000
+        val songIds = List(songs.size) { randomUuid() }
         val sb = StringBuilder("{\"songs\":[")
         songs.forEachIndexed { index, song ->
             if (index > 0) sb.append(',')
@@ -82,20 +87,42 @@ object JcArchive {
                 key
             }
             val minor = key.endsWith("m") && key.length > 1
-            sb.append("{\"subtitle\":\"\"")
-                .append(",\"date\":").append(date)
-                .append(",\"timeSignature\":").append(jsonQuote(song.time))
-                .append(",\"tempo\":").append(jsonQuote(song.tempo))
-                .append(",\"artist\":").append(jsonQuote(song.artist))
+            sb.append("{\"rawData\":").append(jsonQuote(song.body))
                 .append(",\"title\":").append(jsonQuote(song.title))
-                .append(",\"duration\":").append(jsonQuote(song.duration))
-                .append(",\"id\":").append(jsonQuote(randomUuid()))
+                .append(",\"artist\":").append(jsonQuote(song.artist))
+                .append(",\"id\":").append(jsonQuote(songIds[index]))
                 .append(",\"keyChord\":{\"key\":").append(jsonQuote(keyBase))
                 .append(",\"minor\":").append(minor)
-                .append("},\"rawData\":").append(jsonQuote(song.body))
-                .append('}')
+                .append("},\"date\":").append(date)
+            if (song.time.isNotBlank()) {
+                sb.append(",\"timeSignature\":").append(jsonQuote(song.time))
+            }
+            if (song.duration.isNotBlank()) {
+                sb.append(",\"duration\":").append(jsonQuote(song.duration))
+            }
+            sb.append('}')
         }
-        return sb.append("]}").toString()
+        sb.append("],\"identity\":").append(jsonQuote(randomUuid()))
+            .append(",\"playlists\":")
+        if (songs.isNotEmpty() && setlistName != null) {
+            sb.append("[{\"arrangement\":[")
+            songIds.forEachIndexed { index, id ->
+                if (index > 0) sb.append(',')
+                sb.append("{\"index\":").append(jsonQuote(randomUuid()))
+                    .append(",\"notesAndDrawing\":[],\"id\":").append(jsonQuote(id))
+                    .append(",\"arrangement\":[],\"type\":\"song\"}")
+            }
+            sb.append("],\"separateSongSettings\":false,\"title\":")
+                .append(jsonQuote(setlistName))
+                .append(",\"notes\":\"\",\"eventDate\":null,\"id\":")
+                .append(jsonQuote(randomUuid()))
+                .append(",\"shared\":false,\"date\":").append(date)
+                .append(",\"hasImage\":false,\"deletedEntities\":null,\"lastPushDate\":null}]")
+        } else {
+            sb.append("[]")
+        }
+        return sb.append(",\"tags\":[],\"dataVersion\":").append(jsonQuote(randomUuid()))
+            .append('}').toString()
     }
 
     /**
