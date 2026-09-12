@@ -13,7 +13,7 @@ App de setlists/cifras multiplataforma (Kotlin Multiplatform + Compose Multiplat
 - `composeApp/src/commonMain/kotlin/com/opensetlist/app/`
   - `App.kt` — estado global e roteamento (Scaffold + ModalNavigationDrawer), controla todo o fluxo
   - `AppStrings.kt` — TODAS as strings de UI centralizadas aqui (pt-BR); use `AppStrings.*` em vez de literais
-  - `data/` — `SongRepository.kt` (toda a lógica de banco), `ChordProParser.kt`, `Transposer.kt`, `DurationUtils.kt` (parse/format de duração "3:45"), `DataTransfer.kt`, `SampleSongs.kt`, `Timestamps.kt` (`currentTimestampIso`/`currentTimestampCompact` via expect/actual)
+  - `data/` — `SongRepository.kt` (toda a lógica de banco), `ChordProParser.kt`, `Transposer.kt`, `DurationUtils.kt` (parse/format de duração "3:45"), `DataTransfer.kt`, `SampleSongs.kt`, `Timestamps.kt` (`currentTimestampIso`/`currentTimestampCompact` via expect/actual), `JcArchive.kt`/`OslArchive.kt`/`ZipData.kt` (formatos `.jcarchive`/`.osl` como ZIP com `data.json`)
   - `model/` — `Song.kt`, `ChordProLine.kt` (modelos)
   - `ui/screens/` — telas: SongList, SetlistList, Setlist, Editor, ChordViewer, Artists, Tags, FilteredSongList, Settings
   - `ui/components/` — `ChordProView.kt`, `SideDrawer.kt`, `SortMenu.kt`, `BackHandler.kt`
@@ -63,9 +63,28 @@ App de setlists/cifras multiplataforma (Kotlin Multiplatform + Compose Multiplat
 
 - `buildTypes.release`: `isMinifyEnabled = true` + `isShrinkResources = true` + `proguard-rules.pro` (`composeApp/proguard-rules.pro`)
 - Regras mantidas: `MainActivity`, classes SQLDelight geradas (`com.opensetlist.app.data.db.**`), `-keepattributes *Annotation*, Signature, InnerClasses`, campos `volatile` de coroutines, `-dontwarn` p/ classes JVM ausentes
-- APK release: `composeApp/build/outputs/apk/release/composeApp-release.apk` (~2 MB com R8); `mapping.txt` em `build/outputs/mapping/release/` p/ deobfuscar crashes
+- APK release: `composeApp/build/outputs/apk/release/opensetlist-release.apk` (~2 MB com R8); `mapping.txt` em `build/outputs/mapping/release/` p/ deobfuscar crashes
 - Backup `.db` exportado com timestamp no nome: `setlist_backup_<aaaa-MM-dd_HH-mm-ss>.db`; JSON de backup tem `"createdAt"` ISO e `"version":4` (ids numéricos e `creationDate`/`lastEdit` epoch ms; `transpose` INT na música; `date` INT epoch ms na setlist; tabelas cadastrais `song`/`artist`/`tag`/`setlist` usam `id` INTEGER AUTOINCREMENT + `creation_date`/`last_edit`)
 - Ao alterar dependências/kotlin: rodar `:composeApp:assembleRelease` para validar o R8 (e não só `assembleDebug`)
+
+## Lançamento de versão (sempre que lançar)
+
+Checklist completo para cada release — seguir na ordem:
+
+1. **Bump no código**: `appVersionName` e `versionCode` em `composeApp/build.gradle.kts` (Play exige `versionCode` crescente; tag segue `vX.Y.Z`)
+2. **Validar**: `./gradlew :composeApp:assembleRelease` (gera `opensetlist-release.apk`) e rodar a suíte de testes (`desktopTest`/`testDebugUnitTest`)
+3. **Commit de versão** no padrão `🔖 Versão X.Y.Z` na `main`; push para `upstream` (OpenSetList) e `origin` (fork)
+4. **Tag + push**: `git tag vX.Y.Z` e push nos dois remotes
+5. **GitHub Release** no upstream com o **"O que há de novo"** em pt-BR (título `OpenSetList X.Y.Z`; body com bullet list das mudanças para o usuário). Use `gh` — ex.: `gh api -X POST repos/OpenSetList/opensetlist-app/releases -f tag_name=vX.Y.Z ...` (ou `gh release edit`)
+6. **README**: atualizar badge de versão (topo), seção de recursos alterados e tabela de Plataformas/Distribuição
+7. **F-Droid metadata** (`fdroiddata` branch `com.opensetlist.app`): rodar `fdroid checkupdates --auto com.opensetlist.app` (geraria a nova entrada no `Builds` + `CurrentVersion{Code}`) e `fdroid rewritemeta` — sempre reproduzir com o ambiente da CI (fdroidserver master + `ruamel.yaml==0.18.0`; ver notas abaixo); commit + push → pipeline verde
+8. **Play Store**: publicar o APK com o campo "O que há de novo" correspondente
+
+### Notas do F-Droid (armadilhas já mapeadas)
+
+- A CI roda `fdroid rewritemeta` com o **código master do fdroidserver** + `ruamel.yaml` ≥ 0.18, que faz *wrap* de scalars longos (ex.: `UpdateCheckData` vira 2 linhas). Não confiar em suposição de versão — o jeito seguro é reproduzir: clonar `gitlab.com/fdroid/fdroidserver` (master) e rodar com venv com `ruamel.yaml==0.18.0`
+- `fdroid checkupdates --auto` exige repo git **limpo** (sem untracked) — mover artefatos fora antes de rodar
+- `UpdateCheckData` aponta para `composeApp/build.gradle.kts` → atualizar os dois campos (`appVersionName` string e `versionCode` int) na mesma tag; a regex é `versionCode\s*=\s*(\d+)|.|[Vv]ersionName\s*=\s*"([^"]+)"`
 
 ## Regras de código
 

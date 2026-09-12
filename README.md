@@ -1,6 +1,7 @@
 # OpenSetlist
 
 [![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-blue.svg)](LICENSE)
+[![Versão](https://img.shields.io/badge/vers%C3%A3o-1.2.0-blue.svg)](https://github.com/OpenSetList/opensetlist-app/releases)
 
 Aplicativo multiplataforma de **setlists e cifras** para músicos, construído com **Kotlin Multiplatform** + **Compose Multiplatform** + **SQLDelight**.
 
@@ -21,12 +22,14 @@ O projeto é livre e aberto: contribuições são bem-vindas.
 
 ### Músicas
 - Lista de todas as músicas com busca (título/artista) e ordenação (nome, artista, criação);
+- **Voltar e retomar** — ao voltar de uma música, a lista lembra o termo de busca, a ordenação e a posição da rolagem;
 - Editor de cifras **ChordPro** completo (título, artista, tom, BPM, capo, duração, link do YouTube, tags);
 - Excluir música pela lista, pelo visualizador ou pelo editor;
 - **Buscar e importar cifras da internet** — busca por título (ou URL colada) em **Ultimate Guitar** e **CifraClub**, com prévia da cifra, conversão automática para ChordPro e importação direta na biblioteca;
 - **Importar cifras de link compartilhado** (Android) — "compartilhar" um link de cifra do navegador para o OpenSetlist importa a música direto na biblioteca.
 
 ### Visualizador de cifras
+- **Visualizador com memória** — a posição da rolagem é lembrada ao sair e voltar para a cifra;
 - Transposição de tom (+/-);
 - Tamanho da letra e ocultar acordes (para cantar junto);
 - Rolagem automática com controle de velocidade;
@@ -39,7 +42,7 @@ O projeto é livre e aberto: contribuições são bem-vindas.
 - Criar, renomear, editar dados da gig (data, local, horário) e excluir;
 - Adicionar/remover músicas (com busca no modal) e **reordenar por arrastar**;
 - Duração total calculada a partir da duração das músicas;
-- Compartilhar/exportar setlist no formato **OpenSetList** (`.osl`, JSON) ou **JustChords** (`.chopro`) — escolha o formato na lista de setlists ou no topo da setlist aberta;
+- Compartilhar/exportar setlist no formato **OpenSetList** (`.osl` — arquivo compactado que contém os dados da setlist) ou **JustChords** (`.chopro`/`.jcarchive`) — escolha o formato na lista de setlists ou no topo da setlist aberta;
 - Lista de setlists com busca, ordenação e ações por linha.
 
 ### Organização
@@ -49,8 +52,9 @@ O projeto é livre e aberto: contribuições são bem-vindas.
 ### Dados e backup
 - **Exportar/importar backup completo** do banco (`.db`);
 - **Exportar/importar músicas** em lote (JSON);
-- **Importar setlist compartilhada** (`.osl`, JSON) — reimportar uma setlist com o mesmo nome **atualiza** a existente, sem duplicar setlists nem músicas;
-- **Importar setlist do JustChords** (`.chopro`) — lê o arquivo exportado pelo app JustChords, usando o nome do arquivo como nome do setlist e cada `{new_song}` como uma música na ordem; cria/atualiza o setlist e as músicas **sem duplicar** as existentes. Arquivos `.chopro` abertos com o app (abrir com… OpenSetlist) também são importados como setlist;
+- **Arquivos `.osl` compactados** — as exportações OpenSetList agora são arquivos ZIP (menores e mais confiáveis ao compartilhar); os arquivos `.osl` antigos, em texto puro (JSON), continuam sendo importados;
+- **Importar setlist compartilhada** (`.osl`) — reimportar uma setlist com o mesmo nome **atualiza** a existente, sem duplicar setlists nem músicas;
+- **Importar do JustChords** (`.chopro` e `.jcarchive`) — lê os arquivos exportados pelo app JustChords (texto ou backup), usando o nome do arquivo como nome do setlist e cada `{new_song}` como uma música na ordem; cria/atualiza o setlist e as músicas **sem duplicar** as existentes. As exportações do OpenSetlist `.chopro`/`.jcarchive` são **compatíveis com o JustChords** (reimportáveis no app dele). Arquivos recebidos via "compartilhar/abrir com…" também são importados diretamente;
 - **Importar backup do SetList Helper** (`.db`) — músicas, setlists, tags/gêneros, youtube, compasso, bpm, duração e observações; atualiza os dados existentes sem duplicar;
 - **Importar/exportar `.pro`** (ChordPro);
 - **Nuvem** — exportar/importar backup via seletor do sistema (Google Drive/Dropbox, SAF no Android, picker no desktop).
@@ -72,6 +76,8 @@ As importações (backup, músicas, setlists, SetList Helper e JustChords) mostr
 - [x] Artistas e tags
 - [x] Backup completo (`.db`), exportação/importação de músicas e setlists (JSON)
 - [x] Importação de setlist do JustChords (`.chopro`) e compartilhamento de setlist nos formatos OpenSetList/JustChords, sem duplicar músicas nem setlists
+- [x] Exportação de arquivos `.osl` compactados (ZIP) e `.jcarchive` compatíveis com a reimportação no JustChords
+- [x] Memória de rolagem, busca e ordenação ao voltar de uma cifra/setlist
 - [x] Importação de backup do SetList Helper (músicas, setlists, tags, gêneros, youtube, compasso, bpm, duração, observações) com atualização sem duplicar
 - [x] Modo escuro persistente
 - [x] Manter tela acesa por contexto (visualização de música, playlist ou o tempo todo)
@@ -79,14 +85,14 @@ As importações (backup, músicas, setlists, SetList Helper e JustChords) mostr
 - [x] Minificação/ofuscação Android (R8 + `proguard-rules.pro`) e backup com timestamp no nome
 - [x] Obter cifras da internet — busca/importação de cifras de **Ultimate Guitar e CifraClub** (prévia, conversão para ChordPro, importação direta na biblioteca) e importação de cifras a partir de **link compartilhado** (Android)
 - [x] Testes automatizados (parser ChordPro, transposer, importação JSON, offsets de acordes)
+- [x] Publicação na **Play Store** (v1.2.0) — pipeline do **F-Droid** verde, aguardando publicação
 
 ### 🚀 Previsto
 - [ ] **Exportar setlist e músicas em PDF** — exportar setlist e músicas (letra/cifra) em PDF para impressão/uso offline
 - [ ] **Metrônomo simples** — metrônomo com BPM e compasso para acompanhar durante o ensaio/apresentação
 - [ ] **Visualização web via host local da setlist** — servir a setlist atual em rede local (HTTP embutido + página HTML/QR code) para quem não tem o app instalado abrir no navegador/celular
 - [ ] **Sincronização por conta** — login em conta cloud e sincronização automática entre dispositivos (OAuth real com Google Drive/Dropbox)
-- [ ] Keystore de release própria + publicação na Play Store
-- [ ] Publicação na App Store (iOS)
+- [ ] Keystore de release própria (assinatura de produção no lugar da keystore de debug) e publicação na App Store (iOS)
 
 ## Plataformas
 
@@ -95,6 +101,7 @@ As importações (backup, músicas, setlists, SetList Helper e JustChords) mostr
 | Android | ✅ Suportada (minSdk 24, targetSdk 36) |
 | Desktop (Windows/macOS/Linux) | ✅ Suportada (JVM) |
 | iOS | ✅ Compilável (framework `ComposeApp`) |
+| Distribuição | ✅ Play Store (v1.2.0) · F-Droid (pipeline verde) |
 
 ## Stack
 
@@ -168,10 +175,12 @@ Abra `iosApp/` no Xcode e rode, ou compile o framework:
 ### Release Android
 ```bash
 ./gradlew :composeApp:assembleRelease
-# APK: composeApp/build/outputs/apk/release/composeApp-release.apk
+# APK: composeApp/build/outputs/apk/release/opensetlist-release.apk
 ```
 
-> ⚠️ A assinatura de release atual usa a keystore **debug** do Android SDK (`~/.android/debug.keystore`) — serve para testes, mas **não** para publicação na Play Store. Use uma keystore própria de release.
+Fluxo de lançamento: aumentar `appVersionName`/`versionCode` em `composeApp/build.gradle.kts`, validar com `assembleRelease`, criar a tag `vX.Y.Z`, publicar a **GitHub Release** com o "O que há de novo" e atualizar o metadata do **F-Droid** (ver checklist em `AGENTS.md`).
+
+> ⚠️ A assinatura de release atual usa a keystore **debug** do Android SDK (`~/.android/debug.keystore`) — serve para testes, mas **não** é a assinatura de produção da Play Store.
 
 ## Guia de contribuições
 
