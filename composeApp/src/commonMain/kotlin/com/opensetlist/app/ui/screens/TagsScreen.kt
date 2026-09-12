@@ -21,16 +21,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.opensetlist.app.AppStrings
 import com.opensetlist.app.model.Tag
+import com.opensetlist.app.ui.components.SearchableListState
 import com.opensetlist.app.ui.components.SortMenu
 
 /** Critérios de ordenação da lista de tags. */
@@ -52,13 +50,13 @@ fun TagsScreen(
     onEdit: (Tag) -> Unit,
     onDelete: (Tag) -> Unit,
     onExport: (Tag) -> Unit,
+    state: SearchableListState,
     modifier: Modifier = Modifier
 ) {
-    var searchQuery by remember { mutableStateOf("") }
-    var sortOrder by remember { mutableStateOf(TagSort.NAME_ASC) }
+    val sortOrder = TagSort.entries[state.sortIndex]
 
     val filteredTags = tags.filter { tag ->
-        searchQuery.isBlank() || tag.name.contains(searchQuery, ignoreCase = true)
+        state.searchQuery.isBlank() || tag.name.contains(state.searchQuery, ignoreCase = true)
     }
 
     val sortedTags = remember(filteredTags, sortOrder) {
@@ -92,13 +90,13 @@ fun TagsScreen(
             SortMenu(
                 currentLabel = sortOrder.label,
                 options = TagSort.entries.map { it.label },
-                onSelect = { sortOrder = TagSort.entries[it] }
+                onSelect = { state.sortIndex = it }
             )
         }
 
         OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
+            value = state.searchQuery,
+            onValueChange = { state.searchQuery = it },
             placeholder = { Text(AppStrings.searchTagsPlaceholder) },
             singleLine = true,
             modifier = Modifier
@@ -118,7 +116,7 @@ fun TagsScreen(
                 )
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(modifier = Modifier.fillMaxSize(), state = state.listState) {
                 items(sortedTags, key = { it.id }) { tag ->
                     Row(
                         modifier = Modifier

@@ -2,6 +2,7 @@ package com.opensetlist.app
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -84,6 +85,7 @@ import com.opensetlist.app.model.Song
 import com.opensetlist.app.model.Tag
 import com.opensetlist.app.ui.components.AppBackHandler
 import com.opensetlist.app.ui.components.DrawerSection
+import com.opensetlist.app.ui.components.SearchableListState
 import com.opensetlist.app.ui.components.SetlistShareMenu
 import com.opensetlist.app.ui.components.SideDrawer
 import com.opensetlist.app.ui.screens.ArtistsScreen
@@ -95,6 +97,7 @@ import com.opensetlist.app.ui.screens.ExportProgressScreen
 import com.opensetlist.app.ui.screens.FilteredSongListScreen
 import com.opensetlist.app.ui.screens.SetlistListScreen
 import com.opensetlist.app.ui.screens.SetlistScreen
+import com.opensetlist.app.ui.screens.SetlistSort
 import com.opensetlist.app.ui.screens.SettingsScreen
 import com.opensetlist.app.ui.screens.SongListScreen
 import com.opensetlist.app.ui.screens.TagsScreen
@@ -168,6 +171,14 @@ fun App(
     var tagsBySong by remember { mutableStateOf(emptyMap<Long, List<Tag>>()) }
     var currentScreen by remember { mutableStateOf<Screen>(Screen.SongList) }
     var currentDrawerSection by remember { mutableStateOf(DrawerSection.ALL_SONGS) }
+
+    val songListState = remember { SearchableListState() }
+    val setlistListState = remember { SearchableListState(SetlistSort.DATE_DESC.ordinal) }
+    val artistListState = remember { SearchableListState() }
+    val tagListState = remember { SearchableListState() }
+    val artistSongsState = remember { SearchableListState() }
+    val tagSongsState = remember { SearchableListState() }
+    val setlistViewListState = remember { LazyListState() }
 
     var showNewSetlistDialog by remember { mutableStateOf(false) }
     var showSongImportMenu by remember { mutableStateOf(false) }
@@ -852,6 +863,7 @@ fun App(
                             SongListScreen(
                                 songs = songs,
                                 setlists = setlists,
+                                state = songListState,
                                 onSongClick = { song ->
                                     syncSongTags(song)
                                     currentScreen = Screen.ChordView(song)
@@ -872,6 +884,7 @@ fun App(
                         is Screen.SetlistList -> {
                             SetlistListScreen(
                                 setlists = setlists,
+                                state = setlistListState,
                                 onSetlistClick = { setlist ->
                                     currentDrawerSection = DrawerSection.SETLISTS
                                     currentScreen = Screen.SetlistView(setlist, backTarget = Screen.SetlistList)
@@ -894,6 +907,7 @@ fun App(
                             ArtistsScreen(
                                 artists = artists,
                                 songCounts = artistSongCounts,
+                                state = artistListState,
                                 onArtistClick = { artist ->
                                     currentDrawerSection = DrawerSection.ARTISTS
                                     currentScreen = Screen.ArtistSongs(artist)
@@ -914,6 +928,7 @@ fun App(
                             TagsScreen(
                                 tags = tags,
                                 songCounts = tagSongCounts,
+                                state = tagListState,
                                 onTagClick = { tag ->
                                     currentDrawerSection = DrawerSection.TAGS
                                     currentScreen = Screen.TagSongs(tag)
@@ -933,6 +948,7 @@ fun App(
                         is Screen.ArtistSongs -> {
                             FilteredSongListScreen(
                                 songs = repository.songsByArtist(screen.artist.name),
+                                state = artistSongsState,
                                 onSongClick = { song ->
                                     syncSongTags(song)
                                     currentScreen = Screen.ChordView(song, origin = screen)
@@ -943,6 +959,7 @@ fun App(
                         is Screen.TagSongs -> {
                             FilteredSongListScreen(
                                 songs = repository.songsByTag(screen.tag.id),
+                                state = tagSongsState,
                                 onSongClick = { song ->
                                     syncSongTags(song)
                                     currentScreen = Screen.ChordView(song, origin = screen)
@@ -1034,6 +1051,7 @@ fun App(
                             SetlistScreen(
                                 setlist = screen.setlist,
                                 allSongs = songs,
+                                listState = setlistViewListState,
                                 onSongClick = { song ->
                                     val setSongs = screen.setlist.songs
                                     val index = setSongs.indexOfFirst { it.id == song.id }
