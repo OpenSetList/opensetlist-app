@@ -86,6 +86,14 @@ Checklist completo para cada release — seguir na ordem:
 - `fdroid checkupdates --auto` exige repo git **limpo** (sem untracked) — mover artefatos fora antes de rodar
 - `UpdateCheckData` aponta para `composeApp/build.gradle.kts` → atualizar os dois campos (`appVersionName` string e `versionCode` int) na mesma tag; a regex é `versionCode\s*=\s*(\d+)|.|[Vv]ersionName\s*=\s*"([^"]+)"`
 
+### Notas do F-Droid: build reproduzível (`Binaries`/`AllowedAPKSigningKeys`)
+
+- O `Binaries` do metadata aponta para `https://github.com/OpenSetList/opensetlist-app/releases/download/v%v/opensetlist-release.apk` — **cada versão listada em `Builds` precisa ter o APK binário publicado na release correspondente** (senão o `fdroid build` falha com 404 no download). Na primeira inclusão, manter só a versão mais recente no `Builds`.
+- A CI builda com **JDK 21** (`openjdk-21-jdk-headless` + `update-alternatives`) e Gradle do wrapper (8.5). O `kotlin-tooling-metadata.json` que entra no APK grava o `jvmTarget` do **target desktop** do KMP, que herda a JDK do runtime (o android está fixado em 17) → **o binário da release deve ser compilado com JDK 21**, senão o `sameApk` da CI diverge. Confirmado: JDK17 vs JDK21 diferem só nesse arquivo; build com JDK21 é idêntico entre raízes diferentes.
+- Passos para gerar/subir o binário de uma versão: worktree no commit da tag → renomear `~/.android/debug.keystore` (senão AGP assina e o output não é `*-unsigned.apk`) → `./gradlew :composeApp:assembleRelease --no-daemon --no-build-cache` com `JAVA_HOME` JDK 21 → `apksigner sign --ks ~/.keystores/opensetlist-release.keystore --ks-key-alias opensetlist` → **salvar com o nome exato `opensetlist-release.apk` antes do upload** (`gh release upload` usa o basename do arquivo como nome da asset) → `gh release upload <tag> --repo OpenSetList/opensetlist-app opensetlist-release.apk --clobber`
+- Keystore própria em `~/.keystores/opensetlist-release.keystore` (alias `opensetlist`, senha em `opensetlist-release.password`, cert PEM em `opensetlist-release-cert.pem`) → **fazer backup offline**; `AllowedAPKSigningKeys` = `e7dbb3740f412252758ac7368028959d4744738de4f6b193613b27a9404047c5` (SHA-256 do cert via `apksigner verify --print-certs`)
+- Job quebrado do CI com "codequality.json: no matching files / No files to upload" = **sintoma** de falha interna no `fdroid build` (o script aborta antes de gerar o `codequality.json`). Olhar o log do job, não o erro de upload.
+
 ## Regras de código
 
 - Não adicionar comentários ao código
