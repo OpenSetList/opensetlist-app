@@ -1,0 +1,3 @@
+- JustChords compatibility: .jcarchive exports are now fully compatible and can be reopened in the JustChords app.
+- Compressed .osl files: OpenSetList exports are now ZIP archives (smaller and more reliable to share); older plain-text .osl files are still imported normally.
+- Resume where you left off: returning from a chart or setlist restores scroll position, search term and sort order.

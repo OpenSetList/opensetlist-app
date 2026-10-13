@@ -1,0 +1,3 @@
+- Compatibilidade com o JustChords: as exportações em .jcarchive agora são 100% compatíveis e podem ser reabertas no app JustChords.
+- Arquivos .osl compactados: as exportações OpenSetList agora são arquivos ZIP (menores e mais confiáveis ao compartilhar); os arquivos .osl antigos em texto continuam sendo importados normalmente.
+- Retomar de onde parou: ao voltar de uma cifra ou setlist, o app lembra a posição da rolagem, o termo de busca e a ordenação.
