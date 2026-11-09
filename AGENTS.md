@@ -90,6 +90,7 @@ Checklist completo para cada release — seguir na ordem:
 - A CI roda `fdroid rewritemeta` com o **código master do fdroidserver** + `ruamel.yaml` ≥ 0.18, que faz *wrap* de scalars longos (ex.: `UpdateCheckData` vira 2 linhas). Não confiar em suposição de versão — o jeito seguro é reproduzir: clonar `gitlab.com/fdroid/fdroidserver` (master) e rodar com venv com `ruamel.yaml==0.18.0`
 - `fdroid checkupdates --auto` exige repo git **limpo** (sem untracked) — mover artefatos fora antes de rodar
 - `UpdateCheckData` aponta para `androidApp/build.gradle.kts` → atualizar os dois campos (`appVersionName` string e `versionCode` int) na mesma tag; a regex é `versionCode\s*=\s*(\d+)|.|[Vv]ersionName\s*=\s*"([^"]+)"`
+- Projeto multi-módulo (AGP 9): o `checkupdates --auto` copia a entrada anterior (`subdir: composeApp` + `gradle: yes`) → na entrada nova remover `subdir` e usar `gradle: - :androidApp:assembleRelease` (a 1.2.0 continua com o layout antigo)
 
 ### Notas do F-Droid: build reproduzível (`Binaries`/`AllowedAPKSigningKeys`)
 
