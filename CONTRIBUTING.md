@@ -25,7 +25,7 @@ Obrigado pelo interesse em contribuir com o OpenSetlist! Qualquer ajuda — corr
 Sempre rode pelo menos Android e desktop:
 
 ```bash
-./gradlew :composeApp:assembleDebug
+./gradlew :androidApp:assembleDebug
 ./gradlew :composeApp:packageUberJarForCurrentOS
 ```
 

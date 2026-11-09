@@ -98,7 +98,7 @@ As importações (backup, músicas, setlists, SetList Helper e JustChords) mostr
 
 | Plataforma | Status |
 |---|---|
-| Android | ✅ Suportada (minSdk 24, targetSdk 36) |
+| Android | ✅ Suportada (minSdk 24, targetSdk 37) |
 | Desktop (Windows/macOS/Linux) | ✅ Suportada (JVM) |
 | iOS | ✅ Compilável (framework `ComposeApp`) |
 | Distribuição | ✅ Play Store (v1.2.0) · F-Droid (pipeline verde) |
@@ -107,17 +107,24 @@ As importações (backup, músicas, setlists, SetList Helper e JustChords) mostr
 
 | Camada | Tecnologia |
 |---|---|
-| Linguagem | Kotlin 2.0.21 |
-| UI | Compose Multiplatform 1.6.11 (Material 3) |
-| Persistência | SQLDelight 2.0.2 |
-| Android | AGP 8.2.2, compileSdk 34, minSdk 24, targetSdk 36 |
-| Build | Gradle 8.5, JDK 17 |
+| Linguagem | Kotlin 2.3.21 |
+| UI | Compose Multiplatform 1.12.2 (Material 3) |
+| Persistência | SQLDelight 2.4.1 |
+| Android | AGP 9.5.1, compileSdk 37, minSdk 24, targetSdk 37 |
+| Build | Gradle 9.6.0, JDK 17 |
 | Entrada iOS | `iosApp/` (Xcode) |
 
 ## Estrutura do projeto
 
 ```
-composeApp/
+androidApp/                         # App Android (AGP 9 exige módulo separado da biblioteca KMP)
+├── src/main/
+│   ├── kotlin/com/opensetlist/app/MainActivity.kt
+│   ├── AndroidManifest.xml
+│   └── res/                        # Ícones, splash, temas, file_paths
+├── proguard-rules.pro
+└── build.gradle.kts                # applicationId, versionCode, assinatura, R8
+composeApp/                         # Biblioteca KMP compartilhada
 ├── src/
 │   ├── commonMain/kotlin/com/opensetlist/app/
 │   │   ├── App.kt                 # Estado global e roteamento
@@ -134,8 +141,7 @@ composeApp/
 │   ├── androidMain/               # actuals (SharedPreferences, SAF, Bluetooth, ...)
 │   ├── iosMain/                   # actuals (NSUserDefaults, SQLDelight native, ...)
 │   └── desktopMain/               # actuals (java.util.prefs, JDBC SQLite, JFileChooser, ...)
-├── build.gradle.kts
-└── ...
+└── build.gradle.kts               # Biblioteca KMP (com.android.kotlin.multiplatform.library) + desktop
 iosApp/                            # Projeto Xcode
 ```
 
@@ -155,15 +161,15 @@ iosApp/                            # Projeto Xcode
 
 ### Android (debug)
 ```bash
-./gradlew :composeApp:assembleDebug
+./gradlew :androidApp:assembleDebug
 # ou, com o dispositivo/emulador conectado:
-./gradlew :composeApp:installDebug
+./gradlew :androidApp:installDebug
 ```
 
 ### Desktop
 ```bash
 ./gradlew :composeApp:packageUberJarForCurrentOS
-java -jar composeApp/build/compose/jars/composeApp-linux-x64-*.jar
+java -jar composeApp/build/compose/jars/opensetlist-linux-x64-*.jar
 ```
 
 ### iOS
@@ -174,11 +180,11 @@ Abra `iosApp/` no Xcode e rode, ou compile o framework:
 
 ### Release Android
 ```bash
-./gradlew :composeApp:assembleRelease
-# APK: composeApp/build/outputs/apk/release/opensetlist-release.apk
+./gradlew :androidApp:assembleRelease
+# APK: androidApp/build/outputs/apk/release/opensetlist-release.apk
 ```
 
-Fluxo de lançamento: aumentar `appVersionName`/`versionCode` em `composeApp/build.gradle.kts`, validar com `assembleRelease`, criar a tag `vX.Y.Z`, publicar a **GitHub Release** com o "O que há de novo" e atualizar o metadata do **F-Droid** (ver checklist em `AGENTS.md`).
+Fluxo de lançamento: aumentar `appVersionName`/`versionCode` em `androidApp/build.gradle.kts` (mantendo o `appVersionName` de `composeApp/build.gradle.kts` em sincronia), validar com `assembleRelease`, criar a tag `vX.Y.Z`, publicar a **GitHub Release** com o "O que há de novo" e atualizar o metadata do **F-Droid** (ver checklist em `AGENTS.md`).
 
 > ⚠️ A assinatura de release atual usa a keystore **debug** do Android SDK (`~/.android/debug.keystore`) — serve para testes, mas **não** é a assinatura de produção da Play Store.
 

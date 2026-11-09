@@ -34,19 +34,19 @@ jobs:
         run: |
           SDKMANAGER="$(command -v sdkmanager || echo "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager")"
           yes | "$SDKMANAGER" --licenses > /dev/null
-          "$SDKMANAGER" "platforms;android-36" "build-tools;34.0.0"
+          "$SDKMANAGER" "platforms;android-37.0" "build-tools;36.0.0"
 
       - name: Build e testes de release
         run: |
           chmod +x gradlew
-          ./gradlew :composeApp:desktopTest :composeApp:assembleRelease \
+          ./gradlew :composeApp:desktopTest :androidApp:assembleRelease \
             --no-daemon --no-build-cache
 
       - name: Assinar APK v2/v3 com a keystore F-Droid
         run: |
           printf '%s' "${{ secrets.F_DROID_KEYSTORE_B64 }}" | base64 -d > /tmp/fdroid.keystore
-          cp "$(ls composeApp/build/outputs/apk/release/*-unsigned.apk | head -n 1)" opensetlist-release.apk
-          APKSIGNER="$ANDROID_HOME/build-tools/34.0.0/apksigner"
+          cp "$(ls androidApp/build/outputs/apk/release/*-unsigned.apk | head -n 1)" opensetlist-release.apk
+          APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
           echo "${{ secrets.F_DROID_KEYSTORE_PASS }}" | "$APKSIGNER" sign \
             --ks /tmp/fdroid.keystore \
             --ks-key-alias opensetlist \
@@ -56,8 +56,8 @@ jobs:
 
       - name: Verificar assinatura e alinhamento
         run: |
-          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --print-certs opensetlist-release.apk
-          "$ANDROID_HOME/build-tools/34.0.0/zipalign" -c -v 4 opensetlist-release.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs opensetlist-release.apk
+          "$ANDROID_HOME/build-tools/36.0.0/zipalign" -c -v 4 opensetlist-release.apk
 
       - name: Enviar para a release da tag
         env:

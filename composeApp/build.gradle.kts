@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.androidKotlinMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.sqldelight)
@@ -19,7 +19,11 @@ sqldelight {
 }
 
 kotlin {
-    androidTarget {
+    android {
+        namespace = "com.opensetlist.app.shared"
+        compileSdk = 37
+        minSdk = 24
+
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
         }
@@ -55,7 +59,6 @@ kotlin {
 
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
-            implementation(libs.androidx.core.splashscreen)
             implementation(libs.sqldelight.android.driver)
             implementation(libs.ktor.client.okhttp)
         }
@@ -82,55 +85,4 @@ compose.desktop {
             packageVersion = appVersionName
         }
     }
-}
-
-android {
-    namespace = "com.opensetlist.app"
-    compileSdk = 36
-
-    defaultConfig {
-        applicationId = "com.opensetlist.app"
-        minSdk = 24
-        targetSdk = 36
-        versionCode = 5
-        versionName = appVersionName
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    buildFeatures {
-        compose = true
-    }
-
-    val releaseKeystoreFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
-
-    signingConfigs {
-        if (releaseKeystoreFile.exists()) {
-            create("release") {
-                storeFile = releaseKeystoreFile
-                storePassword = "android"
-                keyAlias = "androiddebugkey"
-                keyPassword = "android"
-            }
-        }
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-            signingConfig = signingConfigs.findByName("release")
-        }
-    }
-}
-
-base {
-    archivesName.set("opensetlist")
 }
